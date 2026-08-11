@@ -1,6 +1,6 @@
 # Factory
 
-Private multi-app Next.js monorepo for building products while extracting reusable UI, contracts, configuration, and tooling.
+Multi-app Next.js monorepo for building products while extracting reusable UI, contracts, configuration, and tooling.
 
 ## Repository model
 
