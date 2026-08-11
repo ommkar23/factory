@@ -13,10 +13,6 @@ Private multi-app Next.js monorepo for building products while extracting reusab
 
 All product work is tracked through GitHub issues and pull requests in this repository. Use labels and milestones to identify the app, work type, priority, and lifecycle stage.
 
-## Agent workflow
-
-`product-manager` decides what to build, `lead-sde` designs and orchestrates it, and `frontend-sde` / `backend-sde` implement isolated worktree tasks. The lead reviews and merges. UI changes require recorded human Storybook approval before merge. See [AGENTS.md](./AGENTS.md).
-
 ## Getting started
 
 ```bash

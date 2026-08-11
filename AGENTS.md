@@ -1,41 +1,44 @@
-# Factory agent operating rules
+# Factory project conventions
 
-## Repository scope
+## Repository purpose
 
-Factory is the single repository for all applications in this product portfolio. Every application change, shared-package change, issue, pull request, and CI workflow belongs here.
+Factory is a pnpm/Turborepo monorepo containing multiple Next.js applications and reusable packages. All application changes, shared-package changes, issues, pull requests, and CI workflows belong in this repository.
 
-## Roles and handoffs
+## Scaffold
 
-1. `product-manager` decides what should be built and turns research, feedback, defects, and requests into product-ready GitHub issues.
-2. `lead-sde` owns technical planning, explicit ownership of shared contracts and migrations, worktree task creation, integration, CI/CD, review, and merge decisions.
-3. `frontend-sde` and `backend-sde` implement assigned tasks on isolated branches/worktrees and push their branches to this repository.
-4. Implementation agents may open pull requests but must not merge them. `lead-sde` merges only after required checks and approvals pass.
+- `apps/<app-name>` contains independently owned Next.js applications.
+- `packages/ui` contains reusable accessible UI components.
+- `packages/contracts` contains shared TypeScript schemas and API contracts.
+- `packages/typescript-config` contains shared TypeScript configuration.
+- `tooling` contains repository-wide development automation when justified.
+- `docs/architecture` contains architecture decision records.
+- `.github` contains centralized issue forms, pull-request conventions, ownership, dependency updates, and CI.
+
+The baseline uses Node.js 24, pnpm 11.21.0, Turborepo 2.10.9, TypeScript 7.0.2, and Prettier 3.9.6.
 
 ## Architecture boundaries
 
-- Put application-specific code in `apps/<app-name>`.
-- Put reusable packages in `packages/*`.
-- Do not extract an abstraction merely because reuse might occur. Extract after at least two apps need it, unless `lead-sde` records an ADR explaining earlier extraction.
-- Shared contracts, generated types, migrations, and reusable packages must have an explicit owner in the issue and technical plan.
+- Keep application-specific code in `apps/<app-name>`.
+- Extract code into `packages/*` only after at least two applications need it, unless an ADR explains why earlier extraction is justified.
+- Give shared contracts, generated types, migrations, and reusable packages explicit ownership in the governing issue or technical plan.
+- Preserve clear package exports and avoid importing another application's private implementation.
 - Do not add provider-specific deployment configuration or workflows without explicit human approval.
 
-## GitHub workflow
+## Development conventions
 
-- Begin product work from a GitHub issue with acceptance criteria, priority, lifecycle, and app/area labels.
-- Use one branch and worktree per implementation task.
-- Open all pull requests against this repository and link the governing issue.
-- Include test output and concise handoff evidence in every pull request.
-- Keep commits scoped and never commit credentials or generated secret files.
+- Start product work from a GitHub issue with acceptance criteria and relevant app or area labels.
+- Keep each branch and pull request focused on one coherent change.
+- Link pull requests to their governing issue.
+- Add or update tests for changed behavior and include verification evidence in the pull request.
+- UI changes must include Storybook evidence or equivalent screenshots and recorded human approval before merge.
+- Keep commits scoped and never commit credentials, tokens, `.env` files, or generated secrets.
 
-## Mandatory Storybook approval gate
+## Required checks
 
-Any pull request that changes user interface behavior or appearance must complete this gate before merge:
+```bash
+corepack enable
+pnpm install --frozen-lockfile
+pnpm check
+```
 
-1. The frontend implementer supplies a Storybook URL or screenshots.
-2. The implementer blocks the Kanban task with `kind=needs_input` and requests human review.
-3. A human records explicit approval in a Kanban comment.
-4. A human unblocks the task.
-5. The implementer reruns required checks and completes the task.
-6. Only then may `lead-sde` merge the pull request.
-
-A green automated CI run does not replace this human approval.
+Run relevant application-level tests in addition to the repository checks. A green CI run does not replace required human UI approval.

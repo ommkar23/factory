@@ -18,15 +18,14 @@ Closes #
 - [ ] Relevant tests were added or updated
 - [ ] No secrets or provider-specific deployment configuration were added
 
-## UI approval gate
+## UI approval
 
 - [ ] This pull request has no UI changes
-- [ ] Storybook URL or screenshots are included below
-- [ ] Human approval is recorded in the Kanban task
-- [ ] The task was unblocked by a human after approval
+- [ ] Storybook URL or equivalent screenshots are included below
+- [ ] Required human approval has been recorded
 
 Storybook/review evidence:
 
-## Handoff notes
+## Additional notes
 
 <!-- Risks, migrations, rollout concerns, or follow-up work. -->
