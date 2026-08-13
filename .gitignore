@@ -4,6 +4,7 @@ node_modules/
 .next/
 dist/
 coverage/
+storybook-static/
 .env
 .env.*
 !.env.example

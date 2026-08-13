@@ -1,0 +1,13 @@
+.git
+node_modules
+.pnpm-store
+.turbo
+**/.next
+**/dist
+**/coverage
+**/storybook-static
+.env
+.env.*
+!.env.example
+*.log
+.DS_Store
