@@ -1,29 +1,15 @@
 import type { ReactNode } from "react";
+import { Alert } from "./alert";
 
 export type StatusMessageProps = {
   children: ReactNode;
   tone?: "info" | "success";
 };
-
+/** @deprecated Use Alert for titled updates. Retained for backwards compatibility. */
 export function StatusMessage({ children, tone = "info" }: StatusMessageProps) {
-  const colors =
-    tone === "success"
-      ? { background: "#ecfdf3", border: "#027a48", text: "#054f31" }
-      : { background: "#eff8ff", border: "#175cd3", text: "#102a56" };
-
   return (
-    <p
-      role="status"
-      style={{
-        background: colors.background,
-        border: `1px solid ${colors.border}`,
-        borderRadius: "0.375rem",
-        color: colors.text,
-        margin: 0,
-        padding: "0.75rem 1rem",
-      }}
-    >
+    <Alert title={tone === "success" ? "Success" : "Information"} tone={tone}>
       {children}
-    </p>
+    </Alert>
   );
 }
