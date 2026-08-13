@@ -1,0 +1,79 @@
+name: Deploy Storybook review site
+
+on:
+  workflow_dispatch:
+    inputs:
+      ref:
+        description: Git ref to build and publish (branch, tag, or SHA)
+        required: true
+        type: string
+  workflow_call:
+    inputs:
+      ref:
+        description: Git ref to build and publish (branch, tag, or SHA)
+        required: true
+        type: string
+
+# The build receives only read access. The deploy job gets Pages/OIDC access only
+# after it receives the static artifact built by the dependency-ordered build job.
+permissions:
+  contents: read
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    name: Build Storybook
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Check out requested revision
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.ref }}
+
+      - name: Set up pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 11.21.0
+          run_install: false
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Validate UI package
+        run: pnpm --filter @factory/ui lint && pnpm --filter @factory/ui typecheck && pnpm --filter @factory/ui test
+
+      - name: Build static Storybook
+        run: pnpm --filter @factory/ui build
+        env:
+          STORYBOOK_BASE_PATH: /factory/
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: packages/ui/storybook-static
+
+  deploy:
+    name: Deploy Storybook review site
+    needs: build
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    permissions:
+      pages: write
+      id-token: write
+    steps:
+      - name: Deploy Pages artifact
+        id: deployment
+        uses: actions/deploy-pages@v4

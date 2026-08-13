@@ -7,6 +7,9 @@ const config: StorybookConfig = {
   async viteFinal(config) {
     return {
       ...config,
+      // GitHub Pages serves this repository site below /factory/. Local Storybook
+      // keeps Vite's root-relative base unless the deployment workflow sets it.
+      base: process.env.STORYBOOK_BASE_PATH ?? config.base,
       server: { ...config.server, watch: { usePolling: true } },
     };
   },
