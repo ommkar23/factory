@@ -179,7 +179,7 @@ describe("WeatherScreen client orchestration", () => {
     expect(screen.queryByText("internal hostname")).toBeNull();
   });
 
-  it("selects a result, loads conditions, and renders them for the selected location", async () => {
+  it("uses only the loading status until selected conditions are ready", async () => {
     vi.useFakeTimers();
     const weather = deferred<typeof clearDayConditions>();
     const getCurrentConditions = vi.fn().mockReturnValue(weather.promise);
@@ -194,17 +194,21 @@ describe("WeatherScreen client orchestration", () => {
       screen.queryByRole("listbox", { name: "Location results" }),
     ).toBeNull();
     expect(
+      screen.queryByText(
+        `Showing conditions for ${locations[0]!.name}, ${locations[0]!.region}.`,
+      ),
+    ).toBeNull();
+    expect(
       screen
-        .getAllByRole("status")
-        .some((status) =>
-          status.textContent?.includes("Showing conditions for Portland"),
-        ),
-    ).toBe(true);
+        .getByText(`Selected ${locations[0]!.name}, ${locations[0]!.region}.`)
+        .getAttribute("role"),
+    ).toBeNull();
     expect(getCurrentConditions).toHaveBeenCalledWith(
       locations[0],
       expect.objectContaining({ signal: expect.any(AbortSignal) }),
     );
     expect(screen.getByText("Loading current conditions…")).toBeTruthy();
+    expect(screen.getAllByRole("status")).toHaveLength(1);
 
     await act(async () => {
       weather.resolve(clearDayConditions);
@@ -212,6 +216,9 @@ describe("WeatherScreen client orchestration", () => {
     });
     expect(screen.getByText("20.4°C")).toBeTruthy();
     expect(screen.getByRole("heading", { name: "Portland" })).toBeTruthy();
+    expect(screen.getByRole("status").textContent).toContain(
+      `Showing conditions for ${locations[0]!.name}, ${locations[0]!.region}.`,
+    );
   });
 
   it("cancels a pending search debounce when selecting an existing result", async () => {

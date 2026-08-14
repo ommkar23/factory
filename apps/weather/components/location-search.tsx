@@ -92,7 +92,7 @@ export function LocationSearch({
         <h2 id={headingId}>Find a location</h2>
       </div>
       <label className={styles.searchLabel} htmlFor={inputId}>
-        Search city, town, or airport
+        Search city or postal code
       </label>
       <input
         aria-activedescendant={
@@ -161,9 +161,8 @@ export function LocationSearch({
         </ul>
       ) : null}
       {state === "selected" && selectedLocation ? (
-        <p className={styles.selectedLocation} role="status">
-          Showing conditions for <strong>{selectedLocation.name}</strong>,{" "}
-          {selectedLocation.region}.
+        <p className={styles.selectedLocation}>
+          Selected {selectedLocation.name}, {selectedLocation.region}.
         </p>
       ) : null}
     </section>

@@ -5,6 +5,10 @@ import {
   createSameOriginClient,
 } from "../lib/weather-api-client";
 import {
+  createLocationsGetHandler,
+  createWeatherGetHandler,
+} from "../lib/weather-api";
+import {
   clearDayConditions,
   selectedLocation,
 } from "../fixtures/weather-fixtures";
@@ -80,6 +84,30 @@ describe("same-origin weather API client", () => {
     await expect(client.searchLocations("Portland")).rejects.toBeInstanceOf(
       WeatherApiResponseError,
     );
+  });
+
+  it("round-trips route handler responses through the same-origin client without a network call", async () => {
+    const locationsHandler = createLocationsGetHandler({
+      fetchLocations: vi.fn().mockResolvedValue([selectedLocation]),
+    });
+    const weatherHandler = createWeatherGetHandler({
+      fetchCurrentConditions: vi.fn().mockResolvedValue(clearDayConditions),
+    });
+    const fetcher = async (input: RequestInfo | URL): Promise<Response> => {
+      const url = new URL(String(input), "http://weather.test");
+      const request = new Request(url);
+      if (url.pathname === "/api/locations") return locationsHandler(request);
+      if (url.pathname === "/api/weather") return weatherHandler(request);
+      return new Response(null, { status: 404 });
+    };
+    const client = createSameOriginClient(fetcher);
+
+    await expect(client.searchLocations(" Portland ")).resolves.toEqual([
+      selectedLocation,
+    ]);
+    await expect(
+      client.getCurrentConditions(selectedLocation),
+    ).resolves.toEqual(clearDayConditions);
   });
 
   it("fails safely for malformed success and error envelopes", async () => {

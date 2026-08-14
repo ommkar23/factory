@@ -50,6 +50,8 @@ test("Weather UI keeps deterministic accessible components and stories app-local
   assert.match(locationSearch, /autoComplete="off"/);
   assert.match(locationSearch, /name="location-search"/);
   assert.match(locationSearch, /placeholder="Try Portland, Maine…"/);
+  assert.match(locationSearch, /Search city or postal code/);
+  assert.doesNotMatch(locationSearch, /airport/i);
   assert.match(locationSearch, /event.key === "ArrowDown"/);
   assert.match(locationSearch, /event.key === "Enter"/);
   assert.match(locationSearch, /tabIndex={-1}/);

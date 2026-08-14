@@ -181,13 +181,9 @@ export function WeatherScreen({
         {weatherState === "ready" && location && conditions ? (
           <CurrentConditionsCard conditions={conditions} location={location} />
         ) : null}
-        {location && weatherState !== "error" ? (
+        {weatherState === "ready" && location ? (
           <p className={styles.selectionAnnouncement} role="status">
-            {weatherState === "loading"
-              ? `Loading conditions for ${location.name}, ${location.region}.`
-              : weatherState === "ready"
-                ? `Showing conditions for ${location.name}, ${location.region}.`
-                : null}
+            Showing conditions for {location.name}, {location.region}.
           </p>
         ) : null}
       </div>

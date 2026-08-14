@@ -50,6 +50,13 @@ function expectActiveOption(index: number) {
 afterEach(cleanup);
 
 describe("LocationSearch", () => {
+  it("uses the city and postal-code search label", () => {
+    renderLocationSearch();
+
+    expect(screen.getByText("Search city or postal code")).toBeTruthy();
+    expect(screen.queryByText(/airport/i)).toBeNull();
+  });
+
   it("initially marks the first result active and links the combobox to it", () => {
     renderLocationSearch();
 
@@ -103,6 +110,19 @@ describe("LocationSearch", () => {
     expect(onSelect).toHaveBeenCalledTimes(1);
     expect(onSelect).toHaveBeenCalledWith(locations[2]);
     expectActiveOption(2);
+  });
+
+  it("shows a factual selected location without a live status role", () => {
+    renderLocationSearch({
+      locations: [],
+      selectedLocation: locations[0],
+      state: "selected",
+    });
+
+    const selected = screen.getByText(
+      `Selected ${locations[0]!.name}, ${locations[0]!.region}.`,
+    );
+    expect(selected.getAttribute("role")).toBeNull();
   });
 
   it("clamps a now-out-of-range active option when the result list shrinks", async () => {
