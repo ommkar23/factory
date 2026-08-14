@@ -83,3 +83,53 @@ export const unknownConditions: CurrentConditions = {
   isDay: false,
   weatherCode: 999,
 };
+
+export const comparisonLocations: readonly Location[] = [
+  ...locations,
+  {
+    countryCode: "JP",
+    id: "1850147",
+    latitude: 35.6762,
+    longitude: 139.6503,
+    name: "Tokyo",
+    region: "Tokyo, Japan",
+    timezone: "Asia/Tokyo",
+  },
+  {
+    countryCode: "AU",
+    id: "2147714",
+    latitude: -33.8688,
+    longitude: 151.2093,
+    name: "Sydney",
+    region: "New South Wales, Australia",
+    timezone: "Australia/Sydney",
+  },
+];
+
+export const readyComparisonEntries = [
+  {
+    conditions: clearDayConditions,
+    location: comparisonLocations[0]!,
+    status: "ready" as const,
+  },
+  {
+    conditions: cloudyNightConditions,
+    location: comparisonLocations[1]!,
+    status: "ready" as const,
+  },
+  {
+    conditions: rainyConditions,
+    location: comparisonLocations[2]!,
+    status: "ready" as const,
+  },
+  {
+    conditions: { ...clearDayConditions, temperatureC: 27.6 },
+    location: comparisonLocations[3]!,
+    status: "ready" as const,
+  },
+  {
+    conditions: { ...cloudyNightConditions, temperatureC: 16.2 },
+    location: comparisonLocations[4]!,
+    status: "ready" as const,
+  },
+];

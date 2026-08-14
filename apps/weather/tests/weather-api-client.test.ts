@@ -10,8 +10,11 @@ import {
 } from "../lib/weather-api";
 import {
   clearDayConditions,
+  cloudyNightConditions,
+  locations,
   selectedLocation,
 } from "../fixtures/weather-fixtures";
+import type { WeatherComparisonDataSource } from "../lib/weather-comparison";
 
 function jsonResponse(body: unknown, status = 200): Response {
   return new Response(JSON.stringify(body), {
@@ -50,6 +53,114 @@ describe("same-origin weather API client", () => {
     expect(fetcher).toHaveBeenCalledWith(
       "/api/weather?latitude=45.5234&longitude=-122.6762",
       expect.objectContaining({ method: "GET" }),
+    );
+  });
+
+  it("structurally satisfies the comparison data source contract", () => {
+    const client = createSameOriginClient(vi.fn());
+    const dataSource: WeatherComparisonDataSource = client;
+
+    expect(dataSource.getCurrentConditions).toBe(client.getCurrentConditions);
+  });
+
+  it("starts independent current-condition requests concurrently with location-specific URLs", async () => {
+    let resolveFirst: ((response: Response) => void) | undefined;
+    let resolveSecond: ((response: Response) => void) | undefined;
+    const fetcher = vi.fn((input: RequestInfo | URL) => {
+      const url = String(input);
+      return new Promise<Response>((resolve) => {
+        if (url.includes("latitude=45.5234")) {
+          resolveFirst = resolve;
+          return;
+        }
+        resolveSecond = resolve;
+      });
+    });
+    const client = createSameOriginClient(fetcher);
+
+    const first = client.getCurrentConditions(selectedLocation);
+    const second = client.getCurrentConditions(locations[1]!);
+
+    expect(fetcher).toHaveBeenNthCalledWith(
+      1,
+      "/api/weather?latitude=45.5234&longitude=-122.6762",
+      expect.objectContaining({ method: "GET" }),
+    );
+    expect(fetcher).toHaveBeenNthCalledWith(
+      2,
+      "/api/weather?latitude=43.6574&longitude=-70.2589",
+      expect.objectContaining({ method: "GET" }),
+    );
+
+    resolveSecond?.(jsonResponse({ conditions: cloudyNightConditions }));
+    resolveFirst?.(jsonResponse({ conditions: clearDayConditions }));
+
+    await expect(Promise.all([first, second])).resolves.toEqual([
+      clearDayConditions,
+      cloudyNightConditions,
+    ]);
+  });
+
+  it("keeps an unaffected location valid when another request is aborted", async () => {
+    const firstController = new AbortController();
+    const secondController = new AbortController();
+    const abortFailure = new DOMException("request cancelled", "AbortError");
+    const fetcher = vi.fn((_input: RequestInfo | URL, init?: RequestInit) => {
+      if (init?.signal === firstController.signal) {
+        return new Promise<Response>((_, reject) => {
+          firstController.signal.addEventListener(
+            "abort",
+            () => reject(abortFailure),
+            {
+              once: true,
+            },
+          );
+        });
+      }
+      return Promise.resolve(
+        jsonResponse({ conditions: cloudyNightConditions }),
+      );
+    });
+    const client = createSameOriginClient(fetcher);
+
+    const aborted = client.getCurrentConditions(selectedLocation, {
+      signal: firstController.signal,
+    });
+    const unaffected = client.getCurrentConditions(locations[1]!, {
+      signal: secondController.signal,
+    });
+    firstController.abort();
+
+    await expect(aborted).rejects.toBe(abortFailure);
+    await expect(unaffected).resolves.toEqual(cloudyNightConditions);
+    expect(fetcher).toHaveBeenNthCalledWith(
+      2,
+      "/api/weather?latitude=43.6574&longitude=-70.2589",
+      expect.objectContaining({ signal: secondController.signal }),
+    );
+  });
+
+  it("validates conditions and does not expose a server error message", async () => {
+    const serverMessage = "provider diagnostic that must not reach the UI";
+    const fetcher = vi.fn().mockResolvedValue(
+      jsonResponse(
+        {
+          error: {
+            code: "UPSTREAM_UNAVAILABLE",
+            message: serverMessage,
+          },
+        },
+        503,
+      ),
+    );
+    const client = createSameOriginClient(fetcher);
+
+    await expect(client.getCurrentConditions(selectedLocation)).rejects.toEqual(
+      expect.objectContaining({
+        code: "UPSTREAM_UNAVAILABLE",
+        message: "The weather service returned an unexpected response.",
+        name: "WeatherApiResponseError",
+      }),
     );
   });
 
