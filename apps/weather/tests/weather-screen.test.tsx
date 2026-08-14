@@ -162,6 +162,16 @@ describe("WeatherScreen client orchestration", () => {
     await elapseSearchDebounce();
     fireEvent.click(screen.getAllByRole("option")[0]!);
 
+    expect(
+      screen.queryByRole("listbox", { name: "Location results" }),
+    ).toBeNull();
+    expect(
+      screen
+        .getAllByRole("status")
+        .some((status) =>
+          status.textContent?.includes("Showing conditions for Portland"),
+        ),
+    ).toBe(true);
     expect(getCurrentConditions).toHaveBeenCalledWith(
       locations[0],
       expect.objectContaining({ signal: expect.any(AbortSignal) }),
@@ -174,6 +184,23 @@ describe("WeatherScreen client orchestration", () => {
     });
     expect(screen.getByText("20.4°C")).toBeTruthy();
     expect(screen.getByRole("heading", { name: "Portland" })).toBeTruthy();
+  });
+
+  it("cancels a pending search debounce when selecting an existing result", async () => {
+    vi.useFakeTimers();
+    const apiClient = client();
+    render(<WeatherScreen apiClient={apiClient} />);
+
+    query("Portland");
+    await elapseSearchDebounce();
+    const firstResult = screen.getAllByRole("option")[0]!;
+    act(() => {
+      query("Boston");
+      fireEvent.click(firstResult);
+    });
+    await elapseSearchDebounce();
+
+    expect(apiClient.searchLocations).toHaveBeenCalledTimes(1);
   });
 
   it("suppresses stale weather responses after a quick reselection and aborts the old request", async () => {
@@ -189,12 +216,14 @@ describe("WeatherScreen client orchestration", () => {
 
     query("Portland");
     await elapseSearchDebounce();
-    const options = screen.getAllByRole("option");
-    fireEvent.click(options[0]!);
+    fireEvent.click(screen.getAllByRole("option")[0]!);
     const firstSignal = (
       getCurrentConditions.mock.calls[0]?.[1] as { signal: AbortSignal }
     ).signal;
-    fireEvent.click(options[1]!);
+
+    query("Maine");
+    await elapseSearchDebounce();
+    fireEvent.click(screen.getAllByRole("option")[1]!);
 
     expect(firstSignal.aborted).toBe(true);
     await act(async () => {
@@ -230,5 +259,10 @@ describe("WeatherScreen client orchestration", () => {
       "Current conditions are temporarily unavailable.",
     );
     expect(screen.queryByText("provider secret")).toBeNull();
+    expect(
+      screen.queryByText(
+        `Showing conditions for ${locations[0]!.name}, ${locations[0]!.region}.`,
+      ),
+    ).toBeNull();
   });
 });

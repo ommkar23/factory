@@ -24,22 +24,38 @@ export function WeatherScreen({
   const [query, setQuery] = useState("");
   const [locations, setLocations] = useState<readonly Location[]>([]);
   const [searchState, setSearchState] = useState<
-    "default" | "loading" | "results" | "no-results" | "error"
+    "default" | "loading" | "results" | "no-results" | "error" | "selected"
   >("default");
   const [location, setLocation] = useState<Location>();
   const [conditions, setConditions] = useState<CurrentConditions>();
   const [weatherState, setWeatherState] = useState<WeatherLoadState>("idle");
   const searchController = useRef<AbortController | undefined>(undefined);
+  const searchTimer = useRef<number | undefined>(undefined);
   const weatherController = useRef<AbortController | undefined>(undefined);
   const searchVersion = useRef(0);
+  const cancelledSearchQuery = useRef<string | undefined>(undefined);
+  const currentNormalizedQuery = useRef("");
   const weatherVersion = useRef(0);
 
   const normalizedQuery = query.trim();
+  currentNormalizedQuery.current = normalizedQuery;
+
+  function cancelSearchWork() {
+    if (searchTimer.current !== undefined) {
+      window.clearTimeout(searchTimer.current);
+      searchTimer.current = undefined;
+    }
+    searchController.current?.abort();
+    searchController.current = undefined;
+  }
 
   useEffect(() => {
     const version = ++searchVersion.current;
-    searchController.current?.abort();
-    searchController.current = undefined;
+    cancelSearchWork();
+
+    if (cancelledSearchQuery.current === normalizedQuery) {
+      return;
+    }
 
     if (normalizedQuery.length < 2) {
       setLocations([]);
@@ -52,6 +68,9 @@ export function WeatherScreen({
     setSearchState("loading");
     setLocations([]);
     const timer = window.setTimeout(() => {
+      if (searchTimer.current === timer) {
+        searchTimer.current = undefined;
+      }
       void apiClient
         .searchLocations(normalizedQuery, { signal: controller.signal })
         .then((nextLocations) => {
@@ -69,16 +88,23 @@ export function WeatherScreen({
           setSearchState("error");
         });
     }, 300);
+    searchTimer.current = timer;
 
     return () => {
-      window.clearTimeout(timer);
-      controller.abort();
+      if (searchTimer.current === timer) {
+        window.clearTimeout(timer);
+        searchTimer.current = undefined;
+      }
+      if (searchController.current === controller) {
+        controller.abort();
+        searchController.current = undefined;
+      }
     };
   }, [apiClient, normalizedQuery]);
 
   useEffect(
     () => () => {
-      searchController.current?.abort();
+      cancelSearchWork();
       weatherController.current?.abort();
     },
     [],
@@ -86,7 +112,8 @@ export function WeatherScreen({
 
   function selectLocation(nextLocation: Location) {
     ++searchVersion.current;
-    searchController.current?.abort();
+    cancelledSearchQuery.current = currentNormalizedQuery.current;
+    cancelSearchWork();
     ++weatherVersion.current;
     weatherController.current?.abort();
 
@@ -94,6 +121,8 @@ export function WeatherScreen({
     const controller = new AbortController();
     weatherController.current = controller;
     setLocation(nextLocation);
+    setLocations([]);
+    setSearchState("selected");
     setConditions(undefined);
     setWeatherState("loading");
 
@@ -149,11 +178,13 @@ export function WeatherScreen({
         {weatherState === "ready" && location && conditions ? (
           <CurrentConditionsCard conditions={conditions} location={location} />
         ) : null}
-        {location ? (
+        {location && weatherState !== "error" ? (
           <p className={styles.selectionAnnouncement} role="status">
             {weatherState === "loading"
               ? `Loading conditions for ${location.name}, ${location.region}.`
-              : `Showing conditions for ${location.name}, ${location.region}.`}
+              : weatherState === "ready"
+                ? `Showing conditions for ${location.name}, ${location.region}.`
+                : null}
           </p>
         ) : null}
       </div>
