@@ -42,5 +42,10 @@ describe("CurrentConditionsCard", () => {
     expect(screen.getByText("0.2 mm")).toBeTruthy();
     expect(screen.getByText("N 11.5 km/h")).toBeTruthy();
     expect(screen.getByText("Observed locally 2026-08-14T10:42")).toBeTruthy();
+
+    const attribution = screen.getByRole("link", {
+      name: "Weather data by Open-Meteo.com",
+    });
+    expect(attribution.getAttribute("href")).toBe("https://open-meteo.com/");
   });
 });

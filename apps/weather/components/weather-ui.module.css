@@ -269,6 +269,30 @@
   font-weight: 700;
 }
 
+.attribution {
+  margin: 1rem 0 0;
+  font-size: 0.875rem;
+  line-height: 1.45;
+  overflow-wrap: anywhere;
+}
+
+.attribution a {
+  color: #f8fdff;
+  font-weight: 700;
+  text-decoration: underline;
+  text-decoration-thickness: 0.12em;
+  text-underline-offset: 0.18em;
+}
+
+.attribution a:hover {
+  color: #ffffff;
+}
+
+.attribution a:focus-visible {
+  outline: 3px solid #ffffff;
+  outline-offset: 3px;
+}
+
 .selectionAnnouncement {
   grid-column: 1 / -1;
   margin: 0;

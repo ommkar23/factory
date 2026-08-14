@@ -114,6 +114,6 @@ test("Weather UI keeps deterministic accessible components and stories app-local
   ].join("\n");
   assert.doesNotMatch(
     source,
-    /fetch\s*\(|open-meteo|openweathermap|geolocation|forecast|localStorage|sessionStorage|auth/i,
+    /fetch\s*\(|openweathermap|geolocation|forecast|localStorage|sessionStorage|auth/i,
   );
 });

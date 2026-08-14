@@ -76,6 +76,9 @@ export function CurrentConditionsCard({
           </div>
         ))}
       </dl>
+      <p className={styles.attribution}>
+        <a href="https://open-meteo.com/">Weather data by Open-Meteo.com</a>
+      </p>
     </article>
   );
 }
