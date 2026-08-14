@@ -2,39 +2,37 @@
 
 import { useEffect, useRef, useState } from "react";
 
-import { CurrentConditionsCard } from "./current-conditions-card";
-import { LocationSearch } from "./location-search";
-import { WeatherStatus } from "./weather-status";
-import type { CurrentConditions, Location } from "./weather-types";
+import { WeatherComparisonScreen } from "./weather-comparison-screen";
+import {
+  type LocationSearchResult,
+  type LocationSearchState,
+} from "./location-search";
+import type { Location } from "./weather-types";
+import { useWeatherComparison } from "../hooks/use-weather-comparison";
 import {
   sameOriginClient,
   type WeatherApiClient,
 } from "../lib/weather-api-client";
-import styles from "./weather-ui.module.css";
-
-type WeatherLoadState = "idle" | "loading" | "error" | "ready";
 
 export type WeatherScreenProps = {
   apiClient?: WeatherApiClient;
 };
 
+const SEARCH_ERROR_MESSAGE =
+  "Location search is temporarily unavailable. Try again shortly.";
+
 export function WeatherScreen({
   apiClient = sameOriginClient,
 }: WeatherScreenProps) {
+  const comparison = useWeatherComparison(apiClient);
   const [query, setQuery] = useState("");
   const [locations, setLocations] = useState<readonly Location[]>([]);
-  const [searchState, setSearchState] = useState<
-    "default" | "loading" | "results" | "no-results" | "error" | "selected"
-  >("default");
-  const [location, setLocation] = useState<Location>();
-  const [conditions, setConditions] = useState<CurrentConditions>();
-  const [weatherState, setWeatherState] = useState<WeatherLoadState>("idle");
+  const [searchAnnouncement, setSearchAnnouncement] = useState<string>();
+  const [searchState, setSearchState] =
+    useState<LocationSearchState>("default");
   const searchController = useRef<AbortController | undefined>(undefined);
   const searchTimer = useRef<number | undefined>(undefined);
-  const weatherController = useRef<AbortController | undefined>(undefined);
   const searchVersion = useRef(0);
-  const weatherVersion = useRef(0);
-
   const normalizedQuery = query.trim();
 
   function cancelSearchWork() {
@@ -44,11 +42,6 @@ export function WeatherScreen({
     }
     searchController.current?.abort();
     searchController.current = undefined;
-  }
-
-  function cancelWeatherWork() {
-    weatherController.current?.abort();
-    weatherController.current = undefined;
   }
 
   useEffect(() => {
@@ -103,90 +96,62 @@ export function WeatherScreen({
   useEffect(
     () => () => {
       cancelSearchWork();
-      cancelWeatherWork();
     },
     [],
   );
 
-  function selectLocation(nextLocation: Location) {
-    ++searchVersion.current;
-    cancelSearchWork();
-    ++weatherVersion.current;
-    cancelWeatherWork();
+  const selectedLocationIds = new Set(comparison.selectedLocationIds);
+  const searchResults: LocationSearchResult[] = locations.map((location) => ({
+    eligibility: selectedLocationIds.has(location.id)
+      ? "already-added"
+      : comparison.isAtLimit
+        ? "limit-reached"
+        : "available",
+    location,
+  }));
 
-    const version = weatherVersion.current;
-    const controller = new AbortController();
-    weatherController.current = controller;
-    setLocation(nextLocation);
-    setLocations([]);
-    setSearchState("selected");
-    setConditions(undefined);
-    setWeatherState("loading");
+  function handleQueryChange(nextQuery: string) {
+    setSearchAnnouncement(undefined);
+    setQuery(nextQuery);
+  }
 
-    void apiClient
-      .getCurrentConditions(nextLocation, { signal: controller.signal })
-      .then((nextConditions) => {
-        if (weatherVersion.current !== version || controller.signal.aborted) {
-          return;
-        }
-        if (weatherController.current === controller) {
-          weatherController.current = undefined;
-        }
-        setConditions(nextConditions);
-        setWeatherState("ready");
-      })
-      .catch(() => {
-        if (weatherVersion.current !== version || controller.signal.aborted) {
-          return;
-        }
-        if (weatherController.current === controller) {
-          weatherController.current = undefined;
-        }
-        setWeatherState("error");
-      });
+  function handleSelectLocation(location: Location) {
+    const outcome = comparison.addLocation(location);
+    const locationLabel = `${location.name}, ${location.region}`;
+    if (outcome === "added") {
+      setSearchAnnouncement(`Added ${locationLabel} to your comparison.`);
+      return;
+    }
+    if (outcome === "duplicate") {
+      setSearchAnnouncement(`${locationLabel} is already in your comparison.`);
+      return;
+    }
+    setSearchAnnouncement("You can compare up to five locations at once.");
+  }
+
+  function handleRemoveLocation(location: Location) {
+    comparison.removeLocation(location.id);
+    setSearchAnnouncement(`Removed ${location.name}, ${location.region}.`);
+  }
+
+  function handleRetryLocation(location: Location) {
+    comparison.retryLocation(location.id);
   }
 
   return (
-    <main className={styles.weatherScreen}>
-      <div className={styles.screenIntro}>
-        <p className={styles.kicker}>Weather, clearly</p>
-        <h1>Know the air around you.</h1>
-        <p>Calm, focused current conditions for the place you choose.</p>
-      </div>
-      <div className={styles.screenGrid}>
-        <LocationSearch
-          locations={locations}
-          onQueryChange={setQuery}
-          onSelect={selectLocation}
-          query={query}
-          selectedLocation={location}
-          state={searchState}
-          errorMessage="Location search is temporarily unavailable. Try again shortly."
-        />
-        {weatherState === "idle" ? (
-          <WeatherStatus
-            kind="empty"
-            message="Search for a location to see current conditions."
-          />
-        ) : null}
-        {weatherState === "loading" ? (
-          <WeatherStatus kind="loading" message="Loading current conditions…" />
-        ) : null}
-        {weatherState === "error" ? (
-          <WeatherStatus
-            kind="error"
-            message="Current conditions are temporarily unavailable. Try again shortly."
-          />
-        ) : null}
-        {weatherState === "ready" && location && conditions ? (
-          <CurrentConditionsCard conditions={conditions} location={location} />
-        ) : null}
-        {weatherState === "ready" && location ? (
-          <p className={styles.selectionAnnouncement} role="status">
-            Showing conditions for {location.name}, {location.region}.
-          </p>
-        ) : null}
-      </div>
-    </main>
+    <WeatherComparisonScreen
+      comparisonCount={comparison.count}
+      comparisonLimit={5}
+      entries={comparison.entries}
+      onQueryChange={handleQueryChange}
+      onRemoveLocation={handleRemoveLocation}
+      onRetryLocation={handleRetryLocation}
+      onSelectLocation={handleSelectLocation}
+      searchAnnouncement={searchAnnouncement}
+      searchErrorMessage={SEARCH_ERROR_MESSAGE}
+      searchQuery={query}
+      searchResults={searchResults}
+      searchState={searchState}
+    />
   );
 }

@@ -10,6 +10,7 @@ async function readWeatherUi() {
     "components/current-conditions-card.tsx",
     "components/weather-status.tsx",
     "components/weather-screen.tsx",
+    "components/weather-comparison-screen.tsx",
     "components/weather-ui.module.css",
     "fixtures/weather-fixtures.ts",
     "stories/location-search.stories.tsx",
@@ -27,6 +28,7 @@ test("Weather UI keeps deterministic accessible components and stories app-local
     currentConditions,
     weatherStatus,
     weatherScreen,
+    comparisonScreen,
     styles,
     fixtures,
     locationStories,
@@ -79,9 +81,12 @@ test("Weather UI keeps deterministic accessible components and stories app-local
     /role=\{kind === "error" \? "alert" : "status"\}/,
   );
   assert.match(weatherStatus, /aria-live="polite"/);
-  assert.match(weatherScreen, /LocationSearch/);
-  assert.match(weatherScreen, /CurrentConditionsCard/);
-  assert.match(weatherScreen, /selectionAnnouncement/);
+  assert.match(weatherScreen, /useWeatherComparison/);
+  assert.match(weatherScreen, /WeatherComparisonScreen/);
+  assert.match(comparisonScreen, /LocationSearch/);
+  assert.match(comparisonScreen, /CurrentConditionsCard/);
+  assert.match(comparisonScreen, /searchAnnouncement/);
+  assert.match(comparisonScreen, /comparisonCount/);
   assert.match(styles, /:focus-visible/);
   assert.match(styles, /@media \(max-width: 30rem\)/);
 
@@ -106,6 +111,7 @@ test("Weather UI keeps deterministic accessible components and stories app-local
     currentConditions,
     weatherStatus,
     weatherScreen,
+    comparisonScreen,
     fixtures,
     locationStories,
     conditionsStories,
