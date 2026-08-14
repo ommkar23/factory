@@ -4,22 +4,22 @@ import test from "node:test";
 
 const appFile = (path) => new URL(`../${path}`, import.meta.url);
 
-test("Weather app presents a named, accessible current-conditions placeholder without weather integrations", async () => {
-  const [layout, page, styles] = await Promise.all([
+test("Weather app presents the app-local current-conditions screen without integrations", async () => {
+  const [layout, page, styles, screen] = await Promise.all([
     readFile(appFile("app/layout.tsx"), "utf8"),
     readFile(appFile("app/page.tsx"), "utf8"),
     readFile(appFile("app/globals.css"), "utf8"),
+    readFile(appFile("components/weather-screen.tsx"), "utf8"),
   ]);
 
   assert.match(layout, /title:\s*"Weather"/);
-  assert.match(layout, /description:\s*"A weather app is coming soon\."/);
   assert.match(layout, /<html lang="en">/);
-  assert.match(page, /<main[^>]*>/);
-  assert.match(page, /<h1[^>]*>Weather<\/h1>/);
-  assert.match(page, /Current weather conditions will appear here soon\./);
+  assert.match(page, /WeatherScreen/);
+  assert.match(screen, /<main[^>]*>/);
+  assert.match(screen, /<h1[^>]*>Know the air around you\.<\/h1>/);
   assert.doesNotMatch(
-    page,
-    /fetch\s*\(|weatherapi|openweathermap|geolocation|location search/i,
+    `${page}\n${screen}`,
+    /fetch\s*\(|weatherapi|openweathermap|geolocation|forecast|localStorage|sessionStorage/i,
   );
-  assert.match(styles, /@media \(max-width: 40rem\)/);
+  assert.match(styles, /min-width: 20rem/);
 });
