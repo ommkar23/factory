@@ -35,17 +35,31 @@ test("Weather UI keeps deterministic accessible components and stories app-local
     screenStories,
   ] = await readWeatherUi();
 
+  assert.match(locationSearch, /^"use client";/);
+  assert.match(weatherScreen, /^"use client";/);
   assert.match(locationSearch, /export type LocationSearchProps/);
+  assert.match(locationSearch, /useId/);
+  assert.doesNotMatch(locationSearch, /weather-location-results/);
   assert.match(locationSearch, /<label/);
   assert.match(locationSearch, /role="listbox"/);
   assert.match(locationSearch, /role="option"/);
   assert.match(locationSearch, /onSelect/);
   assert.match(locationSearch, /onKeyDown={handleInputKeyDown}/);
   assert.match(locationSearch, /aria-activedescendant/);
+  assert.match(locationSearch, /aria-autocomplete="list"/);
+  assert.match(locationSearch, /autoComplete="off"/);
+  assert.match(locationSearch, /name="location-search"/);
+  assert.match(locationSearch, /placeholder="Try Portland, Maine…"/);
   assert.match(locationSearch, /event.key === "ArrowDown"/);
   assert.match(locationSearch, /event.key === "Enter"/);
   assert.match(locationSearch, /tabIndex={-1}/);
-  assert.match(locationSearch, /selectedLocation/);
+  assert.match(locationSearch, /const isActive = index === safeActiveIndex/);
+  assert.match(locationSearch, /aria-selected={isActive}/);
+  assert.match(
+    locationSearch,
+    /onClick=\{\(\) => \{\s*setActiveIndex\(index\);\s*onSelect\(location\);/,
+  );
+  assert.match(styles, /\.resultButton\[data-active="true"\]/);
 
   assert.match(currentConditions, /export type CurrentConditions/);
   assert.match(currentConditions, /localObservationTime/);

@@ -1,4 +1,6 @@
-import { useState } from "react";
+"use client";
+
+import { useEffect, useId, useState } from "react";
 import type { ChangeEvent, KeyboardEvent } from "react";
 
 import type { Location } from "./weather-types";
@@ -28,9 +30,22 @@ export function LocationSearch({
   state = "default",
 }: LocationSearchProps) {
   const [activeIndex, setActiveIndex] = useState(0);
-  const resultId = "weather-location-results";
+  const idPrefix = useId();
+  const headingId = `${idPrefix}-location-search-heading`;
+  const inputId = `${idPrefix}-location-search`;
+  const helpId = `${idPrefix}-location-search-help`;
+  const resultId = `${idPrefix}-location-results`;
   const hasResults = state === "results" && locations.length > 0;
-  const activeLocation = hasResults ? locations[activeIndex] : undefined;
+  const safeActiveIndex = hasResults
+    ? Math.min(activeIndex, locations.length - 1)
+    : 0;
+  const activeLocation = hasResults ? locations[safeActiveIndex] : undefined;
+
+  useEffect(() => {
+    setActiveIndex((index) =>
+      Math.min(index, Math.max(locations.length - 1, 0)),
+    );
+  }, [locations.length]);
 
   function handleChange(event: ChangeEvent<HTMLInputElement>) {
     setActiveIndex(0);
@@ -71,34 +86,34 @@ export function LocationSearch({
   }
 
   return (
-    <section
-      className={styles.searchPanel}
-      aria-labelledby="location-search-heading"
-    >
+    <section className={styles.searchPanel} aria-labelledby={headingId}>
       <div className={styles.sectionHeading}>
         <p className={styles.kicker}>Your place</p>
-        <h2 id="location-search-heading">Find a location</h2>
+        <h2 id={headingId}>Find a location</h2>
       </div>
-      <label className={styles.searchLabel} htmlFor="location-search">
+      <label className={styles.searchLabel} htmlFor={inputId}>
         Search city, town, or airport
       </label>
       <input
         aria-activedescendant={
           activeLocation ? `${resultId}-${activeLocation.id}` : undefined
         }
+        aria-autocomplete="list"
         aria-controls={hasResults ? resultId : undefined}
-        aria-describedby="location-search-help"
+        aria-describedby={helpId}
         aria-expanded={hasResults}
+        autoComplete="off"
         className={styles.searchInput}
-        id="location-search"
+        id={inputId}
+        name="location-search"
         onChange={handleChange}
         onKeyDown={handleInputKeyDown}
-        placeholder="Try Portland"
+        placeholder="Try Portland, Maine…"
         role="combobox"
         type="search"
         value={query}
       />
-      <p className={styles.fieldHelp} id="location-search-help">
+      <p className={styles.fieldHelp} id={helpId}>
         Choose a result to view its current conditions.
       </p>
       {state === "loading" ? (
@@ -120,15 +135,19 @@ export function LocationSearch({
           role="listbox"
           aria-label="Location results"
         >
-          {locations.map((location) => {
-            const isSelected = location.id === selectedLocation?.id;
+          {locations.map((location, index) => {
+            const isActive = index === safeActiveIndex;
             return (
               <li key={location.id} role="none">
                 <button
-                  aria-selected={isSelected}
+                  aria-selected={isActive}
                   className={styles.resultButton}
+                  data-active={isActive}
                   id={`${resultId}-${location.id}`}
-                  onClick={() => onSelect(location)}
+                  onClick={() => {
+                    setActiveIndex(index);
+                    onSelect(location);
+                  }}
                   role="option"
                   tabIndex={-1}
                   type="button"

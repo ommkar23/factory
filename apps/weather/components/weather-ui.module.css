@@ -136,7 +136,7 @@
 }
 
 .resultButton:hover,
-.resultButton[aria-selected="true"] {
+.resultButton[data-active="true"] {
   border-color: #4a9fbe;
   background: #e7f7fc;
 }
