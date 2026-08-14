@@ -1,29 +1,31 @@
 import type { ReactNode } from "react";
 
+import { Alert } from "./components/alert";
+
 export type StatusMessageProps = {
   children: ReactNode;
-  tone?: "info" | "success";
+  tone?: "info" | "success" | "warning" | "error";
 };
 
+const toneClasses = {
+  info: "bg-card text-card-foreground",
+  success: "bg-secondary text-secondary-foreground",
+  warning: "border-primary/30 bg-secondary text-secondary-foreground",
+  error: undefined,
+} as const;
+
 export function StatusMessage({ children, tone = "info" }: StatusMessageProps) {
-  const colors =
-    tone === "success"
-      ? { background: "#ecfdf3", border: "#027a48", text: "#054f31" }
-      : { background: "#eff8ff", border: "#175cd3", text: "#102a56" };
+  const assertive = tone === "warning" || tone === "error";
 
   return (
-    <p
-      role="status"
-      style={{
-        background: colors.background,
-        border: `1px solid ${colors.border}`,
-        borderRadius: "0.375rem",
-        color: colors.text,
-        margin: 0,
-        padding: "0.75rem 1rem",
-      }}
+    <Alert
+      aria-live={assertive ? "assertive" : "polite"}
+      className={toneClasses[tone]}
+      data-tone={tone}
+      role={assertive ? "alert" : "status"}
+      variant={tone === "error" ? "destructive" : "default"}
     >
       {children}
-    </p>
+    </Alert>
   );
 }
