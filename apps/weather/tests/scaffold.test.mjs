@@ -4,7 +4,7 @@ import test from "node:test";
 
 const appFile = (path) => new URL(`../${path}`, import.meta.url);
 
-test("Weather app presents a named, accessible placeholder without weather integrations", async () => {
+test("Weather app presents a named, accessible current-conditions placeholder without weather integrations", async () => {
   const [layout, page, styles] = await Promise.all([
     readFile(appFile("app/layout.tsx"), "utf8"),
     readFile(appFile("app/page.tsx"), "utf8"),
@@ -16,7 +16,7 @@ test("Weather app presents a named, accessible placeholder without weather integ
   assert.match(layout, /<html lang="en">/);
   assert.match(page, /<main[^>]*>/);
   assert.match(page, /<h1[^>]*>Weather<\/h1>/);
-  assert.match(page, /Weather forecasts will appear here soon\./);
+  assert.match(page, /Current weather conditions will appear here soon\./);
   assert.doesNotMatch(
     page,
     /fetch\s*\(|weatherapi|openweathermap|geolocation|location search/i,
