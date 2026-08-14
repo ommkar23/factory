@@ -33,6 +33,18 @@ The baseline uses Node.js 24, pnpm 11.21.0, Turborepo 2.10.9, TypeScript 7.0.2, 
 - UI changes must include Storybook evidence or equivalent screenshots and recorded human approval before merge.
 - Keep commits scoped and never commit credentials, tokens, `.env` files, or generated secrets.
 
+## Delivery and orchestration
+
+- Freeze shared contracts and cross-lane decisions before parallel implementation begins.
+- Give delegated tasks bounded scope, an isolated worktree, an explicit owner, acceptance criteria, dependencies, prohibited actions, and required handoff evidence.
+- Require delegated completion handoffs to include an immutable commit reference and reproducible verification evidence; independently verify those claims before integration.
+- Keep implementation, technical review, operational deployment, and required human approval as separate responsibilities.
+- Route blocking review findings back to the implementer; do not silently repair work under review.
+- Inspect branch-protection and merge-policy constraints before work reaches the integration gate.
+- Verify the exact integrated commit after merge and push; do not rely only on feature-branch checks.
+- Do not launch installed host GUI applications or request broad operating-system permissions during automated verification; prefer HTTP checks and isolated test tooling.
+- Identify temporary and long-running processes, clean them up when finished, and provide rollback or stop instructions for persistent review services.
+
 ## Required checks
 
 ```bash
