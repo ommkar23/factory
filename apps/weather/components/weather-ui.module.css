@@ -1,0 +1,325 @@
+.weatherScreen {
+  width: min(100%, 76rem);
+  margin: 0 auto;
+  padding: clamp(1.25rem, 4vw, 4rem);
+  color: #10213d;
+}
+
+.weatherScreen,
+.weatherScreen * {
+  box-sizing: border-box;
+}
+
+.screenIntro {
+  max-width: 44rem;
+  margin-bottom: clamp(1.5rem, 4vw, 3rem);
+}
+
+.screenIntro h1,
+.sectionHeading h2,
+.conditionsHeader h2 {
+  margin: 0;
+  font-weight: 700;
+  letter-spacing: -0.035em;
+}
+
+.screenIntro h1 {
+  max-width: 12ch;
+  color: #142956;
+  font-size: clamp(2.5rem, 7vw, 5.5rem);
+  line-height: 0.92;
+}
+
+.screenIntro > p:last-child {
+  max-width: 34rem;
+  margin: 1rem 0 0;
+  color: #526277;
+  font-size: clamp(1rem, 2vw, 1.125rem);
+  line-height: 1.55;
+}
+
+.kicker {
+  margin: 0 0 0.5rem;
+  color: #176b8e;
+  font-size: 0.75rem;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.screenGrid {
+  display: grid;
+  grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
+  gap: clamp(1rem, 3vw, 2rem);
+  align-items: start;
+}
+
+.searchPanel,
+.conditionsCard {
+  min-width: 0;
+  border: 1px solid rgb(32 86 122 / 16%);
+  border-radius: 1.5rem;
+  box-shadow: 0 1.25rem 3rem rgb(28 70 102 / 12%);
+}
+
+.searchPanel {
+  padding: clamp(1.25rem, 3vw, 2rem);
+  background: rgb(255 255 255 / 86%);
+}
+
+.sectionHeading h2,
+.conditionsHeader h2 {
+  color: #17315d;
+  font-size: clamp(1.35rem, 2.5vw, 1.8rem);
+  line-height: 1.1;
+}
+
+.searchLabel {
+  display: block;
+  margin-top: 1.75rem;
+  color: #223a5b;
+  font-size: 0.9rem;
+  font-weight: 700;
+}
+
+.searchInput {
+  width: 100%;
+  min-height: 3rem;
+  margin-top: 0.5rem;
+  padding: 0.75rem 0.875rem;
+  border: 1px solid #9ab3c8;
+  border-radius: 0.8rem;
+  background: #fff;
+  color: #10213d;
+  font: inherit;
+}
+
+.searchInput::placeholder {
+  color: #667b91;
+}
+
+.searchInput:focus-visible,
+.resultButton:focus-visible {
+  outline: 3px solid #087ea4;
+  outline-offset: 3px;
+}
+
+.fieldHelp,
+.observationTime {
+  margin: 0.5rem 0 0;
+  color: #607287;
+  font-size: 0.875rem;
+  line-height: 1.45;
+}
+
+.resultList {
+  display: grid;
+  gap: 0.5rem;
+  margin: 1rem 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.resultButton {
+  display: grid;
+  width: 100%;
+  gap: 0.25rem;
+  padding: 0.875rem;
+  border: 1px solid #d4e1eb;
+  border-radius: 0.75rem;
+  background: #f9fcff;
+  color: #17315d;
+  font: inherit;
+  font-weight: 700;
+  text-align: left;
+  cursor: pointer;
+}
+
+.resultButton:hover,
+.resultButton[data-active="true"] {
+  border-color: #4a9fbe;
+  background: #e7f7fc;
+}
+
+.resultMeta {
+  color: #587086;
+  font-size: 0.85rem;
+  font-weight: 500;
+}
+
+.selectedLocation {
+  margin: 1rem 0 0;
+  color: #24596f;
+  font-size: 0.9rem;
+}
+
+.status {
+  display: flex;
+  gap: 0.625rem;
+  align-items: flex-start;
+  margin-top: 1rem;
+  padding: 0.875rem;
+  border-radius: 0.75rem;
+  font-size: 0.9rem;
+  line-height: 1.4;
+}
+
+.statusMark {
+  display: grid;
+  width: 1.25rem;
+  height: 1.25rem;
+  flex: 0 0 auto;
+  place-items: center;
+  border-radius: 999px;
+  font-weight: 800;
+}
+
+.statusloading,
+.statusempty {
+  background: #edf8fc;
+  color: #17425d;
+}
+
+.statuserror {
+  background: #fff0f0;
+  color: #882d3a;
+}
+
+.conditionsCard {
+  overflow: hidden;
+  padding: clamp(1.25rem, 3vw, 2rem);
+  background: #176d91;
+  color: #f8fdff;
+}
+
+.conditionsHeader {
+  display: flex;
+  gap: 1rem;
+  align-items: start;
+  justify-content: space-between;
+}
+
+.conditionsCard .kicker,
+.conditionsHeader h2 {
+  color: inherit;
+}
+
+.conditionIcon {
+  display: grid;
+  width: clamp(3.5rem, 9vw, 5rem);
+  height: clamp(3.5rem, 9vw, 5rem);
+  flex: 0 0 auto;
+  place-items: center;
+  border: 1px solid rgb(255 255 255 / 30%);
+  border-radius: 999px;
+  background: rgb(255 255 255 / 15%);
+  font-size: clamp(1.8rem, 5vw, 2.75rem);
+}
+
+.conditionsCard .observationTime {
+  color: #f8fdff;
+}
+
+.temperatureRow {
+  display: flex;
+  gap: 1rem;
+  align-items: baseline;
+  margin-top: clamp(2rem, 6vw, 4rem);
+}
+
+.temperature,
+.conditionText {
+  margin: 0;
+}
+
+.temperature {
+  font-size: clamp(4rem, 12vw, 7.5rem);
+  font-weight: 300;
+  letter-spacing: -0.08em;
+  line-height: 0.75;
+}
+
+.conditionText {
+  font-size: clamp(1rem, 2.5vw, 1.25rem);
+  font-weight: 700;
+}
+
+.conditionsList {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1px;
+  margin: clamp(2rem, 5vw, 3.5rem) 0 0;
+  background: rgb(255 255 255 / 20%);
+}
+
+.conditionsList div {
+  min-width: 0;
+  padding: 0.875rem;
+  background: rgb(12 49 90 / 22%);
+}
+
+.conditionsList dt {
+  color: #edf8ff;
+  font-size: 0.78rem;
+}
+
+.conditionsList dd {
+  margin: 0.25rem 0 0;
+  font-size: 1rem;
+  font-weight: 700;
+}
+
+.attribution {
+  margin: 1rem 0 0;
+  font-size: 0.875rem;
+  line-height: 1.45;
+  overflow-wrap: anywhere;
+}
+
+.attribution a {
+  color: #f8fdff;
+  font-weight: 700;
+  text-decoration: underline;
+  text-decoration-thickness: 0.12em;
+  text-underline-offset: 0.18em;
+}
+
+.attribution a:hover {
+  color: #ffffff;
+}
+
+.attribution a:focus-visible {
+  outline: 3px solid #ffffff;
+  outline-offset: 3px;
+}
+
+.selectionAnnouncement {
+  grid-column: 1 / -1;
+  margin: 0;
+  color: #24596f;
+  font-size: 0.9rem;
+}
+
+@media (max-width: 48rem) {
+  .screenGrid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 30rem) {
+  .weatherScreen {
+    padding: 1rem;
+  }
+
+  .screenIntro h1 {
+    font-size: clamp(2.5rem, 16vw, 4rem);
+  }
+
+  .conditionsList {
+    grid-template-columns: 1fr;
+  }
+
+  .temperatureRow {
+    flex-wrap: wrap;
+  }
+}

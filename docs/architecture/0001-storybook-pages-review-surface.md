@@ -2,9 +2,9 @@
 
 ## Purpose
 
-Factory's GitHub Pages site is a static Storybook review surface for the shared UI
-package. It is not a production application deployment and does not host product
-APIs, user data, or application runtime services.
+Factory's GitHub Pages site is a static Storybook review surface for shared UI and
+app-local component stories. It is not a production application deployment and does
+not host product APIs, user data, or application runtime services.
 
 ## Publishing a reviewed revision
 
