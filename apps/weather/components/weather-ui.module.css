@@ -208,7 +208,8 @@
 }
 
 .conditionsCard .kicker,
-.conditionsHeader h2 {
+.conditionsHeader h2,
+.conditionsHeader h3 {
   color: inherit;
 }
 

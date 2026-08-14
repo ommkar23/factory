@@ -89,6 +89,10 @@ test("Weather UI keeps deterministic accessible components and stories app-local
   assert.match(comparisonScreen, /comparisonCount/);
   assert.match(styles, /:focus-visible/);
   assert.match(styles, /@media \(max-width: 30rem\)/);
+  assert.match(
+    styles,
+    /\.conditionsCard \.kicker,\s*\.conditionsHeader h2,\s*\.conditionsHeader h3\s*\{\s*color: inherit;/,
+  );
 
   assert.match(fixtures, /selectedLocation/);
   assert.match(locationStories, /Default/);
