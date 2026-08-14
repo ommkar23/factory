@@ -122,7 +122,7 @@ export function LocationSearch({
       {state === "no-results" ? (
         <WeatherStatus
           kind="empty"
-          message={`No locations matched “${query}”.`}
+          message={`No locations matched “${query.trim()}”.`}
         />
       ) : null}
       {state === "error" ? (

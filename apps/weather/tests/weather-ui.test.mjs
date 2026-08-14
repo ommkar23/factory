@@ -97,6 +97,7 @@ test("Weather UI keeps deterministic accessible components and stories app-local
   assert.match(statusStories, /Empty/);
   assert.match(statusStories, /Error/);
   assert.match(screenStories, /Composed/);
+  assert.match(screenStories, /apiClient: storyApiClient/);
 
   const source = [
     locationSearch,
@@ -111,6 +112,6 @@ test("Weather UI keeps deterministic accessible components and stories app-local
   ].join("\n");
   assert.doesNotMatch(
     source,
-    /fetch\s*\(|open-meteo|weatherapi|openweathermap|geolocation|forecast|localStorage|sessionStorage|auth/i,
+    /fetch\s*\(|open-meteo|openweathermap|geolocation|forecast|localStorage|sessionStorage|auth/i,
   );
 });

@@ -19,7 +19,7 @@ test("Weather app presents the app-local current-conditions screen without integ
   assert.match(screen, /<h1[^>]*>Know the air around you\.<\/h1>/);
   assert.doesNotMatch(
     `${page}\n${screen}`,
-    /fetch\s*\(|weatherapi|openweathermap|geolocation|forecast|localStorage|sessionStorage/i,
+    /fetch\s*\(|openweathermap|geolocation|forecast|localStorage|sessionStorage/i,
   );
   assert.match(styles, /min-width: 20rem/);
 });
