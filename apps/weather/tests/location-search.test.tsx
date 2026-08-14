@@ -3,13 +3,7 @@ import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { LocationSearch } from "../components/location-search";
-import type { Location } from "../components/weather-types";
-
-const locations: readonly Location[] = [
-  { id: "portland-me", name: "Portland", region: "Maine, United States" },
-  { id: "portland-or", name: "Portland", region: "Oregon, United States" },
-  { id: "portland-uk", name: "Portland", region: "Dorset, United Kingdom" },
-];
+import { locations } from "../fixtures/weather-fixtures";
 
 type RenderOptions = Partial<
   Omit<

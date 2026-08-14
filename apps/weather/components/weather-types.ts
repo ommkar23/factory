@@ -1,15 +1,15 @@
-export type Location = {
-  id: string;
-  name: string;
-  region: string;
-};
+import type {
+  CardinalDirection,
+  ConditionKind,
+  CurrentConditions,
+  Location,
+  WeatherCondition,
+} from "../lib/weather-domain";
 
-export type CurrentConditions = {
-  condition: "Clear" | "Cloudy" | "Light rain";
-  feelsLike: string;
-  humidity: string;
-  localObservationTime: string;
-  precipitation: string;
-  temperature: string;
-  wind: string;
+export type {
+  CardinalDirection,
+  ConditionKind,
+  CurrentConditions,
+  Location,
+  WeatherCondition,
 };

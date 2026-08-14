@@ -62,7 +62,11 @@ test("Weather UI keeps deterministic accessible components and stories app-local
   assert.match(styles, /\.resultButton\[data-active="true"\]/);
 
   assert.match(currentConditions, /export type CurrentConditions/);
-  assert.match(currentConditions, /localObservationTime/);
+  assert.match(currentConditions, /observedAt/);
+  assert.match(currentConditions, /temperatureC/);
+  assert.match(currentConditions, /condition\.label/);
+  assert.match(currentConditions, /km\/h/);
+  assert.match(currentConditions, /mm/);
   assert.match(currentConditions, /Feels like/);
   assert.match(currentConditions, /Humidity/);
   assert.match(currentConditions, /Precipitation/);
@@ -88,6 +92,7 @@ test("Weather UI keeps deterministic accessible components and stories app-local
   assert.match(locationStories, /Selected/);
   assert.match(conditionsStories, /Daytime/);
   assert.match(conditionsStories, /Nighttime/);
+  assert.match(conditionsStories, /Unknown/);
   assert.match(statusStories, /Loading/);
   assert.match(statusStories, /Empty/);
   assert.match(statusStories, /Error/);

@@ -8,21 +8,43 @@ export type CurrentConditionsCardProps = {
   location: Location;
 };
 
-const conditionSymbols: Record<CurrentConditions["condition"], string> = {
-  Clear: "☀",
-  Cloudy: "☁",
-  "Light rain": "☂",
-};
+function conditionSymbol(conditions: CurrentConditions): string {
+  switch (conditions.condition.kind) {
+    case "clear":
+    case "partly-cloudy":
+      return conditions.isDay ? "☀" : "☾";
+    case "fog":
+      return "≋";
+    case "drizzle":
+    case "freezing-drizzle":
+    case "rain":
+    case "freezing-rain":
+    case "rain-showers":
+      return "☂";
+    case "snow":
+    case "snow-grains":
+    case "snow-showers":
+      return "❄";
+    case "thunderstorm":
+    case "thunderstorm-hail":
+      return "ϟ";
+    case "unknown":
+      return "◌";
+  }
+}
 
 export function CurrentConditionsCard({
   conditions,
   location,
 }: CurrentConditionsCardProps) {
   const details = [
-    ["Feels like", conditions.feelsLike],
-    ["Humidity", conditions.humidity],
-    ["Precipitation", conditions.precipitation],
-    ["Wind", conditions.wind],
+    ["Feels like", `${conditions.apparentTemperatureC}°C`],
+    ["Humidity", `${conditions.humidityPercent}%`],
+    ["Precipitation", `${conditions.precipitationMm} mm`],
+    [
+      "Wind",
+      `${conditions.windDirectionLabel} ${conditions.windSpeedKmh} km/h`,
+    ],
   ];
 
   return (
@@ -35,16 +57,16 @@ export function CurrentConditionsCard({
           <p className={styles.kicker}>Current conditions</p>
           <h2 id="conditions-heading">{location.name}</h2>
           <p className={styles.observationTime}>
-            Observed locally {conditions.localObservationTime}
+            Observed locally {conditions.observedAt}
           </p>
         </div>
         <span aria-hidden="true" className={styles.conditionIcon}>
-          {conditionSymbols[conditions.condition]}
+          {conditionSymbol(conditions)}
         </span>
       </div>
       <div className={styles.temperatureRow}>
-        <p className={styles.temperature}>{conditions.temperature}</p>
-        <p className={styles.conditionText}>{conditions.condition}</p>
+        <p className={styles.temperature}>{conditions.temperatureC}°C</p>
+        <p className={styles.conditionText}>{conditions.condition.label}</p>
       </div>
       <dl className={styles.conditionsList}>
         {details.map(([label, value]) => (

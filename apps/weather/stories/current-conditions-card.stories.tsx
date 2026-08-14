@@ -7,6 +7,7 @@ import {
   cloudyNightConditions,
   rainyConditions,
   selectedLocation,
+  unknownConditions,
 } from "../fixtures/weather-fixtures";
 
 const visuallyHidden = {
@@ -44,4 +45,8 @@ export const Nighttime: Story = {
 
 export const Rainy: Story = {
   args: { conditions: rainyConditions, location: selectedLocation },
+};
+
+export const Unknown: Story = {
+  args: { conditions: unknownConditions, location: selectedLocation },
 };
