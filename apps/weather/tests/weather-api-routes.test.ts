@@ -275,4 +275,43 @@ describe("weather API routes", () => {
       },
     });
   });
+
+  it("does not map a delayed post-cancellation rejection to a route timeout", async () => {
+    vi.useFakeTimers();
+    try {
+      const controller = new AbortController();
+      const handler = createWeatherGetHandler({
+        fetchCurrentConditions: async (_latitude, _longitude, { signal }) =>
+          new Promise<CurrentConditions>((_, reject) => {
+            signal?.addEventListener(
+              "abort",
+              () => {
+                setTimeout(
+                  () => reject(new DOMException("aborted", "AbortError")),
+                  5_001,
+                );
+              },
+              { once: true },
+            );
+          }),
+      });
+      const pending = handler(
+        request("/api/weather?latitude=0&longitude=0", controller.signal),
+      );
+
+      controller.abort();
+      await vi.advanceTimersByTimeAsync(5_001);
+      const response = await pending;
+
+      expect(response.status).toBe(502);
+      await expect(responseJson(response)).resolves.toEqual({
+        error: {
+          code: "UPSTREAM_UNAVAILABLE",
+          message: "The upstream service is unavailable.",
+        },
+      });
+    } finally {
+      vi.useRealTimers();
+    }
+  });
 });

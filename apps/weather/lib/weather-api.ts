@@ -117,20 +117,40 @@ function canonicalNumber(values: string[]): number | undefined {
 
 function upstreamSignal(requestSignal: AbortSignal, timeoutMs: number) {
   const controller = new AbortController();
+  let requestAborted = false;
   let timedOut = false;
-  const abortForRequest = () => controller.abort();
+  let cleanedUp = false;
+  let timeout: ReturnType<typeof setTimeout> | undefined;
+
+  const clearRouteTimeout = () => {
+    if (timeout === undefined) return;
+    clearTimeout(timeout);
+    timeout = undefined;
+  };
+  const abortForRequest = () => {
+    requestAborted = true;
+    clearRouteTimeout();
+    controller.abort();
+  };
+
   requestSignal.addEventListener("abort", abortForRequest, { once: true });
   if (requestSignal.aborted) abortForRequest();
-  const timeout = setTimeout(() => {
-    timedOut = true;
-    controller.abort();
-  }, timeoutMs);
+  if (!requestAborted) {
+    timeout = setTimeout(() => {
+      timeout = undefined;
+      if (requestAborted) return;
+      timedOut = true;
+      controller.abort();
+    }, timeoutMs);
+  }
 
   return {
     signal: controller.signal,
     timedOut: () => timedOut,
     cleanup: () => {
-      clearTimeout(timeout);
+      if (cleanedUp) return;
+      cleanedUp = true;
+      clearRouteTimeout();
       requestSignal.removeEventListener("abort", abortForRequest);
     },
   };
