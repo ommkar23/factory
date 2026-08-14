@@ -133,6 +133,34 @@ describe("WeatherScreen client orchestration", () => {
     expect(signal.aborted).toBe(true);
   });
 
+  it("aborts an in-flight weather request on unmount without post-unmount updates when the client ignores abort", async () => {
+    vi.useFakeTimers();
+    const weather = deferred<typeof clearDayConditions>();
+    const getCurrentConditions = vi.fn().mockReturnValue(weather.promise);
+    const apiClient = client({ getCurrentConditions });
+    const consoleError = vi
+      .spyOn(console, "error")
+      .mockImplementation(() => {});
+    const view = render(<WeatherScreen apiClient={apiClient} />);
+
+    query("Portland");
+    await elapseSearchDebounce();
+    fireEvent.click(screen.getAllByRole("option")[0]!);
+    const signal = (
+      getCurrentConditions.mock.calls[0]?.[1] as { signal: AbortSignal }
+    ).signal;
+
+    view.unmount();
+    expect(signal.aborted).toBe(true);
+
+    await act(async () => {
+      weather.resolve(clearDayConditions);
+      await Promise.resolve();
+    });
+
+    expect(consoleError).not.toHaveBeenCalled();
+  });
+
   it("uses safe search failure copy instead of server-provided error text", async () => {
     vi.useFakeTimers();
     const apiClient = client({
@@ -201,6 +229,27 @@ describe("WeatherScreen client orchestration", () => {
     await elapseSearchDebounce();
 
     expect(apiClient.searchLocations).toHaveBeenCalledTimes(1);
+  });
+
+  it("searches a selected query again after searching a different query", async () => {
+    vi.useFakeTimers();
+    const apiClient = client();
+    render(<WeatherScreen apiClient={apiClient} />);
+
+    query("Portland");
+    await elapseSearchDebounce();
+    fireEvent.click(screen.getAllByRole("option")[0]!);
+
+    query("Boston");
+    await elapseSearchDebounce();
+    query("Portland");
+    await elapseSearchDebounce();
+
+    expect(apiClient.searchLocations).toHaveBeenCalledTimes(3);
+    expect(apiClient.searchLocations).toHaveBeenLastCalledWith(
+      "Portland",
+      expect.objectContaining({ signal: expect.any(AbortSignal) }),
+    );
   });
 
   it("suppresses stale weather responses after a quick reselection and aborts the old request", async () => {

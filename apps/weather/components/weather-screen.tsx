@@ -33,12 +33,9 @@ export function WeatherScreen({
   const searchTimer = useRef<number | undefined>(undefined);
   const weatherController = useRef<AbortController | undefined>(undefined);
   const searchVersion = useRef(0);
-  const cancelledSearchQuery = useRef<string | undefined>(undefined);
-  const currentNormalizedQuery = useRef("");
   const weatherVersion = useRef(0);
 
   const normalizedQuery = query.trim();
-  currentNormalizedQuery.current = normalizedQuery;
 
   function cancelSearchWork() {
     if (searchTimer.current !== undefined) {
@@ -49,13 +46,14 @@ export function WeatherScreen({
     searchController.current = undefined;
   }
 
+  function cancelWeatherWork() {
+    weatherController.current?.abort();
+    weatherController.current = undefined;
+  }
+
   useEffect(() => {
     const version = ++searchVersion.current;
     cancelSearchWork();
-
-    if (cancelledSearchQuery.current === normalizedQuery) {
-      return;
-    }
 
     if (normalizedQuery.length < 2) {
       setLocations([]);
@@ -105,17 +103,16 @@ export function WeatherScreen({
   useEffect(
     () => () => {
       cancelSearchWork();
-      weatherController.current?.abort();
+      cancelWeatherWork();
     },
     [],
   );
 
   function selectLocation(nextLocation: Location) {
     ++searchVersion.current;
-    cancelledSearchQuery.current = currentNormalizedQuery.current;
     cancelSearchWork();
     ++weatherVersion.current;
-    weatherController.current?.abort();
+    cancelWeatherWork();
 
     const version = weatherVersion.current;
     const controller = new AbortController();
@@ -132,12 +129,18 @@ export function WeatherScreen({
         if (weatherVersion.current !== version || controller.signal.aborted) {
           return;
         }
+        if (weatherController.current === controller) {
+          weatherController.current = undefined;
+        }
         setConditions(nextConditions);
         setWeatherState("ready");
       })
       .catch(() => {
         if (weatherVersion.current !== version || controller.signal.aborted) {
           return;
+        }
+        if (weatherController.current === controller) {
+          weatherController.current = undefined;
         }
         setWeatherState("error");
       });

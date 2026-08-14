@@ -188,7 +188,7 @@ async function responseBody(response: Response): Promise<unknown> {
   try {
     return await response.json();
   } catch {
-    throw new WeatherApiResponseError();
+    return undefined;
   }
 }
 
@@ -209,7 +209,7 @@ function responseError(body: unknown): WeatherApiResponseError {
 async function getJson(fetcher: Fetcher, url: string, signal?: AbortSignal) {
   const response = await fetcher(url, { method: "GET", signal });
   const body = await responseBody(response);
-  if (!response.ok) {
+  if (response.status !== 200) {
     throw responseError(body);
   }
   return body;
