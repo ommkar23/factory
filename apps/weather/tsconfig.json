@@ -1,7 +1,9 @@
 {
   "extends": "../../packages/typescript-config/base.json",
   "compilerOptions": {
+    "baseUrl": ".",
     "jsx": "react-jsx",
+    "paths": { "@/*": ["./*"] },
     "plugins": [{ "name": "next" }]
   },
   "include": ["next-env.d.ts", ".next/types/**/*.ts", "**/*.ts", "**/*.tsx"],
