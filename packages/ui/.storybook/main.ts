@@ -1,12 +1,14 @@
+import { dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 
+import tailwindcss from "@tailwindcss/vite";
 import type { StorybookConfig } from "@storybook/react-vite";
 
 const repositoryRoot = fileURLToPath(new URL("../../..", import.meta.url));
 
 const config: StorybookConfig = {
-  addons: ["@storybook/addon-a11y"],
-  framework: "@storybook/react-vite",
+  addons: [getAbsolutePath("@storybook/addon-a11y")],
+  framework: getAbsolutePath("@storybook/react-vite"),
   stories: [
     "../src/**/*.stories.@(ts|tsx)",
     "../../../apps/weather/stories/**/*.stories.@(ts|tsx)",
@@ -14,9 +16,8 @@ const config: StorybookConfig = {
   async viteFinal(config) {
     return {
       ...config,
-      // GitHub Pages serves this repository site below /factory/. Local Storybook
-      // keeps Vite's root-relative base unless the deployment workflow sets it.
       base: process.env.STORYBOOK_BASE_PATH ?? config.base,
+      plugins: [...(config.plugins ?? []), tailwindcss()],
       server: {
         ...config.server,
         fs: { ...config.server?.fs, allow: [repositoryRoot] },
@@ -27,3 +28,7 @@ const config: StorybookConfig = {
 };
 
 export default config;
+
+function getAbsolutePath(value: string): any {
+  return dirname(fileURLToPath(import.meta.resolve(`${value}/package.json`)));
+}
