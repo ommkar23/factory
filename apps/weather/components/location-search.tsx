@@ -10,15 +10,35 @@ import styles from "./weather-ui.module.css";
 export type LocationSearchState =
   "default" | "loading" | "results" | "no-results" | "error" | "selected";
 
+export type LocationSearchEligibility =
+  "available" | "already-added" | "limit-reached";
+
+export type LocationSearchResult = {
+  eligibility: LocationSearchEligibility;
+  location: Location;
+};
+
 export type LocationSearchProps = {
   errorMessage?: string;
   locations?: readonly Location[];
   onQueryChange: (query: string) => void;
   onSelect: (location: Location) => void;
   query: string;
+  results?: readonly LocationSearchResult[];
   selectedLocation?: Location;
   state?: LocationSearchState;
 };
+
+function eligibilityCopy(eligibility: LocationSearchEligibility): string {
+  switch (eligibility) {
+    case "available":
+      return "Available";
+    case "already-added":
+      return "Already added";
+    case "limit-reached":
+      return "Limit reached";
+  }
+}
 
 export function LocationSearch({
   errorMessage = "We could not find locations right now. Try again shortly.",
@@ -26,6 +46,7 @@ export function LocationSearch({
   onQueryChange,
   onSelect,
   query,
+  results,
   selectedLocation,
   state = "default",
 }: LocationSearchProps) {
@@ -35,17 +56,61 @@ export function LocationSearch({
   const inputId = `${idPrefix}-location-search`;
   const helpId = `${idPrefix}-location-search-help`;
   const resultId = `${idPrefix}-location-results`;
-  const hasResults = state === "results" && locations.length > 0;
-  const safeActiveIndex = hasResults
-    ? Math.min(activeIndex, locations.length - 1)
-    : 0;
-  const activeLocation = hasResults ? locations[safeActiveIndex] : undefined;
+  const searchResults =
+    results ??
+    locations.map((location) => ({ eligibility: "available", location }));
+  const hasResults = state === "results" && searchResults.length > 0;
+  const firstAvailableIndex = searchResults.findIndex(
+    (result) => result.eligibility === "available",
+  );
+  const hasAvailableResult = firstAvailableIndex !== -1;
+  const boundedActiveIndex = Math.min(
+    activeIndex,
+    Math.max(searchResults.length - 1, 0),
+  );
+  const safeActiveIndex =
+    hasResults && searchResults[boundedActiveIndex]?.eligibility === "available"
+      ? boundedActiveIndex
+      : firstAvailableIndex;
+  const activeResult =
+    hasResults && safeActiveIndex >= 0
+      ? searchResults[safeActiveIndex]
+      : undefined;
 
   useEffect(() => {
-    setActiveIndex((index) =>
-      Math.min(index, Math.max(locations.length - 1, 0)),
-    );
-  }, [locations.length]);
+    setActiveIndex((index) => {
+      const boundedIndex = Math.min(
+        index,
+        Math.max(searchResults.length - 1, 0),
+      );
+      if (searchResults[boundedIndex]?.eligibility === "available") {
+        return boundedIndex;
+      }
+
+      return Math.max(firstAvailableIndex, 0);
+    });
+  }, [firstAvailableIndex, searchResults]);
+
+  function moveActiveIndex(direction: 1 | -1) {
+    if (!hasAvailableResult) {
+      return;
+    }
+
+    setActiveIndex((index) => {
+      for (let offset = 1; offset <= searchResults.length; offset += 1) {
+        const nextIndex =
+          (Math.max(index, firstAvailableIndex) +
+            direction * offset +
+            searchResults.length) %
+          searchResults.length;
+        if (searchResults[nextIndex]?.eligibility === "available") {
+          return nextIndex;
+        }
+      }
+
+      return firstAvailableIndex;
+    });
+  }
 
   function handleChange(event: ChangeEvent<HTMLInputElement>) {
     setActiveIndex(0);
@@ -53,50 +118,53 @@ export function LocationSearch({
   }
 
   function handleInputKeyDown(event: KeyboardEvent<HTMLInputElement>) {
-    if (!hasResults) {
+    if (!hasResults || !hasAvailableResult) {
       return;
     }
 
     if (event.key === "ArrowDown") {
       event.preventDefault();
-      setActiveIndex((index) => (index + 1) % locations.length);
+      moveActiveIndex(1);
     }
 
     if (event.key === "ArrowUp") {
       event.preventDefault();
-      setActiveIndex(
-        (index) => (index - 1 + locations.length) % locations.length,
-      );
+      moveActiveIndex(-1);
     }
 
     if (event.key === "Home") {
       event.preventDefault();
-      setActiveIndex(0);
+      setActiveIndex(firstAvailableIndex);
     }
 
     if (event.key === "End") {
       event.preventDefault();
-      setActiveIndex(locations.length - 1);
+      for (let index = searchResults.length - 1; index >= 0; index -= 1) {
+        if (searchResults[index]?.eligibility === "available") {
+          setActiveIndex(index);
+          return;
+        }
+      }
     }
 
-    if (event.key === "Enter" && activeLocation) {
+    if (event.key === "Enter" && activeResult) {
       event.preventDefault();
-      onSelect(activeLocation);
+      onSelect(activeResult.location);
     }
   }
 
   return (
     <section className={styles.searchPanel} aria-labelledby={headingId}>
       <div className={styles.sectionHeading}>
-        <p className={styles.kicker}>Your place</p>
-        <h2 id={headingId}>Find a location</h2>
+        <p className={styles.kicker}>Your places</p>
+        <h2 id={headingId}>Add a location</h2>
       </div>
       <label className={styles.searchLabel} htmlFor={inputId}>
         Search city or postal code
       </label>
       <input
         aria-activedescendant={
-          activeLocation ? `${resultId}-${activeLocation.id}` : undefined
+          activeResult ? `${resultId}-${activeResult.location.id}` : undefined
         }
         aria-autocomplete="list"
         aria-controls={hasResults ? resultId : undefined}
@@ -114,7 +182,7 @@ export function LocationSearch({
         value={query}
       />
       <p className={styles.fieldHelp} id={helpId}>
-        Choose a result to view its current conditions.
+        Choose an available result to compare its current conditions.
       </p>
       {state === "loading" ? (
         <WeatherStatus kind="loading" message="Searching locations…" />
@@ -130,19 +198,24 @@ export function LocationSearch({
       ) : null}
       {hasResults ? (
         <ul
+          aria-label="Location results"
           className={styles.resultList}
           id={resultId}
           role="listbox"
-          aria-label="Location results"
         >
-          {locations.map((location, index) => {
+          {searchResults.map((result, index) => {
+            const { eligibility, location } = result;
             const isActive = index === safeActiveIndex;
+            const unavailable = eligibility !== "available";
             return (
               <li key={location.id} role="none">
                 <button
+                  aria-disabled={unavailable}
                   aria-selected={isActive}
                   className={styles.resultButton}
                   data-active={isActive}
+                  data-eligibility={eligibility}
+                  disabled={unavailable}
                   id={`${resultId}-${location.id}`}
                   onClick={() => {
                     setActiveIndex(index);
@@ -152,8 +225,11 @@ export function LocationSearch({
                   tabIndex={-1}
                   type="button"
                 >
-                  <span>{location.name}</span>
+                  <span className={styles.resultName}>{location.name}</span>
                   <span className={styles.resultMeta}>{location.region}</span>
+                  <span className={styles.resultEligibility}>
+                    {eligibilityCopy(eligibility)}
+                  </span>
                 </button>
               </li>
             );

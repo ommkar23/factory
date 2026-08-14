@@ -125,6 +125,14 @@ describe("LocationSearch", () => {
     expect(selected.getAttribute("role")).toBeNull();
   });
 
+  it("does not point to an unrendered option outside the results state", () => {
+    renderLocationSearch({ state: "default" });
+
+    const input = screen.getByRole("combobox");
+    expect(input.getAttribute("aria-activedescendant")).toBeNull();
+    expect(input.getAttribute("aria-controls")).toBeNull();
+  });
+
   it("clamps a now-out-of-range active option when the result list shrinks", async () => {
     const user = userEvent.setup();
     const { rerender } = renderLocationSearch();
