@@ -25,8 +25,13 @@ test("photo-feed home page uses public shared primitives for a truthful baseline
   assert.match(page, /<Badge variant="outline">Development baseline<\/Badge>/);
   assert.match(
     page,
-    /<h2 id="development-baseline"[^>]*>\s*Current state\s*<\/h2>/,
+    /<h2[\s\S]*?id="photo-feed-current-state"[\s\S]*?>\s*Current state\s*<\/h2>/,
   );
+  assert.match(
+    page,
+    /<Alert\s+aria-labelledby="photo-feed-current-state"\s+role="region">/,
+  );
+  assert.doesNotMatch(page, /role="(?:alert|status)"/);
   assert.match(page, /No photo feed is connected yet\./);
   assert.doesNotMatch(page, /packages\/ui\/src/);
 });

@@ -27,7 +27,7 @@ export default function HomePage() {
         <Card>
           <CardHeader>
             <div className="min-w-0">
-              <h2 id="development-baseline" className="text-lg font-medium">
+              <h2 id="photo-feed-current-state" className="text-lg font-medium">
                 Current state
               </h2>
               <p className="mt-1 text-sm text-muted-foreground">
@@ -36,7 +36,7 @@ export default function HomePage() {
             </div>
           </CardHeader>
           <CardContent>
-            <Alert aria-labelledby="development-baseline">
+            <Alert aria-labelledby="photo-feed-current-state" role="region">
               <AlertTitle>Nothing to configure yet</AlertTitle>
               <AlertDescription>
                 No photo feed is connected yet. This screen only confirms that

@@ -2,7 +2,7 @@
   /* Preserve Weather's established light palette and focus contrast via Factory tokens. */
   --factory-color-canvas: #eaf5fa;
   --factory-color-text: #10213d;
-  --factory-color-focus: #087ea4;
+  --factory-focus-ring: #087ea4;
 
   color-scheme: light;
   font-family: Arial, Helvetica, sans-serif;

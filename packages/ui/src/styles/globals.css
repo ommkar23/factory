@@ -45,7 +45,9 @@
   --factory-color-critical: oklch(0.577 0.245 27.325);
   --factory-color-critical-foreground: oklch(0.985 0 0);
   --factory-color-border: oklch(0.922 0 0);
-  --factory-color-focus: oklch(0.708 0 0);
+  /* Full-opacity focus color: 3.95:1 against the default white surface. */
+  --factory-focus-ring: oklch(0.6 0 0);
+  --factory-color-focus: var(--factory-focus-ring);
 
   --factory-font-sans: Arial, Helvetica, sans-serif;
   --factory-font-mono: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
@@ -68,8 +70,6 @@
   --factory-shadow-md: 0 4px 6px -1px rgb(0 0 0 / 10%);
   --factory-shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 10%);
 
-  --factory-focus-ring: 0 0 0 3px
-    color-mix(in oklab, var(--factory-color-focus), transparent 55%);
   --factory-motion-duration-fast: 150ms;
   --factory-motion-duration-normal: 200ms;
   --factory-motion-ease-standard: cubic-bezier(0.2, 0, 0, 1);
@@ -93,5 +93,5 @@
   --destructive-foreground: var(--factory-color-critical-foreground);
   --border: var(--factory-color-border);
   --input: var(--factory-color-border);
-  --ring: var(--factory-color-focus);
+  --ring: var(--factory-focus-ring);
 }
