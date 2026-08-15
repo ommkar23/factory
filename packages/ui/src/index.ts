@@ -3,9 +3,9 @@ export {
   AlertAction,
   AlertDescription,
   AlertTitle,
-} from "./components/alert";
-export { Badge, badgeVariants } from "./components/badge";
-export { Button, buttonVariants } from "./components/button";
+} from "./components/alert.js";
+export { Badge, badgeVariants } from "./components/badge.js";
+export { Button, buttonVariants } from "./components/button.js";
 export {
   Card,
   CardAction,
@@ -14,10 +14,10 @@ export {
   CardFooter,
   CardHeader,
   CardTitle,
-} from "./components/card";
-export { Input } from "./components/input";
-export { Label } from "./components/label";
-export { Skeleton } from "./components/skeleton";
-export { Spinner } from "./components/spinner";
-export { StatusMessage } from "./status-message";
-export type { StatusMessageProps } from "./status-message";
+} from "./components/card.js";
+export { Input } from "./components/input.js";
+export { Label } from "./components/label.js";
+export { Skeleton } from "./components/skeleton.js";
+export { Spinner } from "./components/spinner.js";
+export { StatusMessage } from "./status-message.js";
+export type { StatusMessageProps } from "./status-message.js";

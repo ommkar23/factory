@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 
-import { Alert } from "./components/alert";
+import { Alert } from "./components/alert.js";
 
 export type StatusMessageProps = {
   children: ReactNode;
