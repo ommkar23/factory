@@ -1,6 +1,8 @@
 "use client";
 
 import { useId } from "react";
+import { Badge } from "@factory/ui/components/badge";
+import { Button } from "@factory/ui/components/button";
 
 import { CurrentConditionsCard } from "./current-conditions-card";
 import {
@@ -42,13 +44,14 @@ function ComparisonEntryCard({
   const headingId = useId();
   const locationLabel = `${entry.location.name}, ${entry.location.region}`;
   const removeAction = (
-    <button
+    <Button
       className={styles.cardAction}
       onClick={() => onRemoveLocation(entry.location)}
       type="button"
+      variant="outline"
     >
       Remove {locationLabel}
-    </button>
+    </Button>
   );
 
   if (entry.status === "ready") {
@@ -84,13 +87,14 @@ function ComparisonEntryCard({
       )}
       <div className={styles.cardActions}>
         {entry.status === "error" ? (
-          <button
+          <Button
             className={styles.cardAction}
             onClick={() => onRetryLocation(entry.location)}
             type="button"
+            variant="outline"
           >
             Retry {locationLabel}
-          </button>
+          </Button>
         ) : null}
         {removeAction}
       </div>
@@ -142,9 +146,13 @@ export function WeatherComparisonScreen({
               <p className={styles.kicker}>Your comparison</p>
               <h2 id={comparisonHeadingId}>Current conditions</h2>
             </div>
-            <p aria-live="polite" className={styles.comparisonCount}>
+            <Badge
+              aria-live="polite"
+              className={styles.comparisonCount}
+              variant="outline"
+            >
               {countLabel}
-            </p>
+            </Badge>
           </div>
           {searchAnnouncement ? (
             <p aria-live="polite" className={styles.searchAnnouncement}>

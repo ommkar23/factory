@@ -11,7 +11,7 @@ const storyApiClient: WeatherApiClient = {
 
 const meta = {
   component: WeatherScreen,
-  parameters: { layout: "fullscreen" },
+  parameters: { a11y: { test: "error" }, layout: "fullscreen" },
   title: "Weather/Screen",
 } satisfies Meta<typeof WeatherScreen>;
 

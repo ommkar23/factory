@@ -42,7 +42,16 @@ test("Weather UI keeps deterministic accessible components and stories app-local
   assert.match(locationSearch, /export type LocationSearchProps/);
   assert.match(locationSearch, /useId/);
   assert.doesNotMatch(locationSearch, /weather-location-results/);
-  assert.match(locationSearch, /<label/);
+  assert.match(
+    locationSearch,
+    /import \{ Input \} from "@factory\/ui\/components\/input"/,
+  );
+  assert.match(
+    locationSearch,
+    /import \{ Label \} from "@factory\/ui\/components\/label"/,
+  );
+  assert.match(locationSearch, /<Label/);
+  assert.match(locationSearch, /<Input/);
   assert.match(locationSearch, /role="listbox"/);
   assert.match(locationSearch, /role="option"/);
   assert.match(locationSearch, /onSelect/);
@@ -78,13 +87,33 @@ test("Weather UI keeps deterministic accessible components and stories app-local
 
   assert.match(
     weatherStatus,
-    /role=\{kind === "error" \? "alert" : "status"\}/,
+    /import \{ Alert \} from "@factory\/ui\/components\/alert"/,
   );
-  assert.match(weatherStatus, /aria-live="polite"/);
+  assert.match(
+    weatherStatus,
+    /import \{ Spinner \} from "@factory\/ui\/components\/spinner"/,
+  );
+  assert.match(weatherStatus, /<Alert/);
+  assert.match(weatherStatus, /<Spinner aria-hidden="true" \/>/);
+  assert.match(
+    weatherStatus,
+    /aria-live=\{isError \? "assertive" : "polite"\}/,
+  );
+  assert.match(weatherStatus, /role=\{isError \? "alert" : "status"\}/);
   assert.match(weatherScreen, /useWeatherComparison/);
   assert.match(weatherScreen, /WeatherComparisonScreen/);
   assert.match(comparisonScreen, /LocationSearch/);
   assert.match(comparisonScreen, /CurrentConditionsCard/);
+  assert.match(
+    comparisonScreen,
+    /import \{ Button \} from "@factory\/ui\/components\/button"/,
+  );
+  assert.match(
+    comparisonScreen,
+    /import \{ Badge \} from "@factory\/ui\/components\/badge"/,
+  );
+  assert.match(comparisonScreen, /<Button/);
+  assert.match(comparisonScreen, /<Badge/);
   assert.match(comparisonScreen, /searchAnnouncement/);
   assert.match(comparisonScreen, /comparisonCount/);
   assert.match(styles, /:focus-visible/);
@@ -122,6 +151,7 @@ test("Weather UI keeps deterministic accessible components and stories app-local
     statusStories,
     screenStories,
   ].join("\n");
+  assert.doesNotMatch(source, /@factory\/ui\/src|packages\/ui\/src/);
   assert.doesNotMatch(
     source,
     /fetch\s*\(|openweathermap|geolocation|forecast|localStorage|sessionStorage|auth/i,

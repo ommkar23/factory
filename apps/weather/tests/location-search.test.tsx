@@ -50,10 +50,14 @@ function expectActiveOption(index: number) {
 afterEach(cleanup);
 
 describe("LocationSearch", () => {
-  it("uses the city and postal-code search label", () => {
+  it("uses shared input and label primitives while preserving the city and postal-code label", () => {
     renderLocationSearch();
 
-    expect(screen.getByText("Search city or postal code")).toBeTruthy();
+    const label = screen.getByText("Search city or postal code");
+    const input = screen.getByRole("combobox");
+
+    expect(label.getAttribute("data-slot")).toBe("label");
+    expect(input.getAttribute("data-slot")).toBe("input");
     expect(screen.queryByText(/airport/i)).toBeNull();
   });
 
