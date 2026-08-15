@@ -22,6 +22,7 @@ const meta = {
       </main>
     ),
   ],
+  parameters: { a11y: { test: "error" } },
   title: "Weather/Status",
 } satisfies Meta<typeof WeatherStatus>;
 

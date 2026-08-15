@@ -29,6 +29,7 @@ const meta = {
       </main>
     ),
   ],
+  parameters: { a11y: { test: "error" } },
   title: "Weather/CurrentConditionsCard",
 } satisfies Meta<typeof CurrentConditionsCard>;
 

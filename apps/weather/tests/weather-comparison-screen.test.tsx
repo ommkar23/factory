@@ -36,7 +36,8 @@ describe("WeatherComparisonScreen", () => {
   it("renders a ready comparison card with a location-specific remove action", () => {
     render(<WeatherComparisonScreen {...comparisonProps()} />);
 
-    expect(screen.getByText("1 of 5 locations compared")).toBeTruthy();
+    const comparisonCount = screen.getByText("1 of 5 locations compared");
+    expect(comparisonCount.getAttribute("data-slot")).toBe("badge");
     expect(
       screen.getByRole("heading", { name: locations[0]!.name }),
     ).toBeTruthy();
@@ -74,12 +75,15 @@ describe("WeatherComparisonScreen", () => {
     expect(screen.getByRole("alert").textContent).toContain(
       "Could not load conditions for Portland.",
     );
-    expect(
-      screen.getByRole("button", {
-        name: `Retry ${errorLocation.name}, ${errorLocation.region}`,
-      }),
-    ).toBeTruthy();
-    expect(screen.getAllByRole("button", { name: /^Remove / })).toHaveLength(3);
+    const retryButton = screen.getByRole("button", {
+      name: `Retry ${errorLocation.name}, ${errorLocation.region}`,
+    });
+    expect(retryButton.getAttribute("data-slot")).toBe("button");
+    const removeButtons = screen.getAllByRole("button", { name: /^Remove / });
+    expect(removeButtons).toHaveLength(3);
+    removeButtons.forEach((button) => {
+      expect(button.getAttribute("data-slot")).toBe("button");
+    });
   });
 
   it("keeps unavailable search results visible, skips them by keyboard, and selects an available result", async () => {

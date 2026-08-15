@@ -1,3 +1,6 @@
+import { Alert } from "@factory/ui/components/alert";
+import { Spinner } from "@factory/ui/components/spinner";
+
 import styles from "./weather-ui.module.css";
 
 export type WeatherStatusProps = {
@@ -12,16 +15,19 @@ export function WeatherStatus({ kind, message }: WeatherStatusProps) {
       : kind === "empty"
         ? "No results"
         : "Something went wrong";
+  const isError = kind === "error";
 
   return (
-    <div
-      aria-live="polite"
+    <Alert
+      aria-live={isError ? "assertive" : "polite"}
       className={`${styles.status} ${styles[`status${kind}`]}`}
-      role={kind === "error" ? "alert" : "status"}
+      role={isError ? "alert" : "status"}
+      variant={isError ? "destructive" : "default"}
     >
+      {kind === "loading" ? <Spinner aria-hidden="true" /> : null}
       <span>
         <strong>{label}.</strong> {message}
       </span>
-    </div>
+    </Alert>
   );
 }
