@@ -1,7 +1,8 @@
 @import "tailwindcss" source("..");
 
 @source "../../../../apps/weather";
-@source "../../../../apps/photo-feed";
+@source "../../../../apps/live-splash";
+@source "../../../../apps/home";
 
 @theme inline {
   --color-background: var(--background);

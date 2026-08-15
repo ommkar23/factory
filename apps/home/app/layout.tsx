@@ -1,10 +1,11 @@
 import type { Metadata } from "next";
 import type { ReactNode } from "react";
+
 import "@factory/ui/globals.css";
 
 export const metadata: Metadata = {
-  title: "Photo Feed",
-  description: "A local-first photo-feed development baseline",
+  title: "Factory Home",
+  description: "Choose a Factory application.",
 };
 
 export default function RootLayout({

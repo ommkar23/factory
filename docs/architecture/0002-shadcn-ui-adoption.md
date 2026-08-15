@@ -7,7 +7,7 @@
 
 ## Context
 
-Factory has two Next.js applications (`apps/weather` and `apps/photo-feed`) that
+Factory has two Next.js applications (`apps/weather` and `apps/live-splash`) that
 need a consistent, accessible foundation without moving application-domain UI
 into a generic package. The product owner requested literal shadcn/ui adoption.
 That request supersedes issue #6's previous non-goal that prohibited external
@@ -35,7 +35,7 @@ Applications must not import `packages/ui/src` internals. Package exports and
 workspace aliases will make these public paths explicit.
 
 Each participating workspace (`packages/ui`, `apps/weather`, and
-`apps/photo-feed`) will have a `components.json` with these identical choices:
+`apps/live-splash`) will have a `components.json` with these identical choices:
 
 - `style`: `base-nova`
 - `baseColor`: `neutral`
@@ -106,7 +106,7 @@ preserved or consciously reconciled on later updates.
 1. Establish the shared Tailwind v4, CSS-token, export, and `components.json`
    foundation without changing application UI markup.
 2. Add only the approved initial primitives in `packages/ui`.
-3. Migrate Weather and Photo Feed independently, preserving their domain
+3. Migrate Weather and Live Splash independently, preserving their domain
    behavior and app-local styling where appropriate.
 4. Integrate only after package and application checks pass and the required
    technical and human UI review evidence is recorded.

@@ -1,18 +1,18 @@
 services:
-  photo-feed:
+  live-splash:
     build:
       context: .
       dockerfile: Containerfile
     command: >-
-      sh -c "pnpm install --frozen-lockfile && pnpm --filter @factory/photo-feed dev"
+      sh -c "pnpm install --frozen-lockfile && pnpm --filter @factory/live-splash dev"
     environment:
       WATCHPACK_POLLING: "true"
     working_dir: /workspace
     user: "1000:1000"
     volumes:
       - .:/workspace:Z
-      - photo-feed-node-modules:/workspace/node_modules
-      - photo-feed-pnpm-cache:/pnpm
+      - live-splash-node-modules:/workspace/node_modules
+      - live-splash-pnpm-cache:/pnpm
     ports:
       - "127.0.0.1:3000:3000"
     healthcheck:
@@ -20,6 +20,60 @@ services:
         [
           "CMD-SHELL",
           'node -e "fetch(''http://127.0.0.1:3000'').then(r => process.exit(r.ok ? 0 : 1)).catch(() => process.exit(1))"',
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 30s
+
+  weather:
+    build:
+      context: .
+      dockerfile: Containerfile
+    command: >-
+      sh -c "pnpm install --frozen-lockfile && pnpm --filter @factory/weather dev"
+    environment:
+      WATCHPACK_POLLING: "true"
+    working_dir: /workspace
+    user: "1000:1000"
+    volumes:
+      - .:/workspace:Z
+      - weather-node-modules:/workspace/node_modules
+      - weather-pnpm-cache:/pnpm
+    ports:
+      - "127.0.0.1:3001:3001"
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          'node -e "fetch(''http://127.0.0.1:3001'').then(r => process.exit(r.ok ? 0 : 1)).catch(() => process.exit(1))"',
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 30s
+
+  home:
+    build:
+      context: .
+      dockerfile: Containerfile
+    command: >-
+      sh -c "pnpm install --frozen-lockfile && pnpm --filter @factory/home dev"
+    environment:
+      WATCHPACK_POLLING: "true"
+    working_dir: /workspace
+    user: "1000:1000"
+    volumes:
+      - .:/workspace:Z
+      - home-node-modules:/workspace/node_modules
+      - home-pnpm-cache:/pnpm
+    ports:
+      - "127.0.0.1:3002:3002"
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          'node -e "fetch(''http://127.0.0.1:3002'').then(r => process.exit(r.ok ? 0 : 1)).catch(() => process.exit(1))"',
         ]
       interval: 10s
       timeout: 5s
@@ -54,7 +108,11 @@ services:
       start_period: 30s
 
 volumes:
-  photo-feed-node-modules:
-  photo-feed-pnpm-cache:
+  live-splash-node-modules:
+  live-splash-pnpm-cache:
+  weather-node-modules:
+  weather-pnpm-cache:
+  home-node-modules:
+  home-pnpm-cache:
   storybook-node-modules:
   storybook-pnpm-cache:

@@ -7,10 +7,14 @@ import type { StorybookConfig } from "@storybook/react-vite";
 const repositoryRoot = fileURLToPath(new URL("../../..", import.meta.url));
 
 const config: StorybookConfig = {
-  addons: [getAbsolutePath("@storybook/addon-a11y")],
+  addons: [
+    getAbsolutePath("@storybook/addon-a11y"),
+    getAbsolutePath("@storybook/addon-mcp"),
+  ],
   framework: getAbsolutePath("@storybook/react-vite"),
   stories: [
     "../src/**/*.stories.@(ts|tsx)",
+    "../../../apps/home/stories/**/*.stories.@(ts|tsx)",
     "../../../apps/weather/stories/**/*.stories.@(ts|tsx)",
   ],
   async viteFinal(config) {

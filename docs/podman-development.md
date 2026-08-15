@@ -10,7 +10,9 @@ This is a local-only development workflow. It intentionally has no production de
 podman compose up --build
 ```
 
-- Photo Feed: http://127.0.0.1:3000
+- Live Splash: http://127.0.0.1:3000
+- Weather: http://127.0.0.1:3001
+- Factory Home: http://127.0.0.1:3002
 - UI Storybook: http://127.0.0.1:6006
 
 Each service binds to `0.0.0.0` inside its container, while compose publishes only loopback host ports. Compose bind-mounts the tracked workspace files required for development at `/workspace`, intentionally excluding gitignored local `.env` files; named volumes hold root `node_modules` and the pnpm cache. Containers run as UID/GID `1000:1000`. The Compose configuration enables polling-based watchers for macOS bind mounts; Next runs with webpack because its default Turbopack watcher did not observe host file edits through the Podman macOS mount.
@@ -20,6 +22,8 @@ Each service binds to `0.0.0.0` inside its container, while compose publishes on
 ```bash
 podman compose ps
 curl -fsS http://127.0.0.1:3000
+curl -fsS http://127.0.0.1:3001
+curl -fsS http://127.0.0.1:3002
 curl -fsS http://127.0.0.1:6006
 podman compose down
 ```

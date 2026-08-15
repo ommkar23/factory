@@ -27,4 +27,19 @@ pnpm install
 pnpm check
 ```
 
-No application is scaffolded by default. A new app starts from an approved product brief and technical plan.
+## Home app
+
+Factory Home is the application directory at `http://localhost:3002`. Start the
+three applications in separate terminals:
+
+```bash
+pnpm --filter @factory/live-splash dev
+pnpm --filter @factory/weather dev
+pnpm --filter @factory/home dev
+```
+
+Home links to Live Splash at `http://localhost:3000` and Weather at
+`http://localhost:3001` by default. For a deployment, configure public absolute
+HTTPS URLs with `LIVE_SPLASH_URL` and `WEATHER_URL`; each selected app remains an
+independently hosted Next.js application unless a separate reverse proxy is
+introduced.

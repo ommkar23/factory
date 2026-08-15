@@ -16,10 +16,10 @@ export default function HomePage() {
           <Badge variant="outline">Development baseline</Badge>
           <div className="min-w-0">
             <h1 className="text-3xl font-semibold tracking-tight">
-              Photo Feed
+              Live Splash
             </h1>
             <p className="mt-2 max-w-prose text-sm text-muted-foreground">
-              A small, shared-UI baseline for local development.
+              A small, shared-UI baseline for Live Splash local development.
             </p>
           </div>
         </header>
@@ -27,7 +27,10 @@ export default function HomePage() {
         <Card>
           <CardHeader>
             <div className="min-w-0">
-              <h2 id="photo-feed-current-state" className="text-lg font-medium">
+              <h2
+                id="live-splash-current-state"
+                className="text-lg font-medium"
+              >
                 Current state
               </h2>
               <p className="mt-1 text-sm text-muted-foreground">
@@ -36,12 +39,12 @@ export default function HomePage() {
             </div>
           </CardHeader>
           <CardContent>
-            <Alert aria-labelledby="photo-feed-current-state" role="region">
+            <Alert aria-labelledby="live-splash-current-state" role="region">
               <AlertTitle>Nothing to configure yet</AlertTitle>
               <AlertDescription>
-                No photo feed is connected yet. This screen only confirms that
-                the application and shared interface package are available for
-                local development.
+                No Live Splash feed is connected yet. This screen only confirms
+                that the application and shared interface package are available
+                for local development.
               </AlertDescription>
             </Alert>
           </CardContent>

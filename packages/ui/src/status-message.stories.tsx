@@ -15,7 +15,7 @@ export const Information: Story = {
   args: { children: "Your changes are saved." },
 };
 export const Success: Story = {
-  args: { children: "Photo Feed is ready.", tone: "success" },
+  args: { children: "Live Splash is ready.", tone: "success" },
 };
 export const Warning: Story = {
   args: { children: "Weather data may be out of date.", tone: "warning" },
