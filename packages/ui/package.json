@@ -13,7 +13,8 @@
   "imports": {
     "#components/*": "./src/components/*.tsx",
     "#hooks/*": "./src/hooks/*.ts",
-    "#lib/*": "./src/lib/*.ts"
+    "#lib/*": "./src/lib/*.ts",
+    "#status-message": "./src/status-message.tsx"
   },
   "scripts": {
     "build": "storybook build",
