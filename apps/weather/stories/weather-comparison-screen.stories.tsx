@@ -13,9 +13,16 @@ const callbacks = {
   onSelectLocation: () => {},
 };
 
+const longLocation = {
+  ...comparisonLocations[0]!,
+  id: "long-comparison-location",
+  name: "Llanfairpwllgwyngyll",
+  region: "Isle of Anglesey, Wales, United Kingdom",
+};
+
 const meta = {
   component: WeatherComparisonScreen,
-  parameters: { layout: "fullscreen" },
+  parameters: { a11y: { test: "error" }, layout: "fullscreen" },
   title: "Weather/ComparisonScreen",
 } satisfies Meta<typeof WeatherComparisonScreen>;
 
@@ -80,27 +87,7 @@ export const FullFiveLocations: Story = {
   },
 };
 
-export const AlreadyAddedResult: Story = {
-  args: {
-    ...callbacks,
-    comparisonCount: 1,
-    comparisonLimit: 5,
-    entries: readyComparisonEntries.slice(0, 1),
-    searchAnnouncement: "Portland, Oregon is already in your comparison.",
-    searchQuery: "Portland",
-    searchResults: [
-      {
-        eligibility: "already-added",
-        location: comparisonLocations[0]!,
-      },
-      { eligibility: "available", location: comparisonLocations[1]! },
-      { eligibility: "available", location: comparisonLocations[2]! },
-    ],
-    searchState: "results",
-  },
-};
-
-export const LimitReachedResult: Story = {
+export const DuplicateAndLimitResults: Story = {
   args: {
     ...callbacks,
     comparisonCount: 5,
@@ -108,18 +95,51 @@ export const LimitReachedResult: Story = {
     entries: readyComparisonEntries,
     searchAnnouncement:
       "Comparison limit reached. Remove a location before adding another.",
-    searchQuery: "Tokyo",
+    searchQuery: "Portland",
     searchResults: [
       {
+        eligibility: "already-added",
+        location: comparisonLocations[0]!,
+      },
+      { eligibility: "available", location: comparisonLocations[1]! },
+      {
         eligibility: "limit-reached",
-        location: comparisonLocations[3]!,
+        location: comparisonLocations[2]!,
       },
     ],
     searchState: "results",
   },
 };
 
-export const NarrowMobile: Story = {
-  args: OneReady.args,
-  parameters: { viewport: { defaultViewport: "mobile1" } },
+export const LongLocationName: Story = {
+  args: {
+    ...callbacks,
+    comparisonCount: 1,
+    comparisonLimit: 5,
+    entries: [
+      {
+        conditions: readyComparisonEntries[0]!.conditions,
+        location: longLocation,
+        status: "ready",
+      },
+    ],
+    searchQuery: "Llanfair",
+    searchResults: [{ eligibility: "available", location: longLocation }],
+    searchState: "results",
+  },
+};
+
+export const Mobile375: Story = {
+  args: LongLocationName.args,
+  parameters: { viewport: { defaultViewport: "mobile" } },
+};
+
+export const Tablet768: Story = {
+  args: FullFiveLocations.args,
+  parameters: { viewport: { defaultViewport: "tablet" } },
+};
+
+export const Desktop1280: Story = {
+  args: FullFiveLocations.args,
+  parameters: { viewport: { defaultViewport: "desktop" } },
 };

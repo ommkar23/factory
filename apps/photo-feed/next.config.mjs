@@ -1,7 +1,9 @@
+import { fileURLToPath } from "node:url";
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   turbopack: {
-    root: "../..",
+    root: fileURLToPath(new URL("../..", import.meta.url)),
   },
 };
 

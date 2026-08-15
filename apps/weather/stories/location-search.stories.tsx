@@ -14,6 +14,13 @@ const visuallyHidden = {
   width: "1px",
 };
 
+const longLocation = {
+  ...locations[0]!,
+  id: "long-location",
+  name: "Llanfairpwllgwyngyll",
+  region: "Isle of Anglesey, Wales, United Kingdom",
+};
+
 const meta = {
   component: LocationSearch,
   decorators: [
@@ -24,6 +31,7 @@ const meta = {
       </main>
     ),
   ],
+  parameters: { a11y: { test: "error" } },
   title: "Weather/LocationSearch",
 } satisfies Meta<typeof LocationSearch>;
 
@@ -80,6 +88,45 @@ export const Selected: Story = {
     selectedLocation,
     state: "selected",
   },
+};
+
+export const DuplicateAndLimitResults: Story = {
+  args: {
+    onQueryChange: () => {},
+    onSelect: () => {},
+    query: "Portland",
+    results: [
+      { eligibility: "already-added", location: locations[0]! },
+      { eligibility: "available", location: locations[1]! },
+      { eligibility: "limit-reached", location: locations[2]! },
+    ],
+    state: "results",
+  },
+};
+
+export const LongLocationName: Story = {
+  args: {
+    onQueryChange: () => {},
+    onSelect: () => {},
+    query: "Llanfair",
+    results: [{ eligibility: "available", location: longLocation }],
+    state: "results",
+  },
+};
+
+export const Mobile375: Story = {
+  args: Results.args,
+  parameters: { viewport: { defaultViewport: "mobile" } },
+};
+
+export const Tablet768: Story = {
+  args: Results.args,
+  parameters: { viewport: { defaultViewport: "tablet" } },
+};
+
+export const Desktop1280: Story = {
+  args: Results.args,
+  parameters: { viewport: { defaultViewport: "desktop" } },
 };
 
 export const Interactive: Story = {

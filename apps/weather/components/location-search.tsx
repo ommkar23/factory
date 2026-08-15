@@ -2,6 +2,8 @@
 
 import { useEffect, useId, useState } from "react";
 import type { ChangeEvent, KeyboardEvent } from "react";
+import { Input } from "@factory/ui/components/input";
+import { Label } from "@factory/ui/components/label";
 
 import type { Location } from "./weather-types";
 import { WeatherStatus } from "./weather-status";
@@ -159,10 +161,10 @@ export function LocationSearch({
         <p className={styles.kicker}>Your places</p>
         <h2 id={headingId}>Add a location</h2>
       </div>
-      <label className={styles.searchLabel} htmlFor={inputId}>
+      <Label className={styles.searchLabel} htmlFor={inputId}>
         Search city or postal code
-      </label>
-      <input
+      </Label>
+      <Input
         aria-activedescendant={
           activeResult ? `${resultId}-${activeResult.location.id}` : undefined
         }
