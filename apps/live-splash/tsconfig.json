@@ -3,6 +3,8 @@
   "compilerOptions": {
     "baseUrl": ".",
     "jsx": "react-jsx",
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
     "paths": { "@/*": ["./*"] },
     "plugins": [{ "name": "next" }]
   },

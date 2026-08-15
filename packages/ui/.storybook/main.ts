@@ -14,6 +14,7 @@ const config: StorybookConfig = {
   framework: getAbsolutePath("@storybook/react-vite"),
   stories: [
     "../src/**/*.stories.@(ts|tsx)",
+    "../../auth/src/**/*.stories.@(ts|tsx)",
     "../../../apps/home/stories/**/*.stories.@(ts|tsx)",
     "../../../apps/live-splash/stories/**/*.stories.@(ts|tsx)",
     "../../../apps/weather/stories/**/*.stories.@(ts|tsx)",

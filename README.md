@@ -39,7 +39,12 @@ pnpm --filter @factory/home dev
 ```
 
 Home links to Live Splash at `http://localhost:3000` and Weather at
-`http://localhost:3001` by default. For a deployment, configure public absolute
-HTTPS URLs with `LIVE_SPLASH_URL` and `WEATHER_URL`; each selected app remains an
-independently hosted Next.js application unless a separate reverse proxy is
-introduced.
+`http://localhost:3001` by default. For independently hosted deployments,
+configure public absolute HTTPS URLs with `LIVE_SPLASH_URL` and `WEATHER_URL`.
+
+For the shared origin `https://factory.markagen.ai`, build Weather with
+`FACTORY_SHARED_ORIGIN=true` (serves `/weather`) and Live Splash with
+`FACTORY_SHARED_ORIGIN=true` (serves `/live-splash`), then route those path
+prefixes to their corresponding applications without stripping the prefix.
+Production deployments must use `AUTH_MODE=supabase`; mock authentication is
+available only through `next dev`.
