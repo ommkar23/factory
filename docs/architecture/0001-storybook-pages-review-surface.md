@@ -13,11 +13,15 @@ not host product APIs, user data, or application runtime services.
    `main`, a reviewed protected branch, or a reviewed tag/SHA).
 3. The build checks out only that requested ref, installs dependencies with
    `pnpm install --frozen-lockfile`, validates `@factory/ui`, builds its static
-   Storybook, and uploads only `packages/ui/storybook-static`.
+   Storybook with the `/factory/storybook/` base path, packages it as the
+   `storybook/` child of the Pages artifact, and creates static redirects for
+   Home, Live Splash, and Weather from generated Storybook metadata.
 4. The dependency-ordered deploy job publishes that artifact to the restricted
    `github-pages` environment. Discover the deployed URL from the run's deploy
-   job or the repository's Pages settings. The canonical URL is normally
-   `https://ommkar23.github.io/factory/`.
+   job or the repository's Pages settings; the canonical Storybook URL is
+   normally `https://ommkar23.github.io/factory/storybook/`, with app entries at
+   `/factory/storybook/home/`, `/factory/storybook/live-splash/`, and
+   `/factory/storybook/weather/`.
 
 The workflow is deliberately only `workflow_dispatch`/`workflow_call`; it has no
 `pull_request`, `push`, or scheduled trigger. Build access is `contents: read`.

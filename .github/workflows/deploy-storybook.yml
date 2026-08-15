@@ -55,12 +55,15 @@ jobs:
       - name: Build static Storybook
         run: pnpm --filter @factory/ui build
         env:
-          STORYBOOK_BASE_PATH: /factory/
+          STORYBOOK_BASE_PATH: /factory/storybook/
+
+      - name: Package Pages artifact
+        run: pnpm --filter @factory/ui package:pages -- --output "$RUNNER_TEMP/factory-pages"
 
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: packages/ui/storybook-static
+          path: ${{ runner.temp }}/factory-pages
 
   deploy:
     name: Deploy Storybook review site

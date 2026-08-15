@@ -20,6 +20,7 @@
     "build": "storybook build",
     "dev": "storybook dev --host 0.0.0.0 --port 6006",
     "lint": "prettier --check .",
+    "package:pages": "node scripts/package-pages-artifact.mjs",
     "typecheck": "tsc --noEmit -p tsconfig.json",
     "test": "vitest run"
   },

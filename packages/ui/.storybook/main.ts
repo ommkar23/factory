@@ -15,6 +15,7 @@ const config: StorybookConfig = {
   stories: [
     "../src/**/*.stories.@(ts|tsx)",
     "../../../apps/home/stories/**/*.stories.@(ts|tsx)",
+    "../../../apps/live-splash/stories/**/*.stories.@(ts|tsx)",
     "../../../apps/weather/stories/**/*.stories.@(ts|tsx)",
   ],
   async viteFinal(config) {
