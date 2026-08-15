@@ -47,6 +47,47 @@ describe("shared focus and reduced-motion contracts", () => {
     }
   });
 
+  it("keeps the shared focus ring on destructive buttons", () => {
+    render(<Button variant="destructive">Delete</Button>);
+
+    const button = screen.getByRole("button", { name: "Delete" });
+
+    expect(button.className).toContain("focus-visible:ring-ring");
+    expect(button.className).not.toContain("focus-visible:ring-destructive/20");
+    expect(button.className).not.toContain(
+      "dark:focus-visible:ring-destructive/40",
+    );
+  });
+
+  it("keeps the shared focus ring on destructive link badges", () => {
+    render(
+      <Badge variant="destructive" render={<a href="#remove" />}>
+        Remove
+      </Badge>,
+    );
+
+    const badge = screen.getByRole("link", { name: "Remove" });
+
+    expect(badge.className).toContain("focus-visible:ring-ring");
+    expect(badge.className).not.toContain("focus-visible:ring-destructive/20");
+    expect(badge.className).not.toContain(
+      "dark:focus-visible:ring-destructive/40",
+    );
+  });
+
+  it("keeps the shared focus ring on invalid inputs", () => {
+    render(<Input aria-invalid aria-label="Invalid location" />);
+
+    const input = screen.getByRole("textbox", { name: "Invalid location" });
+
+    expect(input.className).toContain("focus-visible:ring-ring");
+    expect(input.className).toContain("aria-invalid:border-destructive");
+    expect(input.className).not.toContain("aria-invalid:ring-destructive/20");
+    expect(input.className).not.toContain(
+      "dark:aria-invalid:ring-destructive/40",
+    );
+  });
+
   it("preserves static feedback while removing non-essential motion", () => {
     render(
       <>
