@@ -1,0 +1,73 @@
+# One-time bootstrap images for the initial Terraform apply.
+# Invoke with:
+# gcloud builds submit --config=cloudbuild.bootstrap.yaml \
+#   --substitutions=_SUPABASE_PUBLISHABLE_KEY="$NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY" .
+substitutions:
+  _IMAGE_PREFIX: asia-south1-docker.pkg.dev/driven-elixir-499108-i5/factory
+  _SUPABASE_URL: https://xsgklsvdmoikaekxzifj.supabase.co
+
+steps:
+  - id: build-home
+    name: gcr.io/cloud-builders/docker
+    args:
+      - build
+      - -f
+      - Dockerfile
+      - --build-arg
+      - APP=home
+      - --build-arg
+      - AUTH_MODE=supabase
+      - --build-arg
+      - FACTORY_SHARED_ORIGIN=true
+      - --build-arg
+      - NEXT_PUBLIC_SUPABASE_URL=${_SUPABASE_URL}
+      - --build-arg
+      - NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=${_SUPABASE_PUBLISHABLE_KEY}
+      - -t
+      - ${_IMAGE_PREFIX}/home:bootstrap
+      - .
+
+  - id: build-weather
+    name: gcr.io/cloud-builders/docker
+    args:
+      - build
+      - -f
+      - Dockerfile
+      - --build-arg
+      - APP=weather
+      - --build-arg
+      - AUTH_MODE=supabase
+      - --build-arg
+      - FACTORY_SHARED_ORIGIN=true
+      - --build-arg
+      - NEXT_PUBLIC_SUPABASE_URL=${_SUPABASE_URL}
+      - --build-arg
+      - NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=${_SUPABASE_PUBLISHABLE_KEY}
+      - -t
+      - ${_IMAGE_PREFIX}/weather:bootstrap
+      - .
+
+  - id: build-live-splash
+    name: gcr.io/cloud-builders/docker
+    args:
+      - build
+      - -f
+      - Dockerfile
+      - --build-arg
+      - APP=live-splash
+      - --build-arg
+      - AUTH_MODE=supabase
+      - --build-arg
+      - FACTORY_SHARED_ORIGIN=true
+      - --build-arg
+      - NEXT_PUBLIC_SUPABASE_URL=${_SUPABASE_URL}
+      - --build-arg
+      - NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=${_SUPABASE_PUBLISHABLE_KEY}
+      - -t
+      - ${_IMAGE_PREFIX}/live-splash:bootstrap
+      - .
+
+images:
+  - ${_IMAGE_PREFIX}/home:bootstrap
+  - ${_IMAGE_PREFIX}/weather:bootstrap
+  - ${_IMAGE_PREFIX}/live-splash:bootstrap

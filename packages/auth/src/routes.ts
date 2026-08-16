@@ -9,6 +9,15 @@ import {
 } from "./core";
 import { MOCK_AUTH_COOKIE } from "./server";
 
+function getCallbackOrigin(request: NextRequest): string {
+  // Cloud Run receives the request from the load balancer over its internal
+  // listener, so `request.url` can resolve to 0.0.0.0:8080. OAuth redirects
+  // must always use the public shared origin.
+  return getAuthMode() === "supabase"
+    ? "https://factory.markagen.ai"
+    : request.nextUrl.origin;
+}
+
 function getCallbackDestination(request: NextRequest): URL {
   const next = request.nextUrl.searchParams.get("next");
   const destinationPath =
@@ -19,7 +28,7 @@ function getCallbackDestination(request: NextRequest): URL {
       ? next
       : "/";
 
-  return new URL(destinationPath, request.url);
+  return new URL(destinationPath, getCallbackOrigin(request));
 }
 
 function mockCookieOptions() {
@@ -64,7 +73,7 @@ export async function handleAuthCallback(
   request: NextRequest,
 ): Promise<NextResponse> {
   const destination = getCallbackDestination(request);
-  const errorDestination = new URL("/", request.url);
+  const errorDestination = new URL("/", getCallbackOrigin(request));
 
   if (getAuthMode() === "mock") {
     return NextResponse.redirect(destination);

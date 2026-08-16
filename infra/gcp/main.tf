@@ -108,6 +108,9 @@ resource "google_cloud_run_v2_service" "factory" {
   name     = each.value.name
   location = var.region
   ingress  = "INGRESS_TRAFFIC_INTERNAL_LOAD_BALANCER"
+  # Domain-restricted sharing blocks an allUsers IAM binding. The service is
+  # still reachable only through the external load balancer due to ingress.
+  invoker_iam_disabled = true
 
   template {
     service_account = google_service_account.runtime.email
@@ -130,15 +133,6 @@ resource "google_cloud_run_v2_service" "factory" {
   }
 
   depends_on = [google_project_service.required]
-}
-
-resource "google_cloud_run_v2_service_iam_member" "public_invoker" {
-  for_each = google_cloud_run_v2_service.factory
-
-  location = each.value.location
-  name     = each.value.name
-  role     = "roles/run.invoker"
-  member   = "allUsers"
 }
 
 resource "google_compute_region_network_endpoint_group" "serverless" {

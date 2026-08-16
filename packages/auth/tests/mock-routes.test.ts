@@ -110,6 +110,24 @@ describe("mock auth routes", () => {
     );
   });
 
+  it("uses the canonical Factory origin rather than an internal proxy host", async () => {
+    process.env.AUTH_MODE = "supabase";
+    process.env.NODE_ENV = "production";
+    process.env.NEXT_PUBLIC_SUPABASE_URL = "https://project.supabase.co";
+    process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY = "test-publishable-key";
+    exchangeCodeForSession.mockResolvedValue({ error: null });
+
+    const response = await handleAuthCallback(
+      new NextRequest(
+        "http://0.0.0.0:8080/auth/callback?code=pkce-code&next=/",
+      ),
+    );
+
+    expect(response.headers.get("location")).toBe(
+      "https://factory.markagen.ai/",
+    );
+  });
+
   it("redirects a missing OAuth code safely to home with an error", async () => {
     process.env.AUTH_MODE = "supabase";
     process.env.NODE_ENV = "production";
