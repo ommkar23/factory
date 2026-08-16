@@ -10,7 +10,7 @@ export default async function HomePage() {
   const user = await getCurrentUser();
 
   if (!user) {
-    redirect(getLoginPath(appBasePath));
+    redirect(getLoginPath(""));
   }
 
   return (

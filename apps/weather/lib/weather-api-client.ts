@@ -217,12 +217,13 @@ async function getJson(fetcher: Fetcher, url: string, signal?: AbortSignal) {
 
 export function createSameOriginClient(
   fetcher: Fetcher = fetch,
+  basePath = process.env.FACTORY_SHARED_ORIGIN === "true" ? "/weather" : "",
 ): WeatherApiClient {
   return {
     async searchLocations(query, options) {
       const body = await getJson(
         fetcher,
-        `/api/locations?${new URLSearchParams({ q: query.trim() })}`,
+        `${basePath}/api/locations?${new URLSearchParams({ q: query.trim() })}`,
         options?.signal,
       );
       if (!isRecord(body) || !Array.isArray(body.locations)) {
@@ -242,7 +243,7 @@ export function createSameOriginClient(
     async getCurrentConditions(location, options) {
       const body = await getJson(
         fetcher,
-        `/api/weather?${new URLSearchParams({
+        `${basePath}/api/weather?${new URLSearchParams({
           latitude: String(location.latitude),
           longitude: String(location.longitude),
         })}`,

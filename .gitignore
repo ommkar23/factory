@@ -10,5 +10,9 @@ storybook-static/
 .env
 .env.*
 !.env.example
+**/.tfstate
+**/.tfstate.*
+.terraform/
+gha-creds-*.json
 *.log
 .DS_Store

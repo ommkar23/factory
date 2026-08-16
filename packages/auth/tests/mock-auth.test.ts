@@ -6,6 +6,7 @@ import {
   getAuthMode,
   getAuthPath,
   getLoginPath,
+  getProductionOAuthCallbackUrl,
   getRequestBasePath,
   getMockUser,
   getUserInitials,
@@ -38,6 +39,18 @@ describe("mock authentication", () => {
     );
     expect(getAuthMode("supabase", "development")).toBe("supabase");
     expect(() => getAuthMode("unknown")).toThrow("AUTH_MODE");
+  });
+
+  it("builds the fixed production OAuth callback URLs", () => {
+    expect(getProductionOAuthCallbackUrl("/")).toBe(
+      "https://factory.markagen.ai/auth/callback?next=/",
+    );
+    expect(getProductionOAuthCallbackUrl("/live-splash")).toBe(
+      "https://factory.markagen.ai/auth/callback?next=/live-splash",
+    );
+    expect(getProductionOAuthCallbackUrl("/weather")).toBe(
+      "https://factory.markagen.ai/auth/callback?next=/weather",
+    );
   });
 
   it("builds callback paths for local ports and shared-origin deployments", () => {

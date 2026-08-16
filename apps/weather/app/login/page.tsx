@@ -1,4 +1,9 @@
-import { getAuthMode, getAuthPath, getRequestBasePath } from "@factory/auth";
+import {
+  getAuthMode,
+  getAuthPath,
+  getProductionOAuthCallbackUrl,
+  getRequestBasePath,
+} from "@factory/auth";
 import { getCurrentUser } from "@factory/auth/server";
 import { LoginScreen } from "@factory/auth/ui";
 import { redirect } from "next/navigation";
@@ -15,14 +20,14 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
   ]);
 
   if (user) {
-    redirect(getAuthPath(appBasePath, "/"));
+    redirect(getAuthPath("", "/"));
   }
 
   return (
     <LoginScreen
       appName="Weather"
       authError={authError}
-      callbackPath={getAuthPath(appBasePath, "/auth/callback")}
+      callbackPath={getProductionOAuthCallbackUrl("/weather")}
       mode={getAuthMode()}
       returnTo={getAuthPath(appBasePath, "/")}
     />

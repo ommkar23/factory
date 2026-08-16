@@ -4,6 +4,10 @@ import { fileURLToPath } from "node:url";
 const nextConfig = {
   basePath:
     process.env.FACTORY_SHARED_ORIGIN === "true" ? "/weather" : undefined,
+  env: {
+    FACTORY_SHARED_ORIGIN: process.env.FACTORY_SHARED_ORIGIN,
+  },
+  output: "standalone",
   turbopack: {
     root: fileURLToPath(new URL("../..", import.meta.url)),
   },

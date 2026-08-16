@@ -56,6 +56,20 @@ describe("same-origin weather API client", () => {
     );
   });
 
+  it("prefixes API requests when served beneath the shared-origin weather path", async () => {
+    const fetcher = vi
+      .fn()
+      .mockResolvedValue(jsonResponse({ locations: [selectedLocation] }));
+    const client = createSameOriginClient(fetcher, "/weather");
+
+    await client.searchLocations("Portland");
+
+    expect(fetcher).toHaveBeenCalledWith(
+      "/weather/api/locations?q=Portland",
+      expect.objectContaining({ method: "GET" }),
+    );
+  });
+
   it("structurally satisfies the comparison data source contract", () => {
     const client = createSameOriginClient(vi.fn());
     const dataSource: WeatherComparisonDataSource = client;

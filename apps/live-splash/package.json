@@ -7,7 +7,7 @@
     "build": "next build",
     "lint": "prettier --check .",
     "typecheck": "tsc --noEmit",
-    "test": "node --test tests/**/*.test.mjs"
+    "test": "node --test tests/**/*.test.mjs && vitest run tests/shared-origin-routing.test.ts tests/health-route.test.ts"
   },
   "dependencies": {
     "@factory/auth": "workspace:*",
@@ -24,6 +24,7 @@
     "eslint": "9.39.1",
     "eslint-config-next": "16.1.1",
     "tailwindcss": "^4.1.18",
-    "typescript": "5.9.3"
+    "typescript": "5.9.3",
+    "vitest": "3.2.4"
   }
 }

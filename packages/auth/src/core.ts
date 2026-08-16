@@ -11,6 +11,20 @@ export type AuthUser = {
 
 const MOCK_TOKEN_PREFIX = "factory-mock.";
 
+export const AUTH_CALLBACK_DESTINATIONS = [
+  "/",
+  "/live-splash",
+  "/weather",
+] as const;
+
+type AuthCallbackDestination = (typeof AUTH_CALLBACK_DESTINATIONS)[number];
+
+export function getProductionOAuthCallbackUrl(
+  next: AuthCallbackDestination,
+): string {
+  return `https://factory.markagen.ai/auth/callback?next=${next}`;
+}
+
 export function getSupabaseConfig(): {
   publishableKey: string;
   url: string;

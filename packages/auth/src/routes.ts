@@ -2,17 +2,25 @@ import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 
 import {
+  AUTH_CALLBACK_DESTINATIONS,
   createMockToken,
   getAuthMode,
-  getAuthPath,
-  getLoginPath,
   getSupabaseConfig,
 } from "./core";
 import { MOCK_AUTH_COOKIE } from "./server";
 
-type CallbackOptions = {
-  basePath: string;
-};
+function getCallbackDestination(request: NextRequest): URL {
+  const next = request.nextUrl.searchParams.get("next");
+  const destinationPath =
+    next !== null &&
+    AUTH_CALLBACK_DESTINATIONS.includes(
+      next as (typeof AUTH_CALLBACK_DESTINATIONS)[number],
+    )
+      ? next
+      : "/";
+
+  return new URL(destinationPath, request.url);
+}
 
 function mockCookieOptions() {
   return {
@@ -54,10 +62,9 @@ export function createMockSignOutResponse() {
 
 export async function handleAuthCallback(
   request: NextRequest,
-  { basePath }: CallbackOptions,
 ): Promise<NextResponse> {
-  const destination = new URL(getAuthPath(basePath, "/"), request.url);
-  const errorDestination = new URL(getLoginPath(basePath), request.url);
+  const destination = getCallbackDestination(request);
+  const errorDestination = new URL("/", request.url);
 
   if (getAuthMode() === "mock") {
     return NextResponse.redirect(destination);
