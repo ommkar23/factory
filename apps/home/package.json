@@ -14,7 +14,7 @@
     "@factory/ui": "workspace:*",
     "next": "16.1.1",
     "react": "19.2.3",
-    "react-dom": "19.2.3"
+    "react-dom": "19.2.8"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4.1.18",
@@ -22,7 +22,7 @@
     "@testing-library/user-event": "14.6.1",
     "@types/node": "24.10.1",
     "@types/react": "19.2.2",
-    "@types/react-dom": "19.2.2",
+    "@types/react-dom": "19.2.4",
     "eslint": "9.39.1",
     "eslint-config-next": "16.1.1",
     "jsdom": "26.1.0",

@@ -14,13 +14,13 @@
     "@factory/ui": "workspace:*",
     "next": "16.1.1",
     "react": "19.2.3",
-    "react-dom": "19.2.3"
+    "react-dom": "19.2.8"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4.1.18",
     "@types/node": "24.10.1",
     "@types/react": "19.2.2",
-    "@types/react-dom": "19.2.2",
+    "@types/react-dom": "19.2.4",
     "eslint": "9.39.1",
     "eslint-config-next": "16.1.1",
     "tailwindcss": "^4.1.18",
