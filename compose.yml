@@ -1,28 +1,29 @@
 # Factory development: three clients plus the pinned official Supabase stack.
 name: factory-dev
 include:
-- path: ./supabase/docker-compose.yml
+  - path: ./supabase/docker-compose.yml
 services:
   home:
     build:
       context: .
       dockerfile: Dockerfile
       target: dev
-    command: sh -c "pnpm install --frozen-lockfile && pnpm --filter @factory/home
+    command:
+      sh -c "pnpm install --frozen-lockfile && pnpm --filter @factory/home
       dev"
     environment:
-      WATCHPACK_POLLING: 'true'
+      WATCHPACK_POLLING: "true"
       HOME: /tmp
       COREPACK_HOME: /tmp/corepack
       PNPM_HOME: /tmp/pnpm
     working_dir: /workspace
     user: 1001:1002
     volumes:
-    - .:/workspace
-    - home-node-modules:/workspace/node_modules
-    - home-pnpm-cache:/pnpm
+      - .:/workspace
+      - home-node-modules:/workspace/node_modules
+      - home-pnpm-cache:/pnpm
     ports:
-    - 127.0.0.1:3001:3002
+      - 127.0.0.1:3001:3002
     depends_on:
       api-gw:
         condition: service_started
@@ -31,21 +32,22 @@ services:
       context: .
       dockerfile: Dockerfile
       target: dev
-    command: sh -c "pnpm install --frozen-lockfile && pnpm --filter @factory/live-splash
+    command:
+      sh -c "pnpm install --frozen-lockfile && pnpm --filter @factory/live-splash
       dev"
     environment:
-      WATCHPACK_POLLING: 'true'
+      WATCHPACK_POLLING: "true"
       HOME: /tmp
       COREPACK_HOME: /tmp/corepack
       PNPM_HOME: /tmp/pnpm
     working_dir: /workspace
     user: 1001:1002
     volumes:
-    - .:/workspace
-    - live-splash-node-modules:/workspace/node_modules
-    - live-splash-pnpm-cache:/pnpm
+      - .:/workspace
+      - live-splash-node-modules:/workspace/node_modules
+      - live-splash-pnpm-cache:/pnpm
     ports:
-    - 127.0.0.1:3002:3000
+      - 127.0.0.1:3002:3000
     depends_on:
       api-gw:
         condition: service_started
@@ -54,21 +56,22 @@ services:
       context: .
       dockerfile: Dockerfile
       target: dev
-    command: sh -c "pnpm install --frozen-lockfile && pnpm --filter @factory/weather
+    command:
+      sh -c "pnpm install --frozen-lockfile && pnpm --filter @factory/weather
       dev"
     environment:
-      WATCHPACK_POLLING: 'true'
+      WATCHPACK_POLLING: "true"
       HOME: /tmp
       COREPACK_HOME: /tmp/corepack
       PNPM_HOME: /tmp/pnpm
     working_dir: /workspace
     user: 1001:1002
     volumes:
-    - .:/workspace
-    - weather-node-modules:/workspace/node_modules
-    - weather-pnpm-cache:/pnpm
+      - .:/workspace
+      - weather-node-modules:/workspace/node_modules
+      - weather-pnpm-cache:/pnpm
     ports:
-    - 127.0.0.1:3003:3001
+      - 127.0.0.1:3003:3001
     depends_on:
       api-gw:
         condition: service_started

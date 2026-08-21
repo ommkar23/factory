@@ -1,5 +1,5 @@
 resources:
-  - '@type': type.googleapis.com/envoy.config.cluster.v3.Cluster
+  - "@type": type.googleapis.com/envoy.config.cluster.v3.Cluster
     name: auth
     connect_timeout: 5s
     type: STRICT_DNS
@@ -31,7 +31,7 @@ resources:
           max_pending_requests: 10000
           max_requests: 10000
 
-  - '@type': type.googleapis.com/envoy.config.cluster.v3.Cluster
+  - "@type": type.googleapis.com/envoy.config.cluster.v3.Cluster
     name: rest
     connect_timeout: 5s
     type: STRICT_DNS
@@ -63,7 +63,7 @@ resources:
           max_pending_requests: 10000
           max_requests: 10000
 
-  - '@type': type.googleapis.com/envoy.config.cluster.v3.Cluster
+  - "@type": type.googleapis.com/envoy.config.cluster.v3.Cluster
     name: realtime
     connect_timeout: 5s
     type: STRICT_DNS
@@ -95,7 +95,7 @@ resources:
           max_pending_requests: 10000
           max_requests: 10000
 
-  - '@type': type.googleapis.com/envoy.config.cluster.v3.Cluster
+  - "@type": type.googleapis.com/envoy.config.cluster.v3.Cluster
     name: storage
     connect_timeout: 5s
     type: STRICT_DNS
@@ -127,7 +127,7 @@ resources:
           max_pending_requests: 10000
           max_requests: 10000
 
-  - '@type': type.googleapis.com/envoy.config.cluster.v3.Cluster
+  - "@type": type.googleapis.com/envoy.config.cluster.v3.Cluster
     name: functions
     connect_timeout: 5s
     type: STRICT_DNS
@@ -158,7 +158,7 @@ resources:
           max_pending_requests: 10000
           max_requests: 10000
 
-  - '@type': type.googleapis.com/envoy.config.cluster.v3.Cluster
+  - "@type": type.googleapis.com/envoy.config.cluster.v3.Cluster
     name: meta
     connect_timeout: 5s
     type: STRICT_DNS
@@ -190,7 +190,7 @@ resources:
           max_pending_requests: 10000
           max_requests: 10000
 
-  - '@type': type.googleapis.com/envoy.config.cluster.v3.Cluster
+  - "@type": type.googleapis.com/envoy.config.cluster.v3.Cluster
     name: studio
     connect_timeout: 5s
     type: STRICT_DNS

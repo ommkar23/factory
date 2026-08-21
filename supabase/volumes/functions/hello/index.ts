@@ -3,8 +3,8 @@
 // This enables autocomplete, go to definition, etc.
 
 // Setup type definitions for built-in Supabase Runtime APIs
-import "@supabase/functions-js/edge-runtime.d.ts"
-import { withSupabase } from "@supabase/server"
+import "@supabase/functions-js/edge-runtime.d.ts";
+import { withSupabase } from "@supabase/server";
 
 // Logs are visible from 'functions' container inspector
 console.log("Hello from Functions!");
@@ -34,4 +34,3 @@ export default {
 // To invoke:
 // curl 'http://localhost:<API_GW_HTTP_PORT>/functions/v1/hello' \
 //   --header 'apiKey: <sb_publishable/sb_secret key>'
-

@@ -1,4 +1,4 @@
-_format_version: '2.1'
+_format_version: "2.1"
 _transform: true
 
 ###
@@ -29,8 +29,8 @@ acls:
 ###
 basicauth_credentials:
   - consumer: DASHBOARD
-    username: '$DASHBOARD_USERNAME'
-    password: '$DASHBOARD_PASSWORD'
+    username: "$DASHBOARD_USERNAME"
+    password: "$DASHBOARD_PASSWORD"
 
 ###
 ### API Routes
@@ -38,7 +38,7 @@ basicauth_credentials:
 services:
   ## Open Auth routes
   - name: auth-v1-open
-    _comment: 'Auth: /auth/v1/verify* -> http://auth:9999/verify*'
+    _comment: "Auth: /auth/v1/verify* -> http://auth:9999/verify*"
     url: http://auth:9999/verify
     routes:
       - name: auth-v1-open
@@ -48,7 +48,7 @@ services:
     plugins:
       - name: cors
   - name: auth-v1-open-callback
-    _comment: 'Auth: /auth/v1/callback* -> http://auth:9999/callback*'
+    _comment: "Auth: /auth/v1/callback* -> http://auth:9999/callback*"
     url: http://auth:9999/callback
     routes:
       - name: auth-v1-open-callback
@@ -58,7 +58,7 @@ services:
     plugins:
       - name: cors
   - name: auth-v1-open-authorize
-    _comment: 'Auth: /auth/v1/authorize* -> http://auth:9999/authorize*'
+    _comment: "Auth: /auth/v1/authorize* -> http://auth:9999/authorize*"
     url: http://auth:9999/authorize
     routes:
       - name: auth-v1-open-authorize
@@ -68,7 +68,7 @@ services:
     plugins:
       - name: cors
   - name: auth-v1-open-jwks
-    _comment: 'Auth: /auth/v1/.well-known/jwks.json -> http://auth:9999/.well-known/jwks.json'
+    _comment: "Auth: /auth/v1/.well-known/jwks.json -> http://auth:9999/.well-known/jwks.json"
     url: http://auth:9999/.well-known/jwks.json
     routes:
       - name: auth-v1-open-jwks
@@ -84,7 +84,7 @@ services:
       - name: auth-v1-open-sso-acs
         strip_path: true
         paths:
-        - /auth/v1/sso/saml/acs
+          - /auth/v1/sso/saml/acs
     plugins:
       - name: cors
 
@@ -94,13 +94,13 @@ services:
       - name: auth-v1-open-sso-metadata
         strip_path: true
         paths:
-        - /auth/v1/sso/saml/metadata
+          - /auth/v1/sso/saml/metadata
     plugins:
       - name: cors
 
   ## Secure Auth routes
   - name: auth-v1
-    _comment: 'Auth: /auth/v1/* -> http://auth:9999/*'
+    _comment: "Auth: /auth/v1/* -> http://auth:9999/*"
     url: http://auth:9999/
     routes:
       - name: auth-v1-all
@@ -129,7 +129,7 @@ services:
 
   ## OpenAPI root - admin only
   - name: rest-v1-openapi
-    _comment: 'PostgREST OpenAPI root: /rest/v1/ -> <http://rest:3000/> (admin only). See <https://github.com/orgs/supabase/discussions/42949>'
+    _comment: "PostgREST OpenAPI root: /rest/v1/ -> <http://rest:3000/> (admin only). See <https://github.com/orgs/supabase/discussions/42949>"
     url: http://rest:3000/
     routes:
       - name: rest-v1-openapi-root
@@ -156,7 +156,7 @@ services:
 
   ## Secure PostgREST routes
   - name: rest-v1
-    _comment: 'PostgREST: /rest/v1/* -> http://rest:3000/*'
+    _comment: "PostgREST: /rest/v1/* -> http://rest:3000/*"
     url: http://rest:3000/
     routes:
       - name: rest-v1-all
@@ -185,7 +185,7 @@ services:
 
   ## Secure GraphQL routes
   - name: graphql-v1
-    _comment: 'PostgREST: /graphql/v1/* -> http://rest:3000/rpc/graphql'
+    _comment: "PostgREST: /graphql/v1/* -> http://rest:3000/rpc/graphql"
     url: http://rest:3000/rpc/graphql
     routes:
       - name: graphql-v1-all
@@ -215,7 +215,7 @@ services:
 
   ## Secure Realtime routes
   - name: realtime-v1-ws
-    _comment: 'Realtime: /realtime/v1/* -> ws://realtime:4000/socket/*'
+    _comment: "Realtime: /realtime/v1/* -> ws://realtime:4000/socket/*"
     url: http://realtime-dev.supabase-realtime:4000/socket
     protocol: ws
     routes:
@@ -245,7 +245,7 @@ services:
 
   # Block access to /realtime/v1/api/openapi
   - name: realtime-v1-rest-openapi
-    _comment: 'Realtime: /realtime/v1/api/openapi/* -> http://realtime:4000/api/openapi/* (blocked)'
+    _comment: "Realtime: /realtime/v1/api/openapi/* -> http://realtime:4000/api/openapi/* (blocked)"
     url: http://realtime-dev.supabase-realtime:4000/api/openapi
     protocol: http
     routes:
@@ -261,7 +261,7 @@ services:
 
   # Block access to /realtime/v1/api/tenants
   - name: realtime-v1-rest-tenants
-    _comment: 'Realtime: /realtime/v1/api/tenants/* -> http://realtime:4000/api/tenants/* (blocked)'
+    _comment: "Realtime: /realtime/v1/api/tenants/* -> http://realtime:4000/api/tenants/* (blocked)"
     url: http://realtime-dev.supabase-realtime:4000/api/tenants
     protocol: http
     routes:
@@ -276,7 +276,7 @@ services:
           message: "Access is forbidden."
 
   - name: realtime-v1-rest
-    _comment: 'Realtime: /realtime/v1/api/* -> http://realtime:4000/api/*'
+    _comment: "Realtime: /realtime/v1/api/* -> http://realtime:4000/api/*"
     url: http://realtime-dev.supabase-realtime:4000/api
     protocol: http
     routes:
@@ -314,7 +314,7 @@ services:
   ## The post-function strips this empty header so Storage's S3 signature
   ## verification falls through to query-parameter parsing.
   - name: storage-v1
-    _comment: 'Storage: /storage/v1/* -> http://storage:5000/*'
+    _comment: "Storage: /storage/v1/* -> http://storage:5000/*"
     url: http://storage:5000/
     routes:
       - name: storage-v1-all
@@ -342,7 +342,7 @@ services:
 
   ## Edge Functions routes
   - name: functions-v1
-    _comment: 'Edge Functions: /functions/v1/* -> http://functions:9000/*'
+    _comment: "Edge Functions: /functions/v1/* -> http://functions:9000/*"
     url: http://functions:9000/
     read_timeout: 150000
     routes:
@@ -355,7 +355,7 @@ services:
 
   ## OAuth 2.0 Authorization Server Metadata (RFC 8414)
   - name: well-known-oauth
-    _comment: 'Auth: /.well-known/oauth-authorization-server -> http://auth:9999/.well-known/oauth-authorization-server'
+    _comment: "Auth: /.well-known/oauth-authorization-server -> http://auth:9999/.well-known/oauth-authorization-server"
     url: http://auth:9999/.well-known/oauth-authorization-server
     routes:
       - name: well-known-oauth
@@ -392,7 +392,7 @@ services:
 
   ## Secure Database routes
   - name: meta
-    _comment: 'pg-meta: /pg/* -> http://pg-meta:8080/*'
+    _comment: "pg-meta: /pg/* -> http://pg-meta:8080/*"
     url: http://meta:8080/
     routes:
       - name: meta-all
@@ -411,7 +411,7 @@ services:
 
   ## Block access to /api/mcp
   - name: mcp-blocker
-    _comment: 'Block direct access to /api/mcp'
+    _comment: "Block direct access to /api/mcp"
     url: http://studio:3000/api/mcp
     routes:
       - name: mcp-blocker-route
@@ -426,7 +426,7 @@ services:
 
   ## MCP endpoint - local access
   - name: mcp
-    _comment: 'MCP: /mcp -> http://studio:3000/api/mcp (local access)'
+    _comment: "MCP: /mcp -> http://studio:3000/api/mcp (local access)"
     url: http://studio:3000/api/mcp
     routes:
       - name: mcp
@@ -453,7 +453,7 @@ services:
 
   ## Protected Dashboard - catch all remaining routes
   - name: dashboard
-    _comment: 'Studio: /* -> http://studio:3000/*'
+    _comment: "Studio: /* -> http://studio:3000/*"
     url: http://studio:3000/
     routes:
       - name: dashboard-all

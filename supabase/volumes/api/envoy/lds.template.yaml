@@ -1,7 +1,7 @@
 resources:
-  - '@type': type.googleapis.com/envoy.config.listener.v3.Listener
+  - "@type": type.googleapis.com/envoy.config.listener.v3.Listener
     name: supabase
-    per_connection_buffer_limit_bytes: 32768  # 32 KiB
+    per_connection_buffer_limit_bytes: 32768 # 32 KiB
 
     address:
       socket_address:
@@ -12,7 +12,7 @@ resources:
       - filters:
           - name: envoy.filters.network.http_connection_manager
             typed_config:
-              '@type': >-
+              "@type": >-
                 type.googleapis.com/envoy.extensions.filters.network.http_connection_manager.v3.HttpConnectionManager
               stat_prefix: ingress_http
               normalize_path: true
@@ -26,7 +26,7 @@ resources:
               access_log:
                 - name: envoy.access_loggers.stdout
                   typed_config:
-                    '@type': >-
+                    "@type": >-
                       type.googleapis.com/envoy.extensions.access_loggers.stream.v3.StdoutAccessLog
                     log_format:
                       text_format_source:
@@ -37,7 +37,7 @@ resources:
                 virtual_hosts:
                   - name: supabase_host
                     domains:
-                      - '*'
+                      - "*"
                     cors:
                       allow_origin_string_match:
                         - safe_regex:
@@ -69,11 +69,11 @@ resources:
                             append_action: ADD_IF_ABSENT
                         typed_per_filter_config:
                           envoy.filters.http.basic_auth:
-                            '@type': >-
+                            "@type": >-
                               type.googleapis.com/envoy.config.route.v3.FilterConfig
                             disabled: true
                           envoy.filters.http.rbac:
-                            '@type': >-
+                            "@type": >-
                               type.googleapis.com/envoy.extensions.filters.http.rbac.v3.RBACPerRoute
                             rbac:
                               rules:
@@ -98,11 +98,11 @@ resources:
                             append_action: ADD_IF_ABSENT
                         typed_per_filter_config:
                           envoy.filters.http.basic_auth:
-                            '@type': >-
+                            "@type": >-
                               type.googleapis.com/envoy.config.route.v3.FilterConfig
                             disabled: true
                           envoy.filters.http.rbac:
-                            '@type': >-
+                            "@type": >-
                               type.googleapis.com/envoy.extensions.filters.http.rbac.v3.RBACPerRoute
                             rbac:
                               rules:
@@ -127,11 +127,11 @@ resources:
                             append_action: ADD_IF_ABSENT
                         typed_per_filter_config:
                           envoy.filters.http.basic_auth:
-                            '@type': >-
+                            "@type": >-
                               type.googleapis.com/envoy.config.route.v3.FilterConfig
                             disabled: true
                           envoy.filters.http.rbac:
-                            '@type': >-
+                            "@type": >-
                               type.googleapis.com/envoy.extensions.filters.http.rbac.v3.RBACPerRoute
                             rbac:
                               rules:
@@ -156,11 +156,11 @@ resources:
                             append_action: ADD_IF_ABSENT
                         typed_per_filter_config:
                           envoy.filters.http.basic_auth:
-                            '@type': >-
+                            "@type": >-
                               type.googleapis.com/envoy.config.route.v3.FilterConfig
                             disabled: true
                           envoy.filters.http.rbac:
-                            '@type': >-
+                            "@type": >-
                               type.googleapis.com/envoy.extensions.filters.http.rbac.v3.RBACPerRoute
                             rbac:
                               rules:
@@ -184,11 +184,11 @@ resources:
                             append_action: ADD_IF_ABSENT
                         typed_per_filter_config:
                           envoy.filters.http.basic_auth:
-                            '@type': >-
+                            "@type": >-
                               type.googleapis.com/envoy.config.route.v3.FilterConfig
                             disabled: true
                           envoy.filters.http.rbac:
-                            '@type': >-
+                            "@type": >-
                               type.googleapis.com/envoy.extensions.filters.http.rbac.v3.RBACPerRoute
                             rbac:
                               rules:
@@ -213,11 +213,11 @@ resources:
                             append_action: ADD_IF_ABSENT
                         typed_per_filter_config:
                           envoy.filters.http.basic_auth:
-                            '@type': >-
+                            "@type": >-
                               type.googleapis.com/envoy.config.route.v3.FilterConfig
                             disabled: true
                           envoy.filters.http.rbac:
-                            '@type': >-
+                            "@type": >-
                               type.googleapis.com/envoy.extensions.filters.http.rbac.v3.RBACPerRoute
                             rbac:
                               rules:
@@ -242,11 +242,11 @@ resources:
                             append_action: ADD_IF_ABSENT
                         typed_per_filter_config:
                           envoy.filters.http.basic_auth:
-                            '@type': >-
+                            "@type": >-
                               type.googleapis.com/envoy.config.route.v3.FilterConfig
                             disabled: true
                           envoy.filters.http.rbac:
-                            '@type': >-
+                            "@type": >-
                               type.googleapis.com/envoy.extensions.filters.http.rbac.v3.RBACPerRoute
                             rbac:
                               rules:
@@ -272,11 +272,11 @@ resources:
                             append_action: ADD_IF_ABSENT
                         typed_per_filter_config:
                           envoy.filters.http.basic_auth:
-                            '@type': >-
+                            "@type": >-
                               type.googleapis.com/envoy.config.route.v3.FilterConfig
                             disabled: true
                           envoy.filters.http.rbac:
-                            '@type': >-
+                            "@type": >-
                               type.googleapis.com/envoy.extensions.filters.http.rbac.v3.RBACPerRoute
                             rbac:
                               rules:
@@ -301,11 +301,11 @@ resources:
                             append_action: ADD_IF_ABSENT
                         typed_per_filter_config:
                           envoy.filters.http.basic_auth:
-                            '@type': >-
+                            "@type": >-
                               type.googleapis.com/envoy.config.route.v3.FilterConfig
                             disabled: true
                           envoy.filters.http.rbac:
-                            '@type': >-
+                            "@type": >-
                               type.googleapis.com/envoy.extensions.filters.http.rbac.v3.RBACPerRoute
                             rbac:
                               rules:
@@ -331,7 +331,7 @@ resources:
                             append_action: ADD_IF_ABSENT
                         typed_per_filter_config:
                           envoy.filters.http.basic_auth:
-                            '@type': >-
+                            "@type": >-
                               type.googleapis.com/envoy.config.route.v3.FilterConfig
                             disabled: true
 
@@ -349,10 +349,10 @@ resources:
                             append_action: ADD_IF_ABSENT
                         typed_per_filter_config:
                           envoy.filters.http.basic_auth:
-                            '@type': type.googleapis.com/envoy.config.route.v3.FilterConfig
+                            "@type": type.googleapis.com/envoy.config.route.v3.FilterConfig
                             disabled: true
                           envoy.filters.http.rbac:
-                            '@type': type.googleapis.com/envoy.extensions.filters.http.rbac.v3.RBACPerRoute
+                            "@type": type.googleapis.com/envoy.extensions.filters.http.rbac.v3.RBACPerRoute
                             rbac:
                               rules:
                                 action: ALLOW
@@ -364,11 +364,11 @@ resources:
                                       - header:
                                           name: apikey
                                           string_match:
-                                            exact: '${SERVICE_ROLE_KEY}'
+                                            exact: "${SERVICE_ROLE_KEY}"
                                       - header:
                                           name: apikey
                                           string_match:
-                                            exact: '${SERVICE_ROLE_KEY_ASYMMETRIC}'
+                                            exact: "${SERVICE_ROLE_KEY_ASYMMETRIC}"
 
                       - name: rest-v1-protected
                         match:
@@ -384,7 +384,7 @@ resources:
                             append_action: ADD_IF_ABSENT
                         typed_per_filter_config:
                           envoy.filters.http.basic_auth:
-                            '@type': >-
+                            "@type": >-
                               type.googleapis.com/envoy.config.route.v3.FilterConfig
                             disabled: true
 
@@ -406,7 +406,7 @@ resources:
                             append_action: ADD_IF_ABSENT
                         typed_per_filter_config:
                           envoy.filters.http.basic_auth:
-                            '@type': >-
+                            "@type": >-
                               type.googleapis.com/envoy.config.route.v3.FilterConfig
                             disabled: true
 
@@ -423,11 +423,11 @@ resources:
                             append_action: ADD_IF_ABSENT
                         typed_per_filter_config:
                           envoy.filters.http.basic_auth:
-                            '@type': >-
+                            "@type": >-
                               type.googleapis.com/envoy.config.route.v3.FilterConfig
                             disabled: true
                           envoy.filters.http.rbac:
-                            '@type': >-
+                            "@type": >-
                               type.googleapis.com/envoy.extensions.filters.http.rbac.v3.RBACPerRoute
                             rbac:
                               rules:
@@ -452,11 +452,11 @@ resources:
                             append_action: ADD_IF_ABSENT
                         typed_per_filter_config:
                           envoy.filters.http.basic_auth:
-                            '@type': >-
+                            "@type": >-
                               type.googleapis.com/envoy.config.route.v3.FilterConfig
                             disabled: true
                           envoy.filters.http.rbac:
-                            '@type': >-
+                            "@type": >-
                               type.googleapis.com/envoy.extensions.filters.http.rbac.v3.RBACPerRoute
                             rbac:
                               rules:
@@ -483,7 +483,7 @@ resources:
                             append_action: ADD_IF_ABSENT
                         typed_per_filter_config:
                           envoy.filters.http.basic_auth:
-                            '@type': >-
+                            "@type": >-
                               type.googleapis.com/envoy.config.route.v3.FilterConfig
                             disabled: true
 
@@ -502,7 +502,7 @@ resources:
                             append_action: ADD_IF_ABSENT
                         typed_per_filter_config:
                           envoy.filters.http.basic_auth:
-                            '@type': >-
+                            "@type": >-
                               type.googleapis.com/envoy.config.route.v3.FilterConfig
                             disabled: true
 
@@ -520,14 +520,14 @@ resources:
                             append_action: ADD_IF_ABSENT
                         typed_per_filter_config:
                           envoy.filters.http.basic_auth:
-                            '@type': >-
+                            "@type": >-
                               type.googleapis.com/envoy.config.route.v3.FilterConfig
                             disabled: true
                           envoy.filters.http.cors:
-                            '@type': >-
+                            "@type": >-
                               type.googleapis.com/envoy.extensions.filters.http.cors.v3.CorsPolicy
                             allow_origin_string_match:
-                              - exact: '${SUPABASE_PUBLIC_URL}'
+                              - exact: "${SUPABASE_PUBLIC_URL}"
                               - safe_regex:
                                   regex: 'https?://(localhost|127\.0\.0\.1)(:[0-9]+)?'
                             allow_methods: "GET,POST,PUT,PATCH,DELETE,OPTIONS,HEAD"
@@ -547,11 +547,11 @@ resources:
                             append_action: ADD_IF_ABSENT
                         typed_per_filter_config:
                           envoy.filters.http.basic_auth:
-                            '@type': >-
+                            "@type": >-
                               type.googleapis.com/envoy.config.route.v3.FilterConfig
                             disabled: true
                           envoy.filters.http.rbac:
-                            '@type': >-
+                            "@type": >-
                               type.googleapis.com/envoy.extensions.filters.http.rbac.v3.RBACPerRoute
                             rbac:
                               rules:
@@ -576,11 +576,11 @@ resources:
                             append_action: ADD_IF_ABSENT
                         typed_per_filter_config:
                           envoy.filters.http.basic_auth:
-                            '@type': >-
+                            "@type": >-
                               type.googleapis.com/envoy.config.route.v3.FilterConfig
                             disabled: true
                           envoy.filters.http.rbac:
-                            '@type': >-
+                            "@type": >-
                               type.googleapis.com/envoy.extensions.filters.http.rbac.v3.RBACPerRoute
                             # Block access to /mcp by default
                             rbac:
@@ -625,7 +625,7 @@ resources:
                             append_action: ADD_IF_ABSENT
                         typed_per_filter_config:
                           envoy.filters.http.rbac:
-                            '@type': >-
+                            "@type": >-
                               type.googleapis.com/envoy.extensions.filters.http.rbac.v3.RBACPerRoute
                             rbac:
                               rules:
@@ -640,20 +640,20 @@ resources:
               http_filters:
                 - name: envoy.filters.http.cors
                   typed_config:
-                    '@type': >-
+                    "@type": >-
                       type.googleapis.com/envoy.extensions.filters.http.cors.v3.Cors
 
                 - name: envoy.filters.http.basic_auth
                   typed_config:
-                    '@type': >-
+                    "@type": >-
                       type.googleapis.com/envoy.extensions.filters.http.basic_auth.v3.BasicAuth
                     users:
-                      inline_string: '${DASHBOARD_BASIC_AUTH}'
+                      inline_string: "${DASHBOARD_BASIC_AUTH}"
 
                 # Copies ?apikey=... from the URL into the apikey header when clients omit the header.
                 - name: envoy.filters.http.lua
                   typed_config:
-                    '@type': >-
+                    "@type": >-
                       type.googleapis.com/envoy.extensions.filters.http.lua.v3.Lua
                     inline_code: |
                       local FUNCTIONS_ROUTE = "functions-v1-all"
@@ -700,7 +700,7 @@ resources:
                 # Returns 401 for missing/invalid API keys on protected API routes.
                 - name: envoy.filters.http.lua
                   typed_config:
-                    '@type': >-
+                    "@type": >-
                       type.googleapis.com/envoy.extensions.filters.http.lua.v3.Lua
                     inline_code: |
                       local ANON_KEY = "${ANON_KEY}"
@@ -773,7 +773,7 @@ resources:
                 # Translates the query parameter apikey into the matching internal JWT and rewrites the URL so only JWTs propagate downstream.
                 - name: envoy.filters.http.lua
                   typed_config:
-                    '@type': >-
+                    "@type": >-
                       type.googleapis.com/envoy.extensions.filters.http.lua.v3.Lua
                     inline_code: |
                       local FUNCTIONS_ROUTE = "functions-v1-all"
@@ -893,7 +893,7 @@ resources:
                 # Translates an apikey header into the appropriate internal JWT for downstream RBAC checks.
                 - name: envoy.filters.http.lua
                   typed_config:
-                    '@type': >-
+                    "@type": >-
                       type.googleapis.com/envoy.extensions.filters.http.lua.v3.Lua
                     inline_code: |
                       local FUNCTIONS_ROUTE = "functions-v1-all"
@@ -952,7 +952,7 @@ resources:
                 # Mirrors apikey into x-api-key for realtime WS compatibility.
                 - name: envoy.filters.http.lua
                   typed_config:
-                    '@type': >-
+                    "@type": >-
                       type.googleapis.com/envoy.extensions.filters.http.lua.v3.Lua
                     inline_code: |
                       local REALTIME_WS_ROUTE = "realtime-v1-ws-protected"
@@ -975,7 +975,7 @@ resources:
                 # Synthesizes an Authorization header (Bearer …) from apikey when callers don’t provide a real JWT header.
                 - name: envoy.filters.http.lua
                   typed_config:
-                    '@type': >-
+                    "@type": >-
                       type.googleapis.com/envoy.extensions.filters.http.lua.v3.Lua
                     inline_code: |
                       local FUNCTIONS_ROUTE = "functions-v1-all"
@@ -1042,7 +1042,7 @@ resources:
 
                 - name: envoy.filters.http.rbac
                   typed_config:
-                    '@type': >-
+                    "@type": >-
                       type.googleapis.com/envoy.extensions.filters.http.rbac.v3.RBAC
                     rules:
                       action: ALLOW
@@ -1056,11 +1056,11 @@ resources:
                             - header:
                                 name: apikey
                                 string_match:
-                                  exact: '${SERVICE_ROLE_KEY}'
+                                  exact: "${SERVICE_ROLE_KEY}"
                             - header:
                                 name: apikey
                                 string_match:
-                                  exact: '${SERVICE_ROLE_KEY_ASYMMETRIC}'
+                                  exact: "${SERVICE_ROLE_KEY_ASYMMETRIC}"
                         apikey:
                           permissions:
                             - url_path:
@@ -1082,20 +1082,20 @@ resources:
                             - header:
                                 name: apikey
                                 string_match:
-                                  exact: '${SERVICE_ROLE_KEY}'
+                                  exact: "${SERVICE_ROLE_KEY}"
                             - header:
                                 name: apikey
                                 string_match:
-                                  exact: '${ANON_KEY}'
+                                  exact: "${ANON_KEY}"
                             - header:
                                 name: apikey
                                 string_match:
-                                  exact: '${SERVICE_ROLE_KEY_ASYMMETRIC}'
+                                  exact: "${SERVICE_ROLE_KEY_ASYMMETRIC}"
                             - header:
                                 name: apikey
                                 string_match:
-                                  exact: '${ANON_KEY_ASYMMETRIC}'
+                                  exact: "${ANON_KEY_ASYMMETRIC}"
                 - name: envoy.filters.http.router
                   typed_config:
-                    '@type': >-
+                    "@type": >-
                       type.googleapis.com/envoy.extensions.filters.http.router.v3.Router
