@@ -23,6 +23,7 @@
 ## Delivery
 
 - Work in local branches or worktrees; review and merge locally.
+- Before implementing any feature, write its plan in `plans/` and obtain a review of that plan.
 - Deploy Storybook from `main` to GitHub Pages at `/factory/storybook/`.
 - For branch work, deploy Storybook only to the local `storybook` service with Podman Compose or Docker Compose; do not publish branch builds to GitHub Pages.
 - Push only the resulting `main` branch. Do not create GitHub issues or pull requests unless requested.
