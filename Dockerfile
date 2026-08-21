@@ -9,6 +9,13 @@ ENV NEXT_TELEMETRY_DISABLED=1
 RUN corepack enable && corepack prepare pnpm@11.21.0 --activate
 WORKDIR /app
 
+# Development image used by compose.yml.
+FROM base AS dev
+WORKDIR /workspace
+RUN mkdir -p /workspace /pnpm && chown -R node:node /workspace /pnpm
+USER node
+CMD ["pnpm", "--version"]
+
 FROM base AS dependencies
 
 ARG APP

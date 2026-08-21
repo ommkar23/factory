@@ -27,6 +27,32 @@ pnpm install
 pnpm check
 ```
 
+## Provider-agnostic development VM bootstrap
+
+Use any Linux VM provider. Recommended baseline: 4 vCPU, 16 GB RAM, 80 GB persistent disk, a non-root SSH user, and Docker Engine with the Compose plugin. Restrict inbound access to SSH; Factory and Supabase bind only to VM loopback.
+
+Install Docker, Git, curl, Python 3, Node.js 24, and agent-browser using your distribution package manager or supported installers. On Linux VMs, install agent-browser with `npm install -g agent-browser`, then run `agent-browser install --with-deps`. If the VM requires it, configure agent-browser to launch Chrome with `--no-sandbox`. Clone Factory with GitHub HTTPS credentials, then run:
+
+```bash
+cd factory
+./scripts/setup-factory-dev.sh
+```
+
+The script creates ignored runtime configuration and Supabase secrets when absent, validates Compose, starts the three apps plus the self-hosted Supabase stack, and waits for local readiness. It does not install Docker, overwrite existing secrets, or commit files.
+
+From a development Mac, tunnel the loopback-only services:
+
+```bash
+ssh -N \
+  -L 3001:127.0.0.1:3001 \
+  -L 3002:127.0.0.1:3002 \
+  -L 3003:127.0.0.1:3003 \
+  -L 8000:127.0.0.1:8000 \
+  <user>@<vm-host>
+```
+
+Open Home, Live Splash, and Weather at http://localhost:3001, :3002, and :3003. The Supabase gateway remains private and is available through the tunnel at http://localhost:8000.
+
 ## Home app
 
 Factory Home is the application directory at `http://localhost:3002`. Start the
