@@ -2,8 +2,8 @@
 
 ## Stack
 
-- pnpm/Turborepo monorepo for Next.js applications and reusable TypeScript packages.
-- Node.js 24+, pnpm 11+, TypeScript 5, Vitest, ESLint, Prettier, Playwright, and Storybook.
+- pnpm/Turborepo monorepo for Next.js applications and reusable JavaScript packages.
+- Node.js 24+, pnpm 11+, JavaScript, Vitest, ESLint, Prettier, Playwright, and Storybook.
 - GitHub Pages hosts Storybook built from `main` at `/factory/storybook/`.
 
 ## Applications

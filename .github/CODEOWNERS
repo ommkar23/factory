@@ -4,5 +4,4 @@
 # Shared boundaries require explicit owner review
 /packages/ui/ @ommkar23
 /packages/contracts/ @ommkar23
-/packages/typescript-config/ @ommkar23
 /.github/ @ommkar23

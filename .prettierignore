@@ -11,3 +11,4 @@ pnpm-lock.yaml
 !.env.example
 *.log
 .DS_Store
+supabase/volumes/db/data/

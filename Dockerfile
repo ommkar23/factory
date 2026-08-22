@@ -26,7 +26,6 @@ COPY apps/live-splash/package.json apps/live-splash/package.json
 COPY apps/weather/package.json apps/weather/package.json
 COPY packages/auth/package.json packages/auth/package.json
 COPY packages/contracts/package.json packages/contracts/package.json
-COPY packages/typescript-config/package.json packages/typescript-config/package.json
 COPY packages/ui/package.json packages/ui/package.json
 
 # Do not use BuildKit-only cache mounts: Cloud Build's docker builder uses
