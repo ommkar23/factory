@@ -1,17 +1,13 @@
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
-
 import {
   DEVELOPMENT_BYPASS_USER,
   getSupabaseConfig,
   isDevelopmentAuthBypass,
-  type AuthUser,
 } from "./core";
-
 export async function createSupabaseServerClient() {
   const cookieStore = await cookies();
   const { publishableKey, url } = getSupabaseConfig();
-
   return createServerClient(url, publishableKey, {
     cookies: {
       getAll() {
@@ -29,19 +25,15 @@ export async function createSupabaseServerClient() {
     },
   });
 }
-
-export async function getCurrentUser(): Promise<AuthUser | null> {
+export async function getCurrentUser() {
   if (isDevelopmentAuthBypass()) {
     return DEVELOPMENT_BYPASS_USER;
   }
-
   const supabase = await createSupabaseServerClient();
   const { data, error } = await supabase.auth.getClaims();
-
   if (error || !data?.claims?.sub) {
     return null;
   }
-
   return {
     id: data.claims.sub,
     email: typeof data.claims.email === "string" ? data.claims.email : null,
@@ -49,13 +41,10 @@ export async function getCurrentUser(): Promise<AuthUser | null> {
     avatarUrl: null,
   };
 }
-
-export async function requireCurrentUser(): Promise<AuthUser> {
+export async function requireCurrentUser() {
   const user = await getCurrentUser();
-
   if (!user) {
     throw new Error("Authentication is required.");
   }
-
   return user;
 }

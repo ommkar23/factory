@@ -1,9 +1,7 @@
 import { readFile } from "node:fs/promises";
 import { fileURLToPath } from "node:url";
 import path from "node:path";
-
 import { describe, expect, it } from "vitest";
-
 const repoRoot = path.resolve(
   path.dirname(fileURLToPath(import.meta.url)),
   "../../..",
@@ -20,7 +18,6 @@ const configurationPaths = [
   ".github/workflows/deploy-cloud-run.yml",
   ".github/workflows/pr-validation.yml",
 ];
-
 describe("authentication configuration surface", () => {
   it("does not document or configure the removed AUTH_MODE switch", async () => {
     for (const configurationPath of configurationPaths) {
@@ -28,7 +25,6 @@ describe("authentication configuration surface", () => {
         path.join(repoRoot, configurationPath),
         "utf8",
       );
-
       expect(content, configurationPath).not.toContain("AUTH_MODE");
     }
   });

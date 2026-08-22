@@ -4,17 +4,15 @@
   "private": true,
   "type": "module",
   "exports": {
-    ".": "./src/core.ts",
-    "./client": "./src/client.ts",
-    "./server": "./src/server.ts",
-    "./routes": "./src/routes.ts",
-    "./proxy": "./src/proxy.ts",
-    "./ui": "./src/auth-controls.tsx"
+    ".": "./src/core.js",
+    "./client": "./src/client.js",
+    "./server": "./src/server.js",
+    "./routes": "./src/routes.js",
+    "./proxy": "./src/proxy.js",
+    "./ui": "./src/auth-controls.jsx"
   },
   "scripts": {
-    "build": "tsc --noEmit",
     "lint": "prettier --check .",
-    "typecheck": "tsc --noEmit",
     "test": "vitest run"
   },
   "peerDependencies": {
@@ -25,13 +23,9 @@
   "devDependencies": {
     "@storybook/react-vite": "10.5.8",
     "@testing-library/react": "16.3.0",
-    "@types/node": "24.10.1",
-    "@types/react": "19.2.2",
-    "@types/react-dom": "19.2.2",
     "jsdom": "26.1.0",
     "react": "19.2.3",
     "react-dom": "19.2.3",
-    "typescript": "5.9.3",
     "vitest": "3.2.4"
   },
   "dependencies": {

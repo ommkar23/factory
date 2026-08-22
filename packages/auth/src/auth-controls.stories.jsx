@@ -1,30 +1,23 @@
-import type { Meta, StoryObj } from "@storybook/react-vite";
-
+import React from "react";
 import { LoginScreen, ProfileMenu } from "./auth-controls";
-
 const user = {
   id: "user-1",
   email: "ada@example.com",
   name: "Ada Lovelace",
   avatarUrl: null,
 };
-
 const meta = {
   component: LoginScreen,
   title: "Authentication/Login",
-} satisfies Meta<typeof LoginScreen>;
-
+};
 export default meta;
-type Story = StoryObj<typeof meta>;
-
-export const GoogleOAuth: Story = {
+export const GoogleOAuth = {
   args: {
     appName: "Factory",
     callbackPath: "/auth/callback",
   },
 };
-
-export const AccountMenu: Story = {
+export const AccountMenu = {
   args: {
     appName: "Factory",
     callbackPath: "/auth/callback",

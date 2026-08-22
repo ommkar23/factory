@@ -1,34 +1,18 @@
 "use client";
-
+import React from "react";
 import { useEffect, useRef, useState } from "react";
-
 import { signIn, signOut } from "./client";
-import {
-  getUserInitials,
-  isDevelopmentAuthBypass,
-  type AuthUser,
-} from "./core";
-
-export function LoginScreen({
-  appName,
-  authError,
-  callbackPath,
-}: {
-  appName: string;
-  authError?: string;
-  callbackPath: string;
-}) {
-  const [error, setError] = useState<string | null>(
+import { getUserInitials, isDevelopmentAuthBypass } from "./core";
+export function LoginScreen({ appName, authError, callbackPath }) {
+  const [error, setError] = useState(
     authError === "oauth_callback_failed"
       ? "We couldn't complete your sign-in. Please try again."
       : null,
   );
   const [pending, setPending] = useState(false);
-
   async function handleSignIn() {
     setError(null);
     setPending(true);
-
     try {
       const redirectTo = new URL(
         callbackPath,
@@ -40,11 +24,9 @@ export function LoginScreen({
       setPending(false);
     }
   }
-
   const actionLabel = pending
     ? "Connecting to Google…"
     : "Continue with Google";
-
   return (
     <main className="flex min-h-screen items-start justify-center bg-muted/40 px-4 py-12 sm:items-center">
       <section
@@ -99,35 +81,24 @@ export function LoginScreen({
     </main>
   );
 }
-
-export function ProfileMenu({
-  loginPath,
-  user,
-}: {
-  loginPath: string;
-  user: AuthUser;
-}) {
-  const [error, setError] = useState<string | null>(null);
+export function ProfileMenu({ loginPath, user }) {
+  const [error, setError] = useState(null);
   const [isOpen, setIsOpen] = useState(false);
   const [pending, setPending] = useState(false);
-  const triggerRef = useRef<HTMLButtonElement>(null);
-
+  const triggerRef = useRef(null);
   useEffect(() => {
-    function handleKeyDown(event: KeyboardEvent) {
+    function handleKeyDown(event) {
       if (event.key === "Escape" && isOpen) {
         setIsOpen(false);
         triggerRef.current?.focus();
       }
     }
-
     document.addEventListener("keydown", handleKeyDown);
     return () => document.removeEventListener("keydown", handleKeyDown);
   }, [isOpen]);
-
   async function handleSignOut() {
     setError(null);
     setPending(true);
-
     try {
       await signOut();
       window.location.replace(loginPath);
@@ -138,10 +109,8 @@ export function ProfileMenu({
       setPending(false);
     }
   }
-
   const accountLabel = user.name ?? user.email ?? "Signed-in user";
   const showSignOut = !isDevelopmentAuthBypass();
-
   return (
     <div className="relative">
       <button
@@ -208,18 +177,7 @@ export function ProfileMenu({
     </div>
   );
 }
-
-export function AppHeader({
-  appName,
-  containerClassName,
-  loginPath,
-  user,
-}: {
-  appName: string;
-  containerClassName: string;
-  loginPath: string;
-  user: AuthUser;
-}) {
+export function AppHeader({ appName, containerClassName, loginPath, user }) {
   return (
     <header className="border-b border-border bg-background/95">
       <div
@@ -231,7 +189,6 @@ export function AppHeader({
     </header>
   );
 }
-
 function GoogleMark() {
   return (
     <svg aria-hidden="true" className="size-4" viewBox="0 0 24 24">
