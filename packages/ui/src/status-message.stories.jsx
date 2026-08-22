@@ -1,5 +1,5 @@
 import React from "react";
-import { StatusMessage } from "./status-message";
+import { StatusMessage } from "./status-message.jsx";
 const meta = {
   component: StatusMessage,
   title: "Components/StatusMessage",

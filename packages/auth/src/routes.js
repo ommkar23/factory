@@ -1,6 +1,6 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse } from "next/server";
-import { AUTH_CALLBACK_DESTINATIONS, getSupabaseConfig } from "./core";
+import { AUTH_CALLBACK_DESTINATIONS, getSupabaseConfig } from "./core.js";
 const FACTORY_ORIGIN = "https://factory.markagen.ai";
 function getCallbackDestination(request) {
   const next = request.nextUrl.searchParams.get("next");

@@ -1,5 +1,5 @@
 import React from "react";
-import { Badge } from "./badge";
+import { Badge } from "./badge.jsx";
 import {
   Card,
   CardContent,
@@ -7,7 +7,7 @@ import {
   CardFooter,
   CardHeader,
   CardTitle,
-} from "./card";
+} from "./card.jsx";
 const meta = {
   component: Card,
   title: "Components/Card",

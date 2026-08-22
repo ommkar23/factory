@@ -1,6 +1,6 @@
 import React from "react";
-import { Input } from "./input";
-import { Label } from "./label";
+import { Input } from "./input.jsx";
+import { Label } from "./label.jsx";
 const meta = {
   component: Input,
   title: "Components/Input",

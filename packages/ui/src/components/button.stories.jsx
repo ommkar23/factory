@@ -1,6 +1,6 @@
 import React from "react";
-import { Spinner } from "./spinner";
-import { Button } from "./button";
+import { Spinner } from "./spinner.jsx";
+import { Button } from "./button.jsx";
 const meta = {
   component: Button,
   title: "Components/Button",

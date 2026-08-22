@@ -1,6 +1,6 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse } from "next/server";
-import { getSupabaseConfig, isDevelopmentAuthBypass } from "./core";
+import { getSupabaseConfig, isDevelopmentAuthBypass } from "./core.js";
 export async function updateAuthSession(request) {
   if (isDevelopmentAuthBypass()) {
     return NextResponse.next({ request });

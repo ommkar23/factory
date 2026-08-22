@@ -4,7 +4,7 @@ import {
   DEVELOPMENT_BYPASS_USER,
   getSupabaseConfig,
   isDevelopmentAuthBypass,
-} from "./core";
+} from "./core.js";
 export async function createSupabaseServerClient() {
   const cookieStore = await cookies();
   const { publishableKey, url } = getSupabaseConfig();

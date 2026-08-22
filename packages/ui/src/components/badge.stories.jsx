@@ -1,5 +1,5 @@
 import React from "react";
-import { Badge } from "./badge";
+import { Badge } from "./badge.jsx";
 const meta = {
   component: Badge,
   title: "Components/Badge",

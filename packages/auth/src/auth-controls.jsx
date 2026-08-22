@@ -1,8 +1,8 @@
 "use client";
 import React from "react";
 import { useEffect, useRef, useState } from "react";
-import { signIn, signOut } from "./client";
-import { getUserInitials, isDevelopmentAuthBypass } from "./core";
+import { signIn, signOut } from "./client.js";
+import { getUserInitials, isDevelopmentAuthBypass } from "./core.js";
 export function LoginScreen({ appName, authError, callbackPath }) {
   const [error, setError] = useState(
     authError === "oauth_callback_failed"

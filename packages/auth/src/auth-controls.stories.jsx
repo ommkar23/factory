@@ -1,5 +1,5 @@
 import React from "react";
-import { LoginScreen, ProfileMenu } from "./auth-controls";
+import { LoginScreen, ProfileMenu } from "./auth-controls.jsx";
 const user = {
   id: "user-1",
   email: "ada@example.com",

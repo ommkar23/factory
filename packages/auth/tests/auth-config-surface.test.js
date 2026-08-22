@@ -1,7 +1,10 @@
+import { execFile } from "node:child_process";
 import { readFile } from "node:fs/promises";
 import { fileURLToPath } from "node:url";
 import path from "node:path";
+import { promisify } from "node:util";
 import { describe, expect, it } from "vitest";
+const execFileAsync = promisify(execFile);
 const repoRoot = path.resolve(
   path.dirname(fileURLToPath(import.meta.url)),
   "../../..",
@@ -27,5 +30,39 @@ describe("authentication configuration surface", () => {
       );
       expect(content, configurationPath).not.toContain("AUTH_MODE");
     }
+  });
+
+  it("uses explicit relative extensions in directly exported ESM modules", async () => {
+    const expectedSpecifiers = {
+      "src/client.js": ["./core.js"],
+      "src/server.js": ["./core.js"],
+      "src/routes.js": ["./core.js"],
+      "src/proxy.js": ["./core.js"],
+      "src/auth-controls.jsx": ["./client.js", "./core.js"],
+    };
+
+    for (const [sourcePath, specifiers] of Object.entries(expectedSpecifiers)) {
+      const content = await readFile(
+        path.join(repoRoot, "packages/auth", sourcePath),
+        "utf8",
+      );
+      for (const specifier of specifiers) {
+        expect(content, `${sourcePath} should import ${specifier}`).toContain(
+          specifier,
+        );
+      }
+    }
+  });
+
+  it("loads the browser client through native Node ESM resolution", async () => {
+    await execFileAsync(
+      process.execPath,
+      [
+        "--input-type=module",
+        "-e",
+        'await import("./packages/auth/src/client.js")',
+      ],
+      { cwd: repoRoot },
+    );
   });
 });

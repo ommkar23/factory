@@ -1,5 +1,5 @@
 import React from "react";
-import { Alert, AlertDescription, AlertTitle } from "./alert";
+import { Alert, AlertDescription, AlertTitle } from "./alert.jsx";
 const meta = {
   component: Alert,
   title: "Components/Alert",

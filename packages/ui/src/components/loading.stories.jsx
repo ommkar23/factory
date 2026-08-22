@@ -1,6 +1,6 @@
 import React from "react";
-import { Skeleton } from "./skeleton";
-import { Spinner } from "./spinner";
+import { Skeleton } from "./skeleton.jsx";
+import { Spinner } from "./spinner.jsx";
 const meta = {
   component: Skeleton,
   title: "Components/Loading",
