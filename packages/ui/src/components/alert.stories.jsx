@@ -1,17 +1,12 @@
-import type { Meta, StoryObj } from "@storybook/react-vite";
-
+import React from "react";
 import { Alert, AlertDescription, AlertTitle } from "./alert";
-
 const meta = {
   component: Alert,
   title: "Components/Alert",
   parameters: { a11y: { test: "error" } },
-} satisfies Meta<typeof Alert>;
-
+};
 export default meta;
-type Story = StoryObj<typeof meta>;
-
-export const Information: Story = {
+export const Information = {
   render: () => (
     <Alert className="max-w-md">
       <AlertTitle>Weather data is delayed</AlertTitle>
@@ -21,8 +16,7 @@ export const Information: Story = {
     </Alert>
   ),
 };
-
-export const Error: Story = {
+export const Error = {
   render: () => (
     <Alert className="max-w-md" variant="destructive">
       <AlertTitle>Unable to update this location</AlertTitle>

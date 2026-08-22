@@ -1,25 +1,18 @@
-import type { Meta, StoryObj } from "@storybook/react-vite";
-
+import React from "react";
 import { Spinner } from "./spinner";
 import { Button } from "./button";
-
 const meta = {
   component: Button,
   title: "Components/Button",
   parameters: { a11y: { test: "error" } },
   args: { children: "Save location" },
-} satisfies Meta<typeof Button>;
-
+};
 export default meta;
-type Story = StoryObj<typeof meta>;
-
-export const Default: Story = {};
-
-export const Disabled: Story = {
+export const Default = {};
+export const Disabled = {
   args: { children: "Save location", disabled: true },
 };
-
-export const Loading: Story = {
+export const Loading = {
   args: {
     "aria-busy": true,
     children: (
@@ -31,8 +24,7 @@ export const Loading: Story = {
     disabled: true,
   },
 };
-
-export const HoverFocusVisibleAndActive: Story = {
+export const HoverFocusVisibleAndActive = {
   args: {
     children: "Inspect interaction states",
     className: "focus-visible:ring-3 hover:bg-primary/80 active:translate-y-px",

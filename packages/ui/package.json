@@ -4,24 +4,23 @@
   "private": true,
   "type": "module",
   "exports": {
-    ".": "./src/index.ts",
+    ".": "./src/index.js",
     "./globals.css": "./src/styles/globals.css",
-    "./components/*": "./src/components/*.tsx",
-    "./lib/*": "./src/lib/*.ts",
-    "./hooks/*": "./src/hooks/*.ts"
+    "./components/*": "./src/components/*.jsx",
+    "./lib/*": "./src/lib/*.js",
+    "./hooks/*": "./src/hooks/*.js"
   },
   "imports": {
-    "#components/*": "./src/components/*.tsx",
-    "#hooks/*": "./src/hooks/*.ts",
-    "#lib/*": "./src/lib/*.ts",
-    "#status-message": "./src/status-message.tsx"
+    "#components/*": "./src/components/*.jsx",
+    "#hooks/*": "./src/hooks/*.js",
+    "#lib/*": "./src/lib/*.js",
+    "#status-message": "./src/status-message.jsx"
   },
   "scripts": {
     "build": "storybook build",
     "dev": "storybook dev --host 0.0.0.0 --port 6006",
     "lint": "prettier --check .",
     "package:pages": "node scripts/package-pages-artifact.mjs",
-    "typecheck": "tsc --noEmit -p tsconfig.json",
     "test": "vitest run"
   },
   "peerDependencies": {
@@ -42,8 +41,6 @@
     "@tailwindcss/vite": "^4.1.18",
     "@testing-library/react": "16.3.0",
     "@testing-library/user-event": "14.6.1",
-    "@types/react": "19.2.2",
-    "@types/react-dom": "19.2.2",
     "axe-core": "4.11.0",
     "eslint": "9.39.1",
     "eslint-plugin-storybook": "10.5.8",
@@ -52,7 +49,6 @@
     "react-dom": "19.2.3",
     "storybook": "10.5.8",
     "tailwindcss": "^4.1.18",
-    "typescript": "5.9.3",
     "vite": "7.2.6",
     "vitest": "3.2.4"
   }

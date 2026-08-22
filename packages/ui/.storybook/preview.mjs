@@ -1,8 +1,5 @@
 import "../src/styles/globals.css";
-
-import type { Preview } from "@storybook/react-vite";
-
-const preview: Preview = {
+const preview = {
   parameters: {
     controls: { expanded: true },
     layout: "centered",
@@ -24,5 +21,4 @@ const preview: Preview = {
     },
   },
 };
-
 export default preview;

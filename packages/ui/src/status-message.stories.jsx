@@ -1,29 +1,24 @@
-import type { Meta, StoryObj } from "@storybook/react-vite";
-
+import React from "react";
 import { StatusMessage } from "./status-message";
-
 const meta = {
   component: StatusMessage,
   title: "Components/StatusMessage",
   parameters: { a11y: { test: "error" } },
-} satisfies Meta<typeof StatusMessage>;
-
+};
 export default meta;
-type Story = StoryObj<typeof meta>;
-
-export const Information: Story = {
+export const Information = {
   args: { children: "Your changes are saved." },
 };
-export const Success: Story = {
+export const Success = {
   args: { children: "Live Splash is ready.", tone: "success" },
 };
-export const Warning: Story = {
+export const Warning = {
   args: { children: "Weather data may be out of date.", tone: "warning" },
 };
-export const Error: Story = {
+export const Error = {
   args: { children: "Unable to load the latest conditions.", tone: "error" },
 };
-export const LongContentInNarrowContainer: Story = {
+export const LongContentInNarrowContainer = {
   args: {
     children:
       "A long but actionable message remains readable in narrow weather and photo feed layouts without introducing horizontal overflow.",

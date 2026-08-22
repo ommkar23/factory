@@ -1,5 +1,4 @@
-import type { Meta, StoryObj } from "@storybook/react-vite";
-
+import React from "react";
 import { Badge } from "./badge";
 import {
   Card,
@@ -9,17 +8,13 @@ import {
   CardHeader,
   CardTitle,
 } from "./card";
-
 const meta = {
   component: Card,
   title: "Components/Card",
   parameters: { a11y: { test: "error" } },
-} satisfies Meta<typeof Card>;
-
+};
 export default meta;
-type Story = StoryObj<typeof meta>;
-
-export const Default: Story = {
+export const Default = {
   render: () => (
     <Card className="w-80">
       <CardHeader>
@@ -33,8 +28,7 @@ export const Default: Story = {
     </Card>
   ),
 };
-
-export const LongContentInNarrowContainer: Story = {
+export const LongContentInNarrowContainer = {
   render: () => (
     <div className="w-56">
       <Card>

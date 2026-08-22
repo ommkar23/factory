@@ -1,8 +1,6 @@
-import type { Meta, StoryObj } from "@storybook/react-vite";
-
+import React from "react";
 import { Input } from "./input";
 import { Label } from "./label";
-
 const meta = {
   component: Input,
   title: "Components/Input",
@@ -13,16 +11,13 @@ const meta = {
       <Input id="story-location" {...args} />
     </div>
   ),
-} satisfies Meta<typeof Input>;
-
+};
 export default meta;
-type Story = StoryObj<typeof meta>;
-
-export const Default: Story = { args: { placeholder: "Search a city" } };
-export const Disabled: Story = {
+export const Default = { args: { placeholder: "Search a city" } };
+export const Disabled = {
   args: { disabled: true, placeholder: "Unavailable" },
 };
-export const NarrowContainer: Story = {
+export const NarrowContainer = {
   args: { placeholder: "A very long location name still fits its container" },
   decorators: [
     (Story) => (

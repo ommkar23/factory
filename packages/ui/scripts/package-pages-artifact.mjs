@@ -7,19 +7,19 @@ const defaultBasePath = "/factory/storybook/";
 
 const canonicalStoryTargets = [
   {
-    appPath: "apps/home/stories/app-directory.stories.tsx",
+    appPath: "apps/home/stories/app-directory.stories.jsx",
     exportName: "Default",
     redirectPath: "home",
     title: "Factory Home",
   },
   {
-    appPath: "apps/live-splash/stories/live-splash-home.stories.tsx",
+    appPath: "apps/live-splash/stories/live-splash-home.stories.jsx",
     exportName: "Default",
     redirectPath: "live-splash",
     title: "Live Splash",
   },
   {
-    appPath: "apps/weather/stories/weather-screen.stories.tsx",
+    appPath: "apps/weather/stories/weather-screen.stories.jsx",
     exportName: "Composed",
     redirectPath: "weather",
     title: "Weather",

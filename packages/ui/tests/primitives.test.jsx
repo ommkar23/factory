@@ -1,9 +1,8 @@
+import React from "react";
 import { createRef } from "react";
-
 import { fireEvent, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
-
 import { Alert, AlertDescription, AlertTitle } from "../src/components/alert";
 import { Badge } from "../src/components/badge";
 import { Button } from "../src/components/button";
@@ -19,7 +18,6 @@ import { Input } from "../src/components/input";
 import { Label } from "../src/components/label";
 import { Skeleton } from "../src/components/skeleton";
 import { Spinner } from "../src/components/spinner";
-
 describe("shared primitives", () => {
   it("associates Labels and Inputs using native accessible names", () => {
     render(
@@ -28,21 +26,18 @@ describe("shared primitives", () => {
         <Input id="location" placeholder="Search a city" />
       </>,
     );
-
     expect(screen.getByRole("textbox", { name: "Location" })).toHaveProperty(
       "placeholder",
       "Search a city",
     );
   });
-
   it("forwards Button refs and merges caller classes with its selected variant", () => {
-    const ref = createRef<HTMLButtonElement>();
+    const ref = createRef();
     render(
       <Button className="custom-marker" ref={ref} variant="destructive">
         Delete location
       </Button>,
     );
-
     expect(ref.current).toBe(
       screen.getByRole("button", { name: "Delete location" }),
     );
@@ -50,7 +45,6 @@ describe("shared primitives", () => {
     expect(ref.current?.className).toContain("custom-marker");
     expect(ref.current?.className).toContain("bg-destructive/10");
   });
-
   it("supports disabled loading compositions without allowing activation", async () => {
     const user = userEvent.setup();
     const onClick = vi.fn();
@@ -60,7 +54,6 @@ describe("shared primitives", () => {
         Updating location
       </Button>,
     );
-
     const button = screen.getByRole("button", {
       name: "Loading Updating location",
     });
@@ -70,20 +63,16 @@ describe("shared primitives", () => {
     await user.click(button);
     expect(onClick).not.toHaveBeenCalled();
   });
-
   it("activates enabled Buttons with Enter and Space", async () => {
     const user = userEvent.setup();
     const onClick = vi.fn();
     render(<Button onClick={onClick}>Retry</Button>);
-
     const button = screen.getByRole("button", { name: "Retry" });
     button.focus();
     await user.keyboard("{Enter}");
     await user.keyboard(" ");
-
     expect(onClick).toHaveBeenCalledTimes(2);
   });
-
   it("uses an assertive alert role for interruption callouts", () => {
     render(
       <Alert>
@@ -91,12 +80,10 @@ describe("shared primitives", () => {
         <AlertDescription>Try again in a moment.</AlertDescription>
       </Alert>,
     );
-
     expect(screen.getByRole("alert").textContent).toContain(
       "Unable to load weather",
     );
   });
-
   it("exposes slot contracts for Card, Badge, and Skeleton composition", () => {
     render(
       <Card>
@@ -111,7 +98,6 @@ describe("shared primitives", () => {
         <CardFooter>Updated just now</CardFooter>
       </Card>,
     );
-
     expect(screen.getByText("Long location name").dataset.slot).toBe(
       "card-title",
     );
@@ -120,25 +106,21 @@ describe("shared primitives", () => {
       "skeleton",
     );
   });
-
   it("keeps semantic token classes when an application overrides its public tokens", () => {
     document.documentElement.style.setProperty(
       "--factory-color-accent",
       "rebeccapurple",
     );
     render(<Button>Themed action</Button>);
-
     const button = screen.getByRole("button", { name: "Themed action" });
     expect(button.className).toContain("bg-primary");
     expect(
       document.documentElement.style.getPropertyValue("--factory-color-accent"),
     ).toBe("rebeccapurple");
   });
-
   it("forwards Input refs and native props", () => {
-    const ref = createRef<HTMLInputElement>();
+    const ref = createRef();
     render(<Input defaultValue="London" ref={ref} required />);
-
     fireEvent.change(screen.getByDisplayValue("London"), {
       target: { value: "Paris" },
     });

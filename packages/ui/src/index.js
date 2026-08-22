@@ -20,4 +20,3 @@ export { Label } from "#components/label";
 export { Skeleton } from "#components/skeleton";
 export { Spinner } from "#components/spinner";
 export { StatusMessage } from "#status-message";
-export type { StatusMessageProps } from "#status-message";
