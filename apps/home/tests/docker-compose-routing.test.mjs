@@ -1,0 +1,21 @@
+import assert from "node:assert/strict";
+import { readFile } from "node:fs/promises";
+import { fileURLToPath } from "node:url";
+import path from "node:path";
+import test from "node:test";
+
+const repoRoot = path.resolve(
+  path.dirname(fileURLToPath(import.meta.url)),
+  "../../..",
+);
+
+test("Docker development Home links target the tunnelled app ports", async () => {
+  const compose = await readFile(path.join(repoRoot, "compose.yml"), "utf8");
+  const homeService = compose.match(
+    /^  home:\n([\s\S]*?)(?=^  [a-z-]+:\n|^volumes:)/m,
+  )?.[1];
+
+  assert.ok(homeService, "home service must be present");
+  assert.match(homeService, /LIVE_SPLASH_URL: http:\/\/localhost:3002/);
+  assert.match(homeService, /WEATHER_URL: http:\/\/localhost:3003/);
+});
