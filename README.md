@@ -72,5 +72,3 @@ For the shared origin `https://factory.markagen.ai`, build Weather with
 `FACTORY_SHARED_ORIGIN=true` (serves `/weather`) and Live Splash with
 `FACTORY_SHARED_ORIGIN=true` (serves `/live-splash`), then route those path
 prefixes to their corresponding applications without stripping the prefix.
-Production deployments must use `AUTH_MODE=supabase`; mock authentication is
-available only through `next dev`.

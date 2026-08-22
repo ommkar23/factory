@@ -16,8 +16,6 @@ steps:
       - --build-arg
       - APP=home
       - --build-arg
-      - AUTH_MODE=supabase
-      - --build-arg
       - FACTORY_SHARED_ORIGIN=true
       - --build-arg
       - NEXT_PUBLIC_SUPABASE_URL=${_SUPABASE_URL}
@@ -36,8 +34,6 @@ steps:
       - --build-arg
       - APP=weather
       - --build-arg
-      - AUTH_MODE=supabase
-      - --build-arg
       - FACTORY_SHARED_ORIGIN=true
       - --build-arg
       - NEXT_PUBLIC_SUPABASE_URL=${_SUPABASE_URL}
@@ -55,8 +51,6 @@ steps:
       - Dockerfile
       - --build-arg
       - APP=live-splash
-      - --build-arg
-      - AUTH_MODE=supabase
       - --build-arg
       - FACTORY_SHARED_ORIGIN=true
       - --build-arg

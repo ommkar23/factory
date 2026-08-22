@@ -22,7 +22,7 @@ fi
 key=$(grep "^SUPABASE_PUBLISHABLE_KEY=" supabase/.env | cut -d= -f2-)
 for app in home live-splash weather; do
   umask 077
-  printf "AUTH_MODE=supabase\nFACTORY_SHARED_ORIGIN=false\nNEXT_PUBLIC_SUPABASE_URL=http://localhost:8000\nNEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=%s\n" "$key" > "apps/$app/.env.local"
+  printf "FACTORY_SHARED_ORIGIN=false\nNEXT_PUBLIC_SUPABASE_URL=http://localhost:8000\nNEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=%s\n" "$key" > "apps/$app/.env.local"
   chmod 600 "apps/$app/.env.local"
 done
 unset key

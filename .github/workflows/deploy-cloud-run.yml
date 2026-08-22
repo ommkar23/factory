@@ -21,7 +21,6 @@ jobs:
     environment: production
     env:
       IMAGE_PREFIX: ${{ vars.GAR_LOCATION }}-docker.pkg.dev/${{ vars.GCP_PROJECT_ID }}/${{ vars.GAR_REPOSITORY }}
-      AUTH_MODE: supabase
       FACTORY_SHARED_ORIGIN: "true"
       NEXT_PUBLIC_SUPABASE_URL: ${{ vars.NEXT_PUBLIC_SUPABASE_URL }}
       NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: ${{ vars.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY }}
@@ -63,7 +62,6 @@ jobs:
             docker build \
               -f Dockerfile \
               --build-arg "APP=$app" \
-              --build-arg "AUTH_MODE=$AUTH_MODE" \
               --build-arg "FACTORY_SHARED_ORIGIN=$FACTORY_SHARED_ORIGIN" \
               --build-arg "NEXT_PUBLIC_SUPABASE_URL=$NEXT_PUBLIC_SUPABASE_URL" \
               --build-arg "NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=$NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY" \
@@ -80,7 +78,6 @@ jobs:
           project_id: ${{ vars.GCP_PROJECT_ID }}
           region: ${{ vars.CLOUD_RUN_REGION }}
           env_vars: |-
-            AUTH_MODE=${{ env.AUTH_MODE }}
             FACTORY_SHARED_ORIGIN=${{ env.FACTORY_SHARED_ORIGIN }}
             NEXT_PUBLIC_SUPABASE_URL=${{ env.NEXT_PUBLIC_SUPABASE_URL }}
             NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=${{ env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY }}
@@ -95,7 +92,6 @@ jobs:
           project_id: ${{ vars.GCP_PROJECT_ID }}
           region: ${{ vars.CLOUD_RUN_REGION }}
           env_vars: |-
-            AUTH_MODE=${{ env.AUTH_MODE }}
             FACTORY_SHARED_ORIGIN=${{ env.FACTORY_SHARED_ORIGIN }}
             NEXT_PUBLIC_SUPABASE_URL=${{ env.NEXT_PUBLIC_SUPABASE_URL }}
             NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=${{ env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY }}
@@ -110,7 +106,6 @@ jobs:
           project_id: ${{ vars.GCP_PROJECT_ID }}
           region: ${{ vars.CLOUD_RUN_REGION }}
           env_vars: |-
-            AUTH_MODE=${{ env.AUTH_MODE }}
             FACTORY_SHARED_ORIGIN=${{ env.FACTORY_SHARED_ORIGIN }}
             NEXT_PUBLIC_SUPABASE_URL=${{ env.NEXT_PUBLIC_SUPABASE_URL }}
             NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=${{ env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY }}

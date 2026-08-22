@@ -43,7 +43,6 @@ jobs:
           docker build
           -f Dockerfile
           --build-arg APP=${{ matrix.app }}
-          --build-arg AUTH_MODE=supabase
           --build-arg FACTORY_SHARED_ORIGIN=true
           --build-arg NEXT_PUBLIC_SUPABASE_URL=https://example.supabase.co
           --build-arg NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=public-build-validation-key

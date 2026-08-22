@@ -7,7 +7,7 @@
     "build": "next build",
     "lint": "prettier --check .",
     "typecheck": "tsc --noEmit",
-    "test": "node --test tests/**/*.test.mjs && vitest run tests/shared-origin-routing.test.ts tests/health-route.test.ts"
+    "test": "node --test tests/**/*.test.mjs && vitest run tests/shared-origin-routing.test.ts tests/health-route.test.ts tests/login-page.test.tsx"
   },
   "dependencies": {
     "@factory/auth": "workspace:*",

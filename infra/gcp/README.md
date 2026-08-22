@@ -21,7 +21,6 @@ The two Supabase values are public client configuration and are embedded into th
 
 The workflow sets these production runtime values for every service:
 
-- `AUTH_MODE=supabase`
 - `FACTORY_SHARED_ORIGIN=true`
 - `LIVE_SPLASH_URL=https://factory.markagen.ai/live-splash`
 - `WEATHER_URL=https://factory.markagen.ai/weather`
