@@ -6,17 +6,17 @@ const appFile = (path) => new URL(`../${path}`, import.meta.url);
 
 async function readWeatherUi() {
   const paths = [
-    "components/location-search.tsx",
-    "components/current-conditions-card.tsx",
-    "components/weather-status.tsx",
-    "components/weather-screen.tsx",
-    "components/weather-comparison-screen.tsx",
+    "components/location-search.jsx",
+    "components/current-conditions-card.jsx",
+    "components/weather-status.jsx",
+    "components/weather-screen.jsx",
+    "components/weather-comparison-screen.jsx",
     "components/weather-ui.module.css",
-    "fixtures/weather-fixtures.ts",
-    "stories/location-search.stories.tsx",
-    "stories/current-conditions-card.stories.tsx",
-    "stories/weather-status.stories.tsx",
-    "stories/weather-screen.stories.tsx",
+    "fixtures/weather-fixtures.js",
+    "stories/location-search.stories.jsx",
+    "stories/current-conditions-card.stories.jsx",
+    "stories/weather-status.stories.jsx",
+    "stories/weather-screen.stories.jsx",
   ];
 
   return Promise.all(paths.map((path) => readFile(appFile(path), "utf8")));
@@ -39,7 +39,6 @@ test("Weather UI keeps deterministic accessible components and stories app-local
 
   assert.match(locationSearch, /^"use client";/);
   assert.match(weatherScreen, /^"use client";/);
-  assert.match(locationSearch, /export type LocationSearchProps/);
   assert.match(locationSearch, /useId/);
   assert.doesNotMatch(locationSearch, /weather-location-results/);
   assert.match(
@@ -74,7 +73,6 @@ test("Weather UI keeps deterministic accessible components and stories app-local
   );
   assert.match(styles, /\.resultButton\[data-active="true"\]/);
 
-  assert.match(currentConditions, /export type CurrentConditions/);
   assert.match(currentConditions, /observedAt/);
   assert.match(currentConditions, /temperatureC/);
   assert.match(currentConditions, /condition\.label/);

@@ -6,11 +6,11 @@ const appFile = (path) => new URL(`../${path}`, import.meta.url);
 
 test("Weather app presents the app-local comparison screen without integrations", async () => {
   const [layout, page, styles, screen, comparisonScreen] = await Promise.all([
-    readFile(appFile("app/layout.tsx"), "utf8"),
-    readFile(appFile("app/page.tsx"), "utf8"),
+    readFile(appFile("app/layout.jsx"), "utf8"),
+    readFile(appFile("app/page.jsx"), "utf8"),
     readFile(appFile("app/globals.css"), "utf8"),
-    readFile(appFile("components/weather-screen.tsx"), "utf8"),
-    readFile(appFile("components/weather-comparison-screen.tsx"), "utf8"),
+    readFile(appFile("components/weather-screen.jsx"), "utf8"),
+    readFile(appFile("components/weather-comparison-screen.jsx"), "utf8"),
   ]);
 
   assert.match(layout, /title:\s*"Weather"/);
