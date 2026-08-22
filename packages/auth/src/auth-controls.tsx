@@ -3,7 +3,11 @@
 import { useEffect, useRef, useState } from "react";
 
 import { signIn, signOut } from "./client";
-import { getUserInitials, type AuthUser } from "./core";
+import {
+  getUserInitials,
+  isDevelopmentAuthBypass,
+  type AuthUser,
+} from "./core";
 
 export function LoginScreen({
   appName,
@@ -136,6 +140,7 @@ export function ProfileMenu({
   }
 
   const accountLabel = user.name ?? user.email ?? "Signed-in user";
+  const showSignOut = !isDevelopmentAuthBypass();
 
   return (
     <div className="relative">
@@ -179,20 +184,24 @@ export function ProfileMenu({
               </p>
             ) : null}
           </div>
-          <div className="my-1 h-px bg-border" role="presentation" />
-          <button
-            className="flex min-h-10 w-full items-center rounded-md px-3 py-2 text-left text-sm transition-colors hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50"
-            disabled={pending}
-            onClick={handleSignOut}
-            role="menuitem"
-            type="button"
-          >
-            {pending ? "Signing out…" : "Sign out"}
-          </button>
-          {error ? (
-            <p className="px-3 pb-2 text-xs text-destructive" role="alert">
-              We couldn’t sign you out. Try again.
-            </p>
+          {showSignOut ? (
+            <>
+              <div className="my-1 h-px bg-border" role="presentation" />
+              <button
+                className="flex min-h-10 w-full items-center rounded-md px-3 py-2 text-left text-sm transition-colors hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50"
+                disabled={pending}
+                onClick={handleSignOut}
+                role="menuitem"
+                type="button"
+              >
+                {pending ? "Signing out…" : "Sign out"}
+              </button>
+              {error ? (
+                <p className="px-3 pb-2 text-xs text-destructive" role="alert">
+                  We couldn’t sign you out. Try again.
+                </p>
+              ) : null}
+            </>
           ) : null}
         </div>
       ) : null}

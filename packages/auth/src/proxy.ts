@@ -1,11 +1,15 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 
-import { getSupabaseConfig } from "./core";
+import { getSupabaseConfig, isDevelopmentAuthBypass } from "./core";
 
 export async function updateAuthSession(
   request: NextRequest,
 ): Promise<NextResponse> {
+  if (isDevelopmentAuthBypass()) {
+    return NextResponse.next({ request });
+  }
+
   const { publishableKey, url } = getSupabaseConfig();
   let response = NextResponse.next({ request });
   const supabase = createServerClient(url, publishableKey, {

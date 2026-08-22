@@ -34,6 +34,12 @@ afterEach(() => {
 });
 
 describe("Google authentication", () => {
+  it("bypasses authentication only in development", () => {
+    expect(auth.isDevelopmentAuthBypass("development")).toBe(true);
+    expect(auth.isDevelopmentAuthBypass("production")).toBe(false);
+    expect(auth.isDevelopmentAuthBypass("test")).toBe(false);
+  });
+
   it("does not expose development mock authentication APIs", () => {
     expect(auth).not.toHaveProperty("getAuthMode");
     expect(auth).not.toHaveProperty("getMockUser");

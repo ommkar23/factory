@@ -1,7 +1,12 @@
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
 
-import { getSupabaseConfig, type AuthUser } from "./core";
+import {
+  DEVELOPMENT_BYPASS_USER,
+  getSupabaseConfig,
+  isDevelopmentAuthBypass,
+  type AuthUser,
+} from "./core";
 
 export async function createSupabaseServerClient() {
   const cookieStore = await cookies();
@@ -26,6 +31,10 @@ export async function createSupabaseServerClient() {
 }
 
 export async function getCurrentUser(): Promise<AuthUser | null> {
+  if (isDevelopmentAuthBypass()) {
+    return DEVELOPMENT_BYPASS_USER;
+  }
+
   const supabase = await createSupabaseServerClient();
   const { data, error } = await supabase.auth.getClaims();
 

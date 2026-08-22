@@ -5,6 +5,19 @@ export type AuthUser = {
   avatarUrl: string | null;
 };
 
+export const DEVELOPMENT_BYPASS_USER: AuthUser = {
+  id: "development-bypass",
+  email: "developer@factory.local",
+  name: "Factory Developer",
+  avatarUrl: null,
+};
+
+export function isDevelopmentAuthBypass(
+  nodeEnv = process.env.NODE_ENV,
+): boolean {
+  return nodeEnv === "development";
+}
+
 export const AUTH_CALLBACK_DESTINATIONS = [
   "/",
   "/live-splash",
