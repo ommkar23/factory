@@ -19,3 +19,19 @@ test("Docker development Home links target the tunnelled app ports", async () =>
   assert.match(homeService, /LIVE_SPLASH_URL: http:\/\/localhost:3002/);
   assert.match(homeService, /WEATHER_URL: http:\/\/localhost:3003/);
 });
+
+test("Docker development app services install dependencies noninteractively", async () => {
+  const compose = await readFile(path.join(repoRoot, "compose.yml"), "utf8");
+
+  for (const service of ["home", "live-splash", "weather"]) {
+    const serviceBlock = compose.match(
+      new RegExp(
+        `^  ${service}:\\n([\\s\\S]*?)(?=^  [a-z-]+:\\n|^volumes:)`,
+        "m",
+      ),
+    )?.[1];
+
+    assert.ok(serviceBlock, `${service} service must be present`);
+    assert.match(serviceBlock, /CI: "true"/);
+  }
+});

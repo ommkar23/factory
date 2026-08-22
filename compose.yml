@@ -13,6 +13,7 @@ services:
       dev"
     environment:
       WATCHPACK_POLLING: "true"
+      CI: "true"
       HOME: /tmp
       COREPACK_HOME: /tmp/corepack
       PNPM_HOME: /tmp/pnpm
@@ -39,6 +40,7 @@ services:
       dev"
     environment:
       WATCHPACK_POLLING: "true"
+      CI: "true"
       HOME: /tmp
       COREPACK_HOME: /tmp/corepack
       PNPM_HOME: /tmp/pnpm
@@ -63,6 +65,7 @@ services:
       dev"
     environment:
       WATCHPACK_POLLING: "true"
+      CI: "true"
       HOME: /tmp
       COREPACK_HOME: /tmp/corepack
       PNPM_HOME: /tmp/pnpm
