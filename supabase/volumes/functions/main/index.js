@@ -8,12 +8,12 @@ const VERIFY_JWT = Deno.env.get("VERIFY_JWT") === "true";
 
 // NOTE:(kallebysantos) We don't check for valid keys but just the bare array parsing,
 // let this for 'jose' lib verification
-export function parseJwks(raw: string | undefined): jose.JSONWebKeySet | null {
+export function parseJwks(raw) {
   if (!raw) return null;
   try {
     const parsed = JSON.parse(raw);
     if (parsed?.keys && Array.isArray(parsed.keys)) {
-      return parsed as jose.JSONWebKeySet;
+      return parsed;
     }
     return null;
   } catch {
@@ -31,7 +31,7 @@ export function parseJwks(raw: string | undefined): jose.JSONWebKeySet | null {
  * @returns The JWT token string
  * @throws Error if Authorization header is missing or malformed
  */
-function getAuthToken(req: Request) {
+function getAuthToken(req) {
   const authHeader = req.headers.get("authorization");
   if (!authHeader) {
     throw new Error("Missing authorization header");
@@ -43,7 +43,7 @@ function getAuthToken(req: Request) {
   return token;
 }
 
-async function isValidLegacyJWT(jwt: string): Promise<boolean> {
+async function isValidLegacyJWT(jwt) {
   if (!JWT_SECRET) {
     console.error("JWT_SECRET not available for HS256 token verification");
     return false;
@@ -61,7 +61,7 @@ async function isValidLegacyJWT(jwt: string): Promise<boolean> {
   return true;
 }
 
-async function isValidJWT(jwt: string): Promise<boolean> {
+async function isValidJWT(jwt) {
   if (!SUPABASE_JWKS) {
     console.error("JWKS not available for ES256/RS256 token verification");
     return false;
@@ -92,7 +92,7 @@ async function isValidJWT(jwt: string): Promise<boolean> {
  * @param jwt - The JWT token string to verify
  * @returns Promise resolving to true if verification succeeds, false otherwise
  */
-async function isValidHybridJWT(jwt: string): Promise<boolean> {
+async function isValidHybridJWT(jwt) {
   const { alg: jwtAlgorithm } = jose.decodeProtectedHeader(jwt);
 
   if (jwtAlgorithm === "HS256") {
@@ -110,7 +110,7 @@ async function isValidHybridJWT(jwt: string): Promise<boolean> {
   return false;
 }
 
-Deno.serve(async (req: Request) => {
+Deno.serve(async (req) => {
   if (req.method !== "OPTIONS" && VERIFY_JWT) {
     try {
       const token = getAuthToken(req);
