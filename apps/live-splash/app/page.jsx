@@ -1,3 +1,4 @@
+import React from "react";
 import { getLoginPath, getRequestBasePath } from "@factory/auth";
 import { getCurrentUser } from "@factory/auth/server";
 import { AppHeader } from "@factory/auth/ui";
@@ -11,15 +12,12 @@ import {
   CardHeader,
 } from "@factory/ui";
 import { redirect } from "next/navigation";
-
 export default async function HomePage() {
   const appBasePath = getRequestBasePath("/live-splash");
   const user = await getCurrentUser();
-
   if (!user) {
     redirect(getLoginPath(""));
   }
-
   return (
     <>
       <AppHeader

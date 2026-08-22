@@ -6,8 +6,7 @@
     "dev": "next dev --webpack -H 0.0.0.0 -p 3000",
     "build": "next build",
     "lint": "prettier --check .",
-    "typecheck": "tsc --noEmit",
-    "test": "node --test tests/**/*.test.mjs && vitest run tests/shared-origin-routing.test.ts tests/health-route.test.ts tests/login-page.test.tsx"
+    "test": "node --test tests/**/*.test.mjs && vitest run tests/shared-origin-routing.test.js tests/health-route.test.js tests/login-page.test.jsx"
   },
   "dependencies": {
     "@factory/auth": "workspace:*",
@@ -18,13 +17,9 @@
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4.1.18",
-    "@types/node": "24.10.1",
-    "@types/react": "19.2.2",
-    "@types/react-dom": "19.2.2",
     "eslint": "9.39.1",
     "eslint-config-next": "16.1.1",
     "tailwindcss": "^4.1.18",
-    "typescript": "5.9.3",
     "vitest": "3.2.4"
   }
 }

@@ -9,8 +9,8 @@ const appRoot = path.resolve(
   "..",
 );
 const mockRoutePaths = [
-  "app/auth/mock/sign-in/route.ts",
-  "app/auth/mock/sign-out/route.ts",
+  "app/auth/mock/sign-in/route.js",
+  "app/auth/mock/sign-out/route.js",
 ];
 
 test("does not expose development mock authentication routes", () => {

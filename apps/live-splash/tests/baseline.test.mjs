@@ -4,7 +4,7 @@ import test from "node:test";
 
 test("Live Splash home page uses public shared primitives for a truthful baseline", async () => {
   const page = await readFile(
-    new URL("../app/page.tsx", import.meta.url),
+    new URL("../app/page.jsx", import.meta.url),
     "utf8",
   );
 
