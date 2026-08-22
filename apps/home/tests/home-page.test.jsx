@@ -1,6 +1,6 @@
+import React from "react";
 import { cleanup, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
-
 vi.mock("@factory/auth/server", () => ({
   getCurrentUser: vi.fn().mockResolvedValue({
     id: "dev-user-0001",
@@ -9,15 +9,11 @@ vi.mock("@factory/auth/server", () => ({
     avatarUrl: null,
   }),
 }));
-
 import HomePage from "../app/page";
-
 afterEach(cleanup);
-
 describe("Factory Home route", () => {
   it("renders the configured local app directory for an authenticated user", async () => {
     render(await HomePage());
-
     expect(screen.getByRole("heading", { name: "Factory Home" })).toBeTruthy();
     expect(
       screen

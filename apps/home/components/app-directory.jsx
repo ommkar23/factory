@@ -1,3 +1,4 @@
+import React from "react";
 import {
   Badge,
   Card,
@@ -7,14 +8,7 @@ import {
   CardTitle,
   buttonVariants,
 } from "@factory/ui";
-
-import type { AppDirectoryEntry } from "../lib/app-directory";
-
-type AppDirectoryProps = Readonly<{
-  apps: readonly AppDirectoryEntry[];
-}>;
-
-export function AppDirectory({ apps }: AppDirectoryProps) {
+export function AppDirectory({ apps }) {
   return (
     <main className="min-h-screen bg-muted/40 px-4 py-10 text-foreground sm:px-6 sm:py-16 lg:px-8">
       <div className="mx-auto flex w-full max-w-5xl flex-col gap-8">

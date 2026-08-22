@@ -1,7 +1,5 @@
 import { describe, expect, it } from "vitest";
-
 import { getAppDirectory } from "../lib/app-directory";
-
 describe("getAppDirectory", () => {
   it("lists Live Splash and Weather at their local development URLs", () => {
     expect(getAppDirectory({})).toEqual([
@@ -19,7 +17,6 @@ describe("getAppDirectory", () => {
       },
     ]);
   });
-
   it("uses valid configured URLs without changing the app identities", () => {
     expect(
       getAppDirectory({
@@ -39,7 +36,6 @@ describe("getAppDirectory", () => {
       },
     ]);
   });
-
   it("rejects configured URLs that are not absolute HTTP(S) URLs", () => {
     expect(() => getAppDirectory({ LIVE_SPLASH_URL: "/live-splash" })).toThrow(
       "LIVE_SPLASH_URL must be an absolute HTTP(S) URL.",

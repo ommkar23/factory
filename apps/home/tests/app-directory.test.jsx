@@ -1,10 +1,8 @@
+import React from "react";
 import { cleanup, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it } from "vitest";
-
 import { AppDirectory } from "../components/app-directory";
-import type { AppDirectoryEntry } from "../lib/app-directory";
-
-const apps: readonly AppDirectoryEntry[] = [
+const apps = [
   {
     description: "Browse the Live Splash photo feed.",
     href: "https://live-splash.example.test",
@@ -18,13 +16,10 @@ const apps: readonly AppDirectoryEntry[] = [
     name: "Weather",
   },
 ];
-
 afterEach(cleanup);
-
 describe("AppDirectory", () => {
   it("renders a named app navigation list with configured links", () => {
     render(<AppDirectory apps={apps} />);
-
     expect(screen.getByRole("heading", { name: "Factory Home" })).toBeTruthy();
     expect(
       screen.getByRole("navigation", { name: "Applications" }),
@@ -39,18 +34,15 @@ describe("AppDirectory", () => {
       screen.getByRole("link", { name: "Open Weather" }).getAttribute("href"),
     ).toBe("https://weather.example.test");
   });
-
   it("keeps long app names and descriptions available to readers", () => {
-    const longApp: AppDirectoryEntry = {
+    const longApp = {
       description:
         "A longer description that confirms the app selection card keeps its complete content available to readers.",
       href: "https://example.test",
       id: "weather",
       name: "Weather",
     };
-
     render(<AppDirectory apps={[longApp]} />);
-
     expect(screen.getByText(longApp.description)).toBeTruthy();
   });
 });

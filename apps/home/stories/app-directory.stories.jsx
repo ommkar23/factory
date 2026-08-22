@@ -1,36 +1,29 @@
-import type { Meta, StoryObj } from "@storybook/react-vite";
-
+import React from "react";
 import { AppDirectory } from "../components/app-directory";
-
 const apps = [
   {
     description: "Browse the Live Splash photo feed.",
     href: "http://localhost:3000",
-    id: "live-splash" as const,
-    name: "Live Splash" as const,
+    id: "live-splash",
+    name: "Live Splash",
   },
   {
     description: "Compare current weather across locations.",
     href: "http://localhost:3001",
-    id: "weather" as const,
-    name: "Weather" as const,
+    id: "weather",
+    name: "Weather",
   },
 ];
-
 const meta = {
   component: AppDirectory,
   parameters: { a11y: { test: "error" }, layout: "fullscreen" },
   title: "Home/AppDirectory",
-} satisfies Meta<typeof AppDirectory>;
-
+};
 export default meta;
-type Story = StoryObj<typeof meta>;
-
-export const Default: Story = {
+export const Default = {
   args: { apps },
 };
-
-export const LongCopy: Story = {
+export const LongCopy = {
   args: {
     apps: [
       {
@@ -46,13 +39,11 @@ export const LongCopy: Story = {
     ],
   },
 };
-
-export const Mobile375: Story = {
+export const Mobile375 = {
   args: Default.args,
   parameters: { viewport: { defaultViewport: "mobile" } },
 };
-
-export const Desktop1280: Story = {
+export const Desktop1280 = {
   args: Default.args,
   parameters: { viewport: { defaultViewport: "desktop" } },
 };
