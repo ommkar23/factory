@@ -1,15 +1,7 @@
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
 
-import {
-  getAuthMode,
-  getMockUser,
-  getSupabaseConfig,
-  isMockToken,
-  type AuthUser,
-} from "./core";
-
-export const MOCK_AUTH_COOKIE = "factory-mock-auth";
+import { getSupabaseConfig, type AuthUser } from "./core";
 
 export async function createSupabaseServerClient() {
   const cookieStore = await cookies();
@@ -34,14 +26,6 @@ export async function createSupabaseServerClient() {
 }
 
 export async function getCurrentUser(): Promise<AuthUser | null> {
-  if (getAuthMode() === "mock") {
-    const cookieStore = await cookies();
-
-    return isMockToken(cookieStore.get(MOCK_AUTH_COOKIE)?.value)
-      ? getMockUser()
-      : null;
-  }
-
   const supabase = await createSupabaseServerClient();
   const { data, error } = await supabase.auth.getClaims();
 

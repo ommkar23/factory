@@ -3,20 +3,16 @@
 import { useEffect, useRef, useState } from "react";
 
 import { signIn, signOut } from "./client";
-import { getUserInitials, type AuthMode, type AuthUser } from "./core";
+import { getUserInitials, type AuthUser } from "./core";
 
 export function LoginScreen({
   appName,
   authError,
   callbackPath,
-  mode,
-  returnTo,
 }: {
   appName: string;
   authError?: string;
   callbackPath: string;
-  mode: AuthMode;
-  returnTo: string;
 }) {
   const [error, setError] = useState<string | null>(
     authError === "oauth_callback_failed"
@@ -34,25 +30,16 @@ export function LoginScreen({
         callbackPath,
         window.location.origin,
       ).toString();
-      await signIn({ mode, redirectTo });
-
-      if (mode === "mock") {
-        window.location.assign(returnTo);
-      }
+      await signIn({ redirectTo });
     } catch (reason) {
       setError(reason instanceof Error ? reason.message : "Unable to sign in.");
       setPending(false);
     }
   }
 
-  const isMock = mode === "mock";
   const actionLabel = pending
-    ? isMock
-      ? "Starting development session…"
-      : "Connecting to Google…"
-    : isMock
-      ? "Continue as development user"
-      : "Continue with Google";
+    ? "Connecting to Google…"
+    : "Continue with Google";
 
   return (
     <main className="flex min-h-screen items-start justify-center bg-muted/40 px-4 py-12 sm:items-center">
@@ -85,28 +72,13 @@ export function LoginScreen({
               onClick={handleSignIn}
               type="button"
             >
-              {isMock ? null : <GoogleMark />}
+              <GoogleMark />
               {actionLabel}
             </button>
 
-            {isMock ? (
-              <div className="space-y-3">
-                <div className="flex items-center gap-3" aria-hidden="true">
-                  <span className="h-px flex-1 bg-border" />
-                  <span className="text-xs font-medium text-muted-foreground">
-                    Local development
-                  </span>
-                  <span className="h-px flex-1 bg-border" />
-                </div>
-                <p className="text-center text-xs leading-5 text-muted-foreground">
-                  Creates a local mock session. Not available in production.
-                </p>
-              </div>
-            ) : (
-              <p className="text-center text-xs leading-5 text-muted-foreground">
-                You’ll be redirected to Google to sign in securely.
-              </p>
-            )}
+            <p className="text-center text-xs leading-5 text-muted-foreground">
+              You’ll be redirected to Google to sign in securely.
+            </p>
           </div>
 
           {error ? (
@@ -126,11 +98,9 @@ export function LoginScreen({
 
 export function ProfileMenu({
   loginPath,
-  mode,
   user,
 }: {
   loginPath: string;
-  mode: AuthMode;
   user: AuthUser;
 }) {
   const [error, setError] = useState<string | null>(null);
@@ -155,7 +125,7 @@ export function ProfileMenu({
     setPending(true);
 
     try {
-      await signOut(mode);
+      await signOut();
       window.location.replace(loginPath);
     } catch (reason) {
       setError(
@@ -234,13 +204,11 @@ export function AppHeader({
   appName,
   containerClassName,
   loginPath,
-  mode,
   user,
 }: {
   appName: string;
   containerClassName: string;
   loginPath: string;
-  mode: AuthMode;
   user: AuthUser;
 }) {
   return (
@@ -249,7 +217,7 @@ export function AppHeader({
         className={`mx-auto flex min-h-14 items-center justify-between px-4 sm:px-6 ${containerClassName}`}
       >
         <span className="text-sm font-medium">{appName}</span>
-        <ProfileMenu loginPath={loginPath} mode={mode} user={user} />
+        <ProfileMenu loginPath={loginPath} user={user} />
       </div>
     </header>
   );

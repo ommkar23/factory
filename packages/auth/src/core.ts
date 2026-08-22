@@ -1,15 +1,9 @@
-export const DEV_USER_ID = "dev-user-0001";
-
-export type AuthMode = "mock" | "supabase";
-
 export type AuthUser = {
   id: string;
   email: string | null;
   name: string | null;
   avatarUrl: string | null;
 };
-
-const MOCK_TOKEN_PREFIX = "factory-mock.";
 
 export const AUTH_CALLBACK_DESTINATIONS = [
   "/",
@@ -34,53 +28,11 @@ export function getSupabaseConfig(): {
 
   if (!url || !publishableKey) {
     throw new Error(
-      "NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY are required when AUTH_MODE=supabase.",
+      "NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY are required.",
     );
   }
 
   return { publishableKey, url };
-}
-
-export function getAuthMode(
-  value = process.env.AUTH_MODE,
-  nodeEnv = process.env.NODE_ENV,
-): AuthMode {
-  if (value === undefined || value === "") {
-    return nodeEnv === "development" ? "mock" : "supabase";
-  }
-
-  if (value === "mock") {
-    if (nodeEnv !== "development") {
-      throw new Error(
-        "AUTH_MODE=mock is only allowed when NODE_ENV=development.",
-      );
-    }
-
-    return "mock";
-  }
-
-  if (value === "supabase") {
-    return "supabase";
-  }
-
-  throw new Error('AUTH_MODE must be either "mock" or "supabase".');
-}
-
-export function getMockUser(): AuthUser {
-  return {
-    id: DEV_USER_ID,
-    email: "dev-user@factory.local",
-    name: "Factory Developer",
-    avatarUrl: null,
-  };
-}
-
-export function createMockToken(randomId: () => string): string {
-  return `${MOCK_TOKEN_PREFIX}${randomId()}`;
-}
-
-export function isMockToken(token: string | undefined): boolean {
-  return Boolean(token?.startsWith(MOCK_TOKEN_PREFIX));
 }
 
 export function getAuthPath(basePath: string, path: string): string {

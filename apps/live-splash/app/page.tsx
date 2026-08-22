@@ -1,4 +1,4 @@
-import { getAuthMode, getLoginPath, getRequestBasePath } from "@factory/auth";
+import { getLoginPath, getRequestBasePath } from "@factory/auth";
 import { getCurrentUser } from "@factory/auth/server";
 import { AppHeader } from "@factory/auth/ui";
 import {
@@ -26,7 +26,6 @@ export default async function HomePage() {
         appName="Live Splash"
         containerClassName="max-w-xl"
         loginPath={getLoginPath(appBasePath)}
-        mode={getAuthMode()}
         user={user}
       />
       <main className="min-h-screen bg-background px-4 py-8 text-foreground sm:px-6 sm:py-12 lg:px-8">

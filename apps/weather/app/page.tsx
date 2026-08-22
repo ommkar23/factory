@@ -1,4 +1,4 @@
-import { getAuthMode, getLoginPath, getRequestBasePath } from "@factory/auth";
+import { getLoginPath, getRequestBasePath } from "@factory/auth";
 import { getCurrentUser } from "@factory/auth/server";
 import { AppHeader } from "@factory/auth/ui";
 import { redirect } from "next/navigation";
@@ -19,7 +19,6 @@ export default async function HomePage() {
         appName="Weather"
         containerClassName="max-w-[76rem]"
         loginPath={getLoginPath(appBasePath)}
-        mode={getAuthMode()}
         user={user}
       />
       <WeatherScreen />

@@ -1,4 +1,4 @@
-import { getAuthMode, getLoginPath } from "@factory/auth";
+import { getLoginPath } from "@factory/auth";
 import { getCurrentUser } from "@factory/auth/server";
 import { AppHeader } from "@factory/auth/ui";
 import { redirect } from "next/navigation";
@@ -19,7 +19,6 @@ export default async function HomePage() {
         appName="Factory"
         containerClassName="max-w-5xl"
         loginPath={getLoginPath("")}
-        mode={getAuthMode()}
         user={user}
       />
       <AppDirectory apps={getAppDirectory()} />

@@ -1,9 +1,4 @@
-import {
-  getAuthMode,
-  getAuthPath,
-  getProductionOAuthCallbackUrl,
-  getRequestBasePath,
-} from "@factory/auth";
+import { getAuthPath, getProductionOAuthCallbackUrl } from "@factory/auth";
 import { getCurrentUser } from "@factory/auth/server";
 import { LoginScreen } from "@factory/auth/ui";
 import { redirect } from "next/navigation";
@@ -13,7 +8,6 @@ type LoginPageProps = {
 };
 
 export default async function LoginPage({ searchParams }: LoginPageProps) {
-  const appBasePath = getRequestBasePath("/weather");
   const [{ auth_error: authError }, user] = await Promise.all([
     searchParams,
     getCurrentUser(),
@@ -28,8 +22,6 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
       appName="Weather"
       authError={authError}
       callbackPath={getProductionOAuthCallbackUrl("/weather")}
-      mode={getAuthMode()}
-      returnTo={getAuthPath(appBasePath, "/")}
     />
   );
 }

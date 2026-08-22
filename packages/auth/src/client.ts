@@ -2,10 +2,9 @@
 
 import { createBrowserClient } from "@supabase/ssr";
 
-import { getSupabaseConfig, type AuthMode } from "./core";
+import { getSupabaseConfig } from "./core";
 
 export type SignInOptions = {
-  mode: AuthMode;
   redirectTo: string;
 };
 
@@ -15,20 +14,7 @@ export function createSupabaseBrowserClient() {
   return createBrowserClient(url, publishableKey);
 }
 
-export async function signIn({
-  mode,
-  redirectTo,
-}: SignInOptions): Promise<void> {
-  if (mode === "mock") {
-    const response = await fetch("/auth/mock/sign-in", { method: "POST" });
-
-    if (!response.ok) {
-      throw new Error("Unable to start the mock development session.");
-    }
-
-    return;
-  }
-
+export async function signIn({ redirectTo }: SignInOptions): Promise<void> {
   const { data, error } =
     await createSupabaseBrowserClient().auth.signInWithOAuth({
       provider: "google",
@@ -48,17 +34,7 @@ export async function signIn({
   window.location.assign(data.url);
 }
 
-export async function signOut(mode: AuthMode): Promise<void> {
-  if (mode === "mock") {
-    const response = await fetch("/auth/mock/sign-out", { method: "POST" });
-
-    if (!response.ok) {
-      throw new Error("Unable to end the mock development session.");
-    }
-
-    return;
-  }
-
+export async function signOut(): Promise<void> {
   const { error } = await createSupabaseBrowserClient().auth.signOut();
 
   if (error) {

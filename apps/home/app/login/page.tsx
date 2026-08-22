@@ -1,8 +1,4 @@
-import {
-  getAuthMode,
-  getAuthPath,
-  getProductionOAuthCallbackUrl,
-} from "@factory/auth";
+import { getAuthPath, getProductionOAuthCallbackUrl } from "@factory/auth";
 import { getCurrentUser } from "@factory/auth/server";
 import { LoginScreen } from "@factory/auth/ui";
 import { redirect } from "next/navigation";
@@ -26,8 +22,6 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
       appName="Factory"
       authError={authError}
       callbackPath={getProductionOAuthCallbackUrl("/")}
-      mode={getAuthMode()}
-      returnTo={getAuthPath("", "/")}
     />
   );
 }
