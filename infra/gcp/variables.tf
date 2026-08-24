@@ -48,6 +48,11 @@ variable "github_branch" {
   }
 }
 
+variable "api_image" {
+  description = "Initial immutable image for factory-api. Set after the bootstrap image push."
+  type        = string
+}
+
 variable "home_image" {
   description = "Initial immutable image for factory-home. Set after the bootstrap image push."
   type        = string

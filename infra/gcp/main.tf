@@ -1,16 +1,24 @@
 locals {
   services = {
+    api = {
+      image = var.api_image
+      name  = "factory-api"
+      port  = 8000
+    }
     home = {
       image = var.home_image
       name  = "factory-home"
+      port  = 8080
     }
     live-splash = {
       image = var.live_splash_image
       name  = "factory-live-splash"
+      port  = 8080
     }
     weather = {
       image = var.weather_image
       name  = "factory-weather"
+      port  = 8080
     }
   }
 }
@@ -119,7 +127,7 @@ resource "google_cloud_run_v2_service" "factory" {
       image = each.value.image
 
       ports {
-        container_port = 8080
+        container_port = each.value.port
       }
     }
   }
@@ -179,6 +187,11 @@ resource "google_compute_url_map" "https" {
   path_matcher {
     name            = "factory"
     default_service = google_compute_backend_service.factory["home"].id
+
+    path_rule {
+      paths   = ["/app", "/app/*"]
+      service = google_compute_backend_service.factory["api"].id
+    }
 
     path_rule {
       paths   = ["/live-splash", "/live-splash/*"]

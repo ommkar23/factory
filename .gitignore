@@ -17,3 +17,6 @@ plans/
 gha-creds-*.json
 *.log
 .DS_Store
+# Python build and test artifacts
+__pycache__/
+*.egg-info/

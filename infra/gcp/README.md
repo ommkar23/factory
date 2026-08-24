@@ -41,6 +41,7 @@ terraform validate
 ```sh
 terraform apply \
   -var="project_id=YOUR_PROJECT_ID" \
+  -var="api_image=unused" \
   -var="home_image=unused" \
   -var="live_splash_image=unused" \
   -var="weather_image=unused" \
@@ -56,8 +57,8 @@ terraform apply \
 ```
 
 2. Put the Terraform outputs into the GitHub `production` Environment variables above.
-3. With an approved human bootstrap principal, build and push one immutable image for each app to the newly created Artifact Registry repository. Use the image digests as `home_image`, `live_splash_image`, and `weather_image`.
-4. Run a full `terraform apply` with those three digest-qualified images. This creates the services, serverless NEGs, external Application Load Balancer, HTTPS certificate, and global IP. GitHub Actions subsequently owns each service image and the public runtime environment values; Terraform deliberately ignores those changing container fields.
+3. With an approved human bootstrap principal, build and push one immutable image for each app to the newly created Artifact Registry repository. Use the image digests as `api_image`, `home_image`, `live_splash_image`, and `weather_image`.
+4. Run a full `terraform apply` with those four digest-qualified images. This creates the services, serverless NEGs, external Application Load Balancer, HTTPS certificate, and global IP. GitHub Actions subsequently owns each service image and the public runtime environment values; Terraform deliberately ignores those changing container fields.
 
 Terraform restricts WIF to repository `ommkar23/factory` and `refs/heads/main`. The GitHub deploy service account receives only Artifact Registry writer, Cloud Run admin, and Service Account User on the dedicated runtime identity.
 
@@ -71,6 +72,7 @@ factory.markagen.ai.  A  <load_balancer_ip_address>
 
 Do not create a Cloud DNS zone here. Keep the record in place until Google-managed certificate provisioning completes, then confirm HTTPS and routing:
 
+- `https://factory.markagen.ai/app/*` → `factory-api`
 - `https://factory.markagen.ai/` → `factory-home`
 - `https://factory.markagen.ai/live-splash/` → `factory-live-splash`
 - `https://factory.markagen.ai/weather/` → `factory-weather`
@@ -89,4 +91,4 @@ gcloud run services update-traffic factory-weather \
   --to-revisions=PREVIOUS_REVISION=100
 ```
 
-Repeat for `factory-home` or `factory-live-splash` as needed. The image tags use the immutable Git commit SHA, so a rollback can also be redeployed by manually dispatching the production workflow from the corresponding commit.
+Repeat for `factory-api`, `factory-home`, or `factory-live-splash` as needed. The image tags use the immutable Git commit SHA, so a rollback can also be redeployed by manually dispatching the production workflow from the corresponding commit.
