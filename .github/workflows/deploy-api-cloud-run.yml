@@ -26,6 +26,11 @@ jobs:
     env:
       IMAGE: ${{ vars.GAR_LOCATION }}-docker.pkg.dev/${{ vars.GCP_PROJECT_ID }}/${{ vars.GAR_REPOSITORY }}/api:${{ github.sha }}
       CORS_ALLOW_ORIGINS: https://factory.markagen.ai
+      ENVIRONMENT: production
+      SUPABASE_URL: ${{ vars.SUPABASE_URL }}
+      SUPABASE_PUBLISHABLE_KEY: ${{ vars.SUPABASE_PUBLISHABLE_KEY }}
+      AUTH_PUBLIC_URL: https://factory.markagen.ai
+      AUTH_ALLOWED_RETURN_PATHS: /,/weather,/live-splash
     steps:
       - uses: actions/checkout@v4
 
@@ -68,4 +73,12 @@ jobs:
           project_id: ${{ vars.GCP_PROJECT_ID }}
           region: ${{ vars.CLOUD_RUN_REGION }}
           env_vars: |-
+            ENVIRONMENT=${{ env.ENVIRONMENT }}
             CORS_ALLOW_ORIGINS=${{ env.CORS_ALLOW_ORIGINS }}
+            SUPABASE_URL=${{ env.SUPABASE_URL }}
+            SUPABASE_PUBLISHABLE_KEY=${{ env.SUPABASE_PUBLISHABLE_KEY }}
+            AUTH_PUBLIC_URL=${{ env.AUTH_PUBLIC_URL }}
+            AUTH_ALLOWED_RETURN_PATHS=${{ env.AUTH_ALLOWED_RETURN_PATHS }}
+          secrets: |-
+            AUTH_SESSION_DATABASE_URL=factory-api-session-database-url:latest
+            AUTH_SESSION_ENCRYPTION_KEY=factory-api-session-encryption-key:latest

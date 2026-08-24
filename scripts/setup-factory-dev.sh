@@ -25,6 +25,14 @@ for app in home live-splash weather; do
   printf "FACTORY_SHARED_ORIGIN=false\nNEXT_PUBLIC_SUPABASE_URL=http://localhost:8000\nNEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=%s\n" "$key" > "apps/$app/.env.local"
   chmod 600 "apps/$app/.env.local"
 done
+if [[ ! -f services/api/.env ]];
+then
+  umask 077
+  session_key=$(python3 -c "import base64, secrets; print(base64.urlsafe_b64encode(secrets.token_bytes(32)).decode())")
+  printf "SUPABASE_URL=http://api-gw:8000\nSUPABASE_AUTHORIZATION_URL=http://localhost:8000\nSUPABASE_PUBLISHABLE_KEY=%s\nAUTH_PUBLIC_URL=http://localhost:3004\nAUTH_ALLOWED_RETURN_PATHS=/,/weather,/live-splash\nAUTH_SESSION_ENCRYPTION_KEY=%s\nAUTH_SESSION_DATABASE_URL=sqlite:////data/factory-api/sessions.db\n" "$key" "$session_key" > services/api/.env
+  unset session_key
+  chmod 600 services/api/.env
+fi
 unset key
 
 docker compose config >/dev/null

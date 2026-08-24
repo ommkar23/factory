@@ -49,13 +49,34 @@ def test_openapi_matches_manual_weather_validation_contract() -> None:
     assert locations["responses"]["400"]["content"]["application/json"]["example"]["error"]["code"] == "INVALID_REQUEST"
 
 
-def test_openapi_declares_bearer_auth_and_stable_authentication_error() -> None:
+def test_openapi_describes_opaque_factory_cookie_authentication_and_stable_errors() -> None:
     schema = create_app().openapi()
 
     locations = schema["paths"]["/app/weather/v1/locations"]["get"]
+    assert "security" not in locations
+    assert "HTTPBearer" not in schema.get("components", {}).get("securitySchemes", {})
+    assert locations["responses"]["401"]["description"] == "A valid Factory session is required."
+    assert locations["responses"]["401"]["content"]["application/json"]["example"]["error"]["code"] == "INVALID_SESSION"
 
-    assert locations["security"] == [{"HTTPBearer": []}]
-    assert locations["responses"]["401"]["description"] == "Authentication credentials are missing or invalid."
-    examples = locations["responses"]["401"]["content"]["application/json"]["examples"]
-    assert examples["missingToken"]["value"]["error"]["code"] == "MISSING_TOKEN"
-    assert examples["invalidToken"]["value"]["error"]["code"] == "INVALID_TOKEN"
+    callback = schema["paths"]["/auth/callback"]["get"]
+    assert callback["summary"] == "Complete Google sign-in"
+    assert "200" not in callback["responses"]
+    assert callback["responses"]["303"]["description"] == "OAuth code exchanged and Factory session cookie issued."
+    assert callback["responses"]["400"]["content"]["application/json"]["example"]["error"]["code"] == "INVALID_OAUTH_STATE"
+    callback_examples = callback["responses"]["400"]["content"]["application/json"]["examples"]
+    assert callback_examples["oauthExchangeFailed"]["value"]["error"]["code"] == "OAUTH_EXCHANGE_FAILED"
+    callback_parameters = {parameter["name"]: parameter for parameter in callback["parameters"]}
+    assert callback_parameters["code"]["required"] is True
+    assert callback_parameters["state"]["required"] is True
+
+    login = schema["paths"]["/auth/login"]["get"]
+    assert "200" not in login["responses"]
+    assert "422" not in login["responses"]
+    assert login["responses"]["307"]["description"] == "Browser redirect to Supabase Google OAuth."
+
+    session = schema["paths"]["/auth/session"]["get"]
+    assert session["responses"]["401"]["content"]["application/json"]["example"]["error"]["code"] == "INVALID_SESSION"
+    assert session["responses"]["200"]["content"]["application/json"]["schema"]["$ref"] == "#/components/schemas/SessionResponse"
+
+    for operation in (schema["paths"]["/auth/login"]["get"], callback, session, schema["paths"]["/auth/logout"]["post"]):
+        assert operation["responses"]["503"]["content"]["application/json"]["example"]["error"]["code"] == "AUTH_NOT_CONFIGURED"

@@ -50,3 +50,13 @@ class LocationsResponse(ApiModel):
 
 class CurrentConditionsResponse(ApiModel):
     conditions: CurrentConditions = Field(description="Normalized metric current conditions.")
+
+
+
+class SessionUser(ApiModel):
+    id: str = Field(description="Stable Supabase user identifier.")
+    email: str | None = Field(default=None, description="Verified user email when Supabase provides one.")
+
+
+class SessionResponse(ApiModel):
+    user: SessionUser = Field(description="Selected signed-in user fields. OAuth credentials are never returned.")

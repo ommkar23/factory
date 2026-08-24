@@ -30,6 +30,7 @@ resource "google_project_service" "required" {
     "iam.googleapis.com",
     "iamcredentials.googleapis.com",
     "run.googleapis.com",
+    "secretmanager.googleapis.com",
     "sts.googleapis.com",
   ])
 
@@ -97,6 +98,7 @@ resource "google_project_iam_member" "github_deploy_roles" {
   for_each = toset([
     "roles/artifactregistry.writer",
     "roles/run.admin",
+    "roles/secretmanager.viewer",
   ])
 
   project = var.project_id
@@ -108,6 +110,29 @@ resource "google_service_account_iam_member" "github_can_use_runtime_identity" {
   service_account_id = google_service_account.runtime.name
   role               = "roles/iam.serviceAccountUser"
   member             = "serviceAccount:${google_service_account.github_deploy.email}"
+}
+
+resource "google_secret_manager_secret" "api_session" {
+  for_each = toset([
+    "factory-api-session-database-url",
+    "factory-api-session-encryption-key",
+  ])
+
+  secret_id = each.value
+
+  replication {
+    auto {}
+  }
+
+  depends_on = [google_project_service.required]
+}
+
+resource "google_secret_manager_secret_iam_member" "runtime_can_read_api_session_secrets" {
+  for_each = google_secret_manager_secret.api_session
+
+  secret_id = each.value.id
+  role      = "roles/secretmanager.secretAccessor"
+  member    = "serviceAccount:${google_service_account.runtime.email}"
 }
 
 resource "google_cloud_run_v2_service" "factory" {
@@ -189,7 +214,7 @@ resource "google_compute_url_map" "https" {
     default_service = google_compute_backend_service.factory["home"].id
 
     path_rule {
-      paths   = ["/app", "/app/*"]
+      paths   = ["/app", "/app/*", "/auth", "/auth/*"]
       service = google_compute_backend_service.factory["api"].id
     }
 

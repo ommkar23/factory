@@ -23,18 +23,14 @@ def documented_error(code: str, message: str, description: str) -> dict:
 def documented_authentication_error() -> dict:
     return {
         "model": ErrorResponse,
-        "description": "Authentication credentials are missing or invalid.",
+        "description": "A valid Factory session is required.",
         "content": {
             "application/json": {
-                "examples": {
-                    "missingToken": {
-                        "summary": "Missing credentials",
-                        "value": {"error": {"code": "MISSING_TOKEN", "message": "Authentication credentials are required."}},
-                    },
-                    "invalidToken": {
-                        "summary": "Malformed, expired, or invalid credentials",
-                        "value": {"error": {"code": "INVALID_TOKEN", "message": "Authentication credentials are invalid."}},
-                    },
+                "example": {
+                    "error": {
+                        "code": "INVALID_SESSION",
+                        "message": "A valid Factory session is required.",
+                    }
                 }
             }
         },

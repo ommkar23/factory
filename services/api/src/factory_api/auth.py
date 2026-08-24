@@ -1,16 +1,14 @@
 from dataclasses import dataclass
-from typing import Annotated, Any
+import time
 
-import jwt
-from fastapi import Request, Security
-from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
+from fastapi import Request
 
-from factory_api.config import Settings
 from factory_api.errors import ApiError
+from factory_api.routers.auth import COOKIE_NAME, SupabaseAuthError
+from factory_api.session_store import ServerSession
 
 
-bearer_scheme = HTTPBearer(auto_error=False, bearerFormat="JWT", description="Supabase user access token.")
-_ALLOWED_ALGORITHMS = ("ES256", "RS256")
+_REFRESH_WINDOW_SECONDS = 60
 
 
 @dataclass(frozen=True)
@@ -18,50 +16,37 @@ class AuthenticatedPrincipal:
     subject: str
 
 
-class TokenVerificationError(Exception):
-    pass
-
-
-class TokenVerifier:
-    def __init__(self, settings: Settings, jwks_client: Any | None = None) -> None:
-        self._audience = settings.supabase_jwt_audience
-        self._issuer = settings.supabase_jwt_issuer
-        self._jwks_client = jwks_client or jwt.PyJWKClient(settings.supabase_jwks_url, cache_keys=True)
-
-    def verify(self, token: str) -> AuthenticatedPrincipal:
-        try:
-            signing_key = self._jwks_client.get_signing_key_from_jwt(token)
-            claims = jwt.decode(
-                token,
-                signing_key.key,
-                algorithms=_ALLOWED_ALGORITHMS,
-                audience=self._audience,
-                issuer=self._issuer,
-                options={"require": ["aud", "exp", "iss", "sub"]},
-                leeway=5,
-            )
-        except (jwt.PyJWTError, ValueError) as error:
-            raise TokenVerificationError from error
-        subject = claims.get("sub")
-        if not isinstance(subject, str) or not subject.strip():
-            raise TokenVerificationError
-        return AuthenticatedPrincipal(subject=subject)
-
-
-async def get_current_principal(
-    request: Request,
-    credentials: Annotated[HTTPAuthorizationCredentials | None, Security(bearer_scheme)],
-) -> AuthenticatedPrincipal:
-    settings = request.app.state.settings
-    if settings.is_development:
+async def get_current_principal(request: Request) -> AuthenticatedPrincipal:
+    if request.app.state.settings.is_development:
         return AuthenticatedPrincipal(subject="development-bypass")
+    session_id = request.cookies.get(COOKIE_NAME)
+    session = request.app.state.session_store.get_session(session_id) if session_id else None
+    if session is None:
+        raise authentication_error()
+    if session.expires_at <= int(time.time()) + _REFRESH_WINDOW_SECONDS:
+        session = await refresh_session(request, session_id, session)
+    subject = session.user.get("id")
+    if not isinstance(subject, str) or not subject:
+        request.app.state.session_store.delete_session(session_id)
+        raise authentication_error()
+    return AuthenticatedPrincipal(subject=subject)
 
-    values = request.headers.getlist("authorization")
-    if not values:
-        raise ApiError("MISSING_TOKEN", "Authentication credentials are required.", 401)
-    if len(values) != 1 or credentials is None:
-        raise ApiError("INVALID_TOKEN", "Authentication credentials are invalid.", 401)
+
+async def refresh_session(request: Request, session_id: str, session: ServerSession) -> ServerSession:
+    store = request.app.state.session_store
     try:
-        return request.app.state.token_verifier.verify(credentials.credentials)
-    except TokenVerificationError as error:
-        raise ApiError("INVALID_TOKEN", "Authentication credentials are invalid.", 401) from error
+        token_data = await request.app.state.supabase_auth_client.refresh_session(refresh_token=session.refresh_token)
+        refreshed_session = store.replace_session(session_id, session.version, token_data)
+        if refreshed_session is not None:
+            return refreshed_session
+        current_session = store.get_session(session_id)
+        if current_session is not None and current_session.version != session.version:
+            return current_session
+        raise authentication_error()
+    except (SupabaseAuthError, ValueError) as error:
+        store.delete_session_if_version(session_id, session.version)
+        raise authentication_error() from error
+
+
+def authentication_error() -> ApiError:
+    return ApiError("INVALID_SESSION", "A valid Factory session is required.", 401)
