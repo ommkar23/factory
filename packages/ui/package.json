@@ -45,7 +45,7 @@
     "eslint": "9.39.1",
     "eslint-plugin-storybook": "10.5.8",
     "jsdom": "26.1.0",
-    "react": "19.2.3",
+    "react": "19.2.8",
     "react-dom": "19.2.3",
     "storybook": "10.5.8",
     "tailwindcss": "^4.1.18",
