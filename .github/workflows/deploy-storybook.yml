@@ -30,7 +30,7 @@ jobs:
     timeout-minutes: 20
     steps:
       - name: Check out requested revision
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           ref: ${{ inputs.ref }}
 

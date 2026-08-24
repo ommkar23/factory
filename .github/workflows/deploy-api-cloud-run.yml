@@ -27,7 +27,7 @@ jobs:
       IMAGE: ${{ vars.GAR_LOCATION }}-docker.pkg.dev/${{ vars.GCP_PROJECT_ID }}/${{ vars.GAR_REPOSITORY }}/api:${{ github.sha }}
       CORS_ALLOW_ORIGINS: https://factory.markagen.ai
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Test API
         run: >-
