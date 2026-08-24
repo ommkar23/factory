@@ -27,7 +27,7 @@ jobs:
       LIVE_SPLASH_URL: https://factory.markagen.ai/live-splash
       WEATHER_URL: https://factory.markagen.ai/weather
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - uses: pnpm/action-setup@v4
         with:
