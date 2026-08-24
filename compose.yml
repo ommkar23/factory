@@ -84,6 +84,7 @@ services:
     build:
       context: ./services/api
     environment:
+      ENVIRONMENT: development
       CORS_ALLOW_ORIGINS: http://localhost:3001,http://localhost:3002,http://localhost:3003
     ports:
       - 127.0.0.1:3004:8000

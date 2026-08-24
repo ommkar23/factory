@@ -47,3 +47,15 @@ def test_openapi_matches_manual_weather_validation_contract() -> None:
 
     locations = schema["paths"]["/app/weather/v1/locations"]["get"]
     assert locations["responses"]["400"]["content"]["application/json"]["example"]["error"]["code"] == "INVALID_REQUEST"
+
+
+def test_openapi_declares_bearer_auth_and_stable_authentication_error() -> None:
+    schema = create_app().openapi()
+
+    locations = schema["paths"]["/app/weather/v1/locations"]["get"]
+
+    assert locations["security"] == [{"HTTPBearer": []}]
+    assert locations["responses"]["401"]["description"] == "Authentication credentials are missing or invalid."
+    examples = locations["responses"]["401"]["content"]["application/json"]["examples"]
+    assert examples["missingToken"]["value"]["error"]["code"] == "MISSING_TOKEN"
+    assert examples["invalidToken"]["value"]["error"]["code"] == "INVALID_TOKEN"

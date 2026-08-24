@@ -65,7 +65,7 @@ def test_locations_returns_normalized_response_and_cache_policy() -> None:
 
     assert response.status_code == 200
     assert response.headers["cache-control"] == (
-        "public, max-age=300, s-maxage=86400, stale-while-revalidate=604800"
+        "private, no-store"
     )
     assert response.json() == {"locations": [LOCATION]}
     assert provider.queries == ["Portland"]
@@ -100,7 +100,7 @@ def test_current_conditions_returns_response_and_cache_policy() -> None:
 
     assert response.status_code == 200
     assert response.headers["cache-control"] == (
-        "public, max-age=60, s-maxage=600, stale-while-revalidate=300"
+        "private, no-store"
     )
     assert response.json() == {"conditions": CONDITIONS}
     assert provider.coordinates == [(45.5234, -122.6762)]

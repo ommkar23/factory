@@ -4,14 +4,15 @@ from typing import Annotated
 from fastapi import APIRouter, Depends, Query, Request
 from fastapi.responses import JSONResponse
 
+from factory_api.auth import get_current_principal
+
 from factory_api.dependencies import WeatherProvider, get_weather_provider
 from factory_api.errors import ApiError
 from factory_api.providers.open_meteo import ProviderPayloadError, UpstreamHttpError
 from factory_api.schemas import CurrentConditionsResponse, ErrorResponse, LocationsResponse
 
-router = APIRouter(prefix="/app/weather/v1", tags=["weather"])
-_LOCATION_CACHE_CONTROL = "public, max-age=300, s-maxage=86400, stale-while-revalidate=604800"
-_CONDITIONS_CACHE_CONTROL = "public, max-age=60, s-maxage=600, stale-while-revalidate=300"
+router = APIRouter(prefix="/app/weather/v1", tags=["weather"], dependencies=[Depends(get_current_principal)])
+_PROTECTED_CACHE_CONTROL = "private, no-store"
 _NUMBER = re.compile(r"^-?(?:0|[1-9]\d*)(?:\.\d+)?$")
 Provider = Annotated[WeatherProvider, Depends(get_weather_provider)]
 
@@ -19,13 +20,36 @@ def documented_error(code: str, message: str, description: str) -> dict:
     return {"model": ErrorResponse, "description": description, "content": {"application/json": {"example": {"error": {"code": code, "message": message}}}}}
 
 
+def documented_authentication_error() -> dict:
+    return {
+        "model": ErrorResponse,
+        "description": "Authentication credentials are missing or invalid.",
+        "content": {
+            "application/json": {
+                "examples": {
+                    "missingToken": {
+                        "summary": "Missing credentials",
+                        "value": {"error": {"code": "MISSING_TOKEN", "message": "Authentication credentials are required."}},
+                    },
+                    "invalidToken": {
+                        "summary": "Malformed, expired, or invalid credentials",
+                        "value": {"error": {"code": "INVALID_TOKEN", "message": "Authentication credentials are invalid."}},
+                    },
+                }
+            }
+        },
+    }
+
+
+_AUTHENTICATION_RESPONSE = documented_authentication_error()
+
 
 @router.get(
     "/locations",
     response_model=LocationsResponse,
     summary="Search locations",
-    description="Search Open-Meteo for up to five normalized locations. Results are cached for five minutes in browsers and one day by shared HTTP caches.",
-    responses={400: documented_error("INVALID_REQUEST", "Request parameters are invalid.", "Invalid request parameters."), 429: documented_error("UPSTREAM_RATE_LIMITED", "The upstream service is rate limited.", "Weather provider rate limited the request."), 502: documented_error("UPSTREAM_UNAVAILABLE", "The upstream service is unavailable.", "Weather provider unavailable or returned invalid data.")},
+    description="Search Open-Meteo for up to five normalized locations. Authentication is required, so responses are not cached.",
+    responses={401: _AUTHENTICATION_RESPONSE, 400: documented_error("INVALID_REQUEST", "Request parameters are invalid.", "Invalid request parameters."), 429: documented_error("UPSTREAM_RATE_LIMITED", "The upstream service is rate limited.", "Weather provider rate limited the request."), 502: documented_error("UPSTREAM_UNAVAILABLE", "The upstream service is unavailable.", "Weather provider unavailable or returned invalid data.")},
 )
 async def get_locations(
     request: Request,
@@ -43,15 +67,15 @@ async def get_locations(
     except Exception as error:
         raise upstream_error(error) from error
     response = LocationsResponse(locations=locations[:5])
-    return JSONResponse(response.model_dump(), headers={"Cache-Control": _LOCATION_CACHE_CONTROL})
+    return JSONResponse(response.model_dump(), headers={"Cache-Control": _PROTECTED_CACHE_CONTROL})
 
 
 @router.get(
     "/current-conditions",
     response_model=CurrentConditionsResponse,
     summary="Get current conditions",
-    description="Return current normalized metric conditions for one WGS84 location. Responses are cached for one minute in browsers and ten minutes by shared HTTP caches.",
-    responses={400: documented_error("INVALID_REQUEST", "Request parameters are invalid.", "Invalid request parameters."), 429: documented_error("UPSTREAM_RATE_LIMITED", "The upstream service is rate limited.", "Weather provider rate limited the request."), 502: documented_error("UPSTREAM_UNAVAILABLE", "The upstream service is unavailable.", "Weather provider unavailable or returned invalid data.")},
+    description="Return current normalized metric conditions for one WGS84 location. Authentication is required, so responses are not cached.",
+    responses={401: _AUTHENTICATION_RESPONSE, 400: documented_error("INVALID_REQUEST", "Request parameters are invalid.", "Invalid request parameters."), 429: documented_error("UPSTREAM_RATE_LIMITED", "The upstream service is rate limited.", "Weather provider rate limited the request."), 502: documented_error("UPSTREAM_UNAVAILABLE", "The upstream service is unavailable.", "Weather provider unavailable or returned invalid data.")},
 )
 async def get_current_conditions(
     request: Request,
@@ -66,7 +90,7 @@ async def get_current_conditions(
     except Exception as error:
         raise upstream_error(error) from error
     response = CurrentConditionsResponse(conditions=conditions)
-    return JSONResponse(response.model_dump(), headers={"Cache-Control": _CONDITIONS_CACHE_CONTROL})
+    return JSONResponse(response.model_dump(), headers={"Cache-Control": _PROTECTED_CACHE_CONTROL})
 
 
 def coordinate(request: Request, name: str, minimum: float, maximum: float) -> float:

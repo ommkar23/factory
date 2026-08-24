@@ -13,4 +13,10 @@ The API returns stable JSON errors:
 }
 ```
 
-Error responses use `Cache-Control: no-store`. Weather success responses retain their documented HTTP cache directives. Client adoption is a separately planned migration.
+Successful Weather responses use `Cache-Control: private, no-store` because the routes require authorization. Error responses use `Cache-Control: no-store`. Client adoption is a separately planned migration.
+
+## Authentication
+
+`GET /health` is public. In production, all `/app/<app-name>/v1/*` routes require a Supabase user access JWT in the Authorization Bearer header. The API verifies the JWT against the project JWKS and validates its issuer, audience, expiry, and subject. Missing credentials return `401 MISSING_TOKEN`; malformed, expired, or invalid credentials return `401 INVALID_TOKEN`.
+
+`ENVIRONMENT=development` is the local-only authentication bypass. Production requires `SUPABASE_JWKS_URL`, `SUPABASE_JWT_ISSUER`, and `SUPABASE_JWT_AUDIENCE`; no JWT values are checked into this repository.
