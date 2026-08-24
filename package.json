@@ -14,11 +14,13 @@
     "test": "turbo run test",
     "format:check": "prettier --check $(git ls-files -- \"*.js\" \"*.jsx\" \"*.mjs\" \"*.json\" \"*.md\" \"*.yml\" \"*.yaml\" \"*.css\")",
     "format:write": "prettier --write $(git ls-files -- \"*.js\" \"*.jsx\" \"*.mjs\" \"*.json\" \"*.md\" \"*.yml\" \"*.yaml\" \"*.css\")",
-    "check": "pnpm format:check && turbo run lint test build"
+    "check": "pnpm format:check && turbo run lint test build",
+    "test:e2e": "node e2e/run-playwright.mjs"
   },
   "devDependencies": {
     "prettier": "3.9.6",
     "supabase": "2.114.0",
-    "turbo": "2.10.9"
+    "turbo": "2.10.9",
+    "@playwright/test": "1.58.2"
   }
 }

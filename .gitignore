@@ -20,3 +20,7 @@ gha-creds-*.json
 # Python build and test artifacts
 __pycache__/
 *.egg-info/
+# Playwright artifacts
+test-results/
+playwright-report/
+blob-report/
