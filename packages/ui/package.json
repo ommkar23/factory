@@ -46,7 +46,7 @@
     "eslint-plugin-storybook": "10.5.8",
     "jsdom": "26.1.0",
     "react": "19.2.3",
-    "react-dom": "19.2.3",
+    "react-dom": "19.2.8",
     "storybook": "10.5.8",
     "tailwindcss": "^4.1.18",
     "vite": "7.2.6",
