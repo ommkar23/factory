@@ -55,7 +55,7 @@ Open Home, Live Splash, and Weather at http://localhost:3001, :3002, and :3003. 
 
 ## Server-only API authentication
 
-The FastAPI service owns Supabase Google OAuth at `/auth/login` and keeps Supabase credentials in its encrypted server-side session store. Browser clients receive only the `Factory-Session` HttpOnly secure cookie; access and refresh tokens are never delivered to the browser. See [services/api/README.md](services/api/README.md) for required production configuration and the API contract.
+The FastAPI service owns Supabase Google OAuth at `/auth/login` and persists only encrypted short-lived PKCE/state records. Browser clients receive HttpOnly Supabase access and refresh cookies, while native/API clients use Supabase access JWTs in Authorization Bearer. See [services/api/README.md](services/api/README.md) for required production configuration and the API contract.
 
 ## Home app
 

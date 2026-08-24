@@ -23,13 +23,13 @@ def documented_error(code: str, message: str, description: str) -> dict:
 def documented_authentication_error() -> dict:
     return {
         "model": ErrorResponse,
-        "description": "A valid Factory session is required.",
+        "description": "A valid Supabase access credential is required.",
         "content": {
             "application/json": {
                 "example": {
                     "error": {
-                        "code": "INVALID_SESSION",
-                        "message": "A valid Factory session is required.",
+                        "code": "INVALID_CREDENTIALS",
+                        "message": "A valid Supabase access credential is required.",
                     }
                 }
             }

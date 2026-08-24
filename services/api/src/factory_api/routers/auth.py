@@ -1,10 +1,12 @@
 import base64
 import hashlib
+import json
 import secrets
 from typing import Any
 from urllib.parse import urlencode
 
 import httpx
+import jwt
 from fastapi import APIRouter, Query, Request
 from fastapi.responses import JSONResponse, RedirectResponse, Response
 
@@ -12,7 +14,9 @@ from factory_api.errors import ApiError
 from factory_api.schemas import ErrorResponse, SessionResponse
 
 
-COOKIE_NAME = "Factory-Session"
+ACCESS_TOKEN_COOKIE_NAME = "Factory-Access-Token"
+REFRESH_TOKEN_COOKIE_NAME = "Factory-Refresh-Token"
+COOKIE_NAME = ACCESS_TOKEN_COOKIE_NAME
 OAUTH_TRANSACTION_COOKIE_NAME = "Factory-OAuth-Transaction"
 OAUTH_TRANSACTION_MAX_AGE_SECONDS = 300
 router = APIRouter(prefix="/auth", tags=["authentication"])
@@ -52,6 +56,10 @@ class SupabaseAuthError(Exception):
     pass
 
 
+class SupabaseAccessTokenExpired(SupabaseAuthError):
+    pass
+
+
 def require_auth_configuration(request: Request) -> None:
     if not request.app.state.settings.is_auth_configured:
         raise ApiError(AUTH_NOT_CONFIGURED_CODE, AUTH_NOT_CONFIGURED_MESSAGE, 503)
@@ -79,6 +87,45 @@ class SupabaseAuthClient:
 
     async def refresh_session(self, *, refresh_token: str) -> dict[str, Any]:
         return await self._token_request("refresh_token", {"refresh_token": refresh_token})
+
+    async def exchange_google_id_token(self, *, id_token: str, nonce: str) -> dict[str, Any]:
+        return await self._token_request("id_token", {"provider": "google", "id_token": id_token, "nonce": nonce})
+
+    async def logout(self, *, access_token: str) -> None:
+        try:
+            async with httpx.AsyncClient(timeout=10) as client:
+                response = await client.post(f"{self._supabase_url}/auth/v1/logout", headers={**self._headers, "Authorization": f"Bearer {access_token}"})
+            response.raise_for_status()
+        except httpx.HTTPError as error:
+            raise SupabaseAuthError from error
+
+    async def verify_access_token(self, token: str) -> dict[str, Any]:
+        try:
+            async with httpx.AsyncClient(timeout=10) as client:
+                jwks_response = await client.get(f"{self._supabase_url}/auth/v1/.well-known/jwks.json", headers=self._headers)
+            jwks = jwks_response.json() if jwks_response.is_success else {}
+        except (httpx.HTTPError, ValueError):
+            jwks = {}
+        keys = jwks.get("keys") if isinstance(jwks, dict) else None
+        if isinstance(keys, list) and keys:
+            try:
+                header = jwt.get_unverified_header(token)
+                key = next(key for key in jwt.PyJWKSet.from_dict(jwks).keys if key.key_id == header.get("kid"))
+                return jwt.decode(token, key.key, algorithms=["RS256", "ES256", "EdDSA"], audience="authenticated", issuer=f"{self._supabase_url}/auth/v1", options={"require": ["exp", "sub", "aud", "iss"]})
+            except jwt.ExpiredSignatureError as error:
+                raise SupabaseAccessTokenExpired from error
+            except (jwt.PyJWTError, StopIteration, ValueError) as error:
+                raise SupabaseAuthError from error
+        try:
+            async with httpx.AsyncClient(timeout=10) as client:
+                response = await client.get(f"{self._supabase_url}/auth/v1/user", headers={**self._headers, "Authorization": f"Bearer {token}"})
+            response.raise_for_status()
+            user = response.json()
+        except (httpx.HTTPError, ValueError) as error:
+            raise SupabaseAuthError from error
+        if not isinstance(user, dict) or not isinstance(user.get("id"), str):
+            raise SupabaseAuthError
+        return {"sub": user["id"], "email": user.get("email")}
 
     async def _token_request(self, grant_type: str, body: dict[str, str]) -> dict[str, Any]:
         try:
@@ -144,11 +191,11 @@ async def login(request: Request, next_path: str = Query("/", alias="next", desc
     status_code=303,
     response_class=RedirectResponse,
     summary="Complete Google sign-in",
-    description="Requires the initiating browser transaction, atomically consumes a one-time bound PKCE state, exchanges the Supabase authorization code server-side, and creates an opaque Factory session cookie.",
+    description="Requires the initiating browser transaction, atomically consumes a one-time bound PKCE state, exchanges the Supabase authorization code server-side, and sets HttpOnly Supabase access and refresh cookies.",
     responses={
         303: {
-            "description": "OAuth code exchanged and Factory session cookie issued.",
-            "headers": {"Set-Cookie": {"description": "Opaque Factory session cookie; expires the OAuth transaction cookie."}},
+            "description": "OAuth code exchanged and Supabase browser token cookies issued.",
+            "headers": {"Set-Cookie": {"description": "HttpOnly Supabase access and refresh cookies; expires the OAuth transaction cookie."}},
         },
         400: documented_callback_error(),
         503: documented_error(AUTH_NOT_CONFIGURED_CODE, AUTH_NOT_CONFIGURED_MESSAGE, "Authentication is not configured."),
@@ -169,14 +216,32 @@ async def callback(
         return oauth_error_response("INVALID_OAUTH_STATE", "The sign-in state is invalid or expired.")
     try:
         token_data = await request.app.state.supabase_auth_client.exchange_code(code=code, code_verifier=oauth_state.code_verifier)
-        session_id = request.app.state.session_store.create_session(token_data)
+        validate_token_pair(token_data)
     except (SupabaseAuthError, ValueError):
         return oauth_error_response("OAUTH_EXCHANGE_FAILED", "The sign-in code could not be exchanged.")
     response = RedirectResponse(oauth_state.next_path, status_code=303, headers={"Cache-Control": "no-store"})
-    response.set_cookie(COOKIE_NAME, session_id, httponly=True, secure=True, samesite="lax", path="/")
+    set_token_cookies(response, token_data)
     response.delete_cookie(OAUTH_TRANSACTION_COOKIE_NAME, path="/", httponly=True, secure=True, samesite="lax")
     return response
 
+
+
+def validate_token_pair(token_data: dict[str, Any]) -> None:
+    access_token = token_data.get("access_token")
+    refresh_token = token_data.get("refresh_token")
+    expires_in = token_data.get("expires_in")
+    if not isinstance(access_token, str) or not access_token or not isinstance(refresh_token, str) or not refresh_token or not isinstance(expires_in, int) or expires_in <= 0:
+        raise ValueError("Supabase returned an invalid token pair.")
+
+
+def set_token_cookies(response: Response, token_data: dict[str, Any]) -> None:
+    response.set_cookie(ACCESS_TOKEN_COOKIE_NAME, token_data["access_token"], httponly=True, secure=True, samesite="lax", path="/", max_age=token_data["expires_in"])
+    response.set_cookie(REFRESH_TOKEN_COOKIE_NAME, token_data["refresh_token"], httponly=True, secure=True, samesite="lax", path="/")
+
+
+def clear_token_cookies(response: Response) -> None:
+    for name in (ACCESS_TOKEN_COOKIE_NAME, REFRESH_TOKEN_COOKIE_NAME):
+        response.delete_cookie(name, path="/", httponly=True, secure=True, samesite="lax")
 
 def oauth_error_response(code: str, message: str) -> JSONResponse:
     response = JSONResponse({"error": {"code": code, "message": message}}, status_code=400, headers={"Cache-Control": "no-store"})
@@ -193,36 +258,85 @@ def allowed_return_path(path: str, allow_list: tuple[str, ...]) -> bool:
 
 @router.get(
     "/session",
-    summary="Read the Factory session",
-    description="Returns the signed-in user profile for a valid opaque Factory cookie. OAuth credentials are never returned.",
+    summary="Read the signed-in Supabase user",
+    description="Returns selected user data for a verified browser cookie or Bearer access token. Browser refresh tokens are never returned.",
     response_model=SessionResponse,
-    responses={
-        401: documented_error("INVALID_SESSION", "A valid Factory session is required.", "A valid Factory session is required."),
-        503: documented_error(AUTH_NOT_CONFIGURED_CODE, AUTH_NOT_CONFIGURED_MESSAGE, "Authentication is not configured."),
-    },
+    responses={401: documented_error("INVALID_CREDENTIALS", "A valid Supabase access credential is required.", "Invalid credential."), 503: documented_error(AUTH_NOT_CONFIGURED_CODE, AUTH_NOT_CONFIGURED_MESSAGE, "Authentication is not configured.")},
 )
 async def get_session(request: Request) -> JSONResponse:
     require_auth_configuration(request)
-    session_id = request.cookies.get(COOKIE_NAME)
-    session = request.app.state.session_store.get_session(session_id) if session_id else None
-    if session is None:
-        raise ApiError("INVALID_SESSION", "A valid Factory session is required.", 401)
-    return JSONResponse(SessionResponse(user=session.user).model_dump(exclude_none=True), headers={"Cache-Control": "no-store"})
+    from factory_api.auth import get_current_principal
+
+    principal = await get_current_principal(request)
+    return JSONResponse(SessionResponse(user={"id": principal.subject, "email": principal.email}).model_dump(exclude_none=True), headers={"Cache-Control": "no-store"})
 
 
-
-@router.post(
-    "/logout",
-    status_code=204,
-    summary="End the Factory session",
-    description="Deletes the server-side session and expires the opaque Factory cookie.",
-    responses={503: documented_error(AUTH_NOT_CONFIGURED_CODE, AUTH_NOT_CONFIGURED_MESSAGE, "Authentication is not configured.")},
-)
+@router.post("/logout", status_code=204, summary="Revoke Supabase browser credentials", description="Attempts provider sign-out then clears both HttpOnly browser token cookies.")
 async def logout(request: Request) -> Response:
     require_auth_configuration(request)
-    session_id = request.cookies.get(COOKIE_NAME)
-    if session_id:
-        request.app.state.session_store.delete_session(session_id)
+    from factory_api.auth import _single_bearer_token, get_current_principal
+
+    bearer = _single_bearer_token(request)
+    access_token = request.cookies.get(ACCESS_TOKEN_COOKIE_NAME)
+    if bearer:
+        await get_current_principal(request)
+        access_token = bearer
+    if access_token:
+        try:
+            await request.app.state.supabase_auth_client.logout(access_token=access_token)
+        except Exception:
+            pass
     response = Response(status_code=204, headers={"Cache-Control": "no-store"})
-    response.delete_cookie(COOKIE_NAME, path="/", httponly=True, secure=True, samesite="lax")
+    clear_token_cookies(response)
     return response
+
+
+@router.post("/native/challenge", summary="Create a native Google nonce", description="Creates a one-time, five-minute nonce for a native Google ID-token exchange.")
+async def native_challenge(request: Request) -> JSONResponse:
+    require_auth_configuration(request)
+    nonce = secrets.token_urlsafe(32)
+    request.app.state.session_store.store_native_challenge(nonce)
+    return JSONResponse({"nonce": nonce}, headers={"Cache-Control": "no-store"})
+
+
+@router.post("/native/exchange", summary="Exchange a native Google ID token", description="Consumes a one-time nonce and returns only the Supabase token pair.")
+async def native_exchange(request: Request) -> JSONResponse:
+    require_auth_configuration(request)
+    payload = await request_json_object(request)
+    id_token = payload.get("id_token") if isinstance(payload, dict) else None
+    nonce = payload.get("nonce") if isinstance(payload, dict) else None
+    if not isinstance(id_token, str) or not isinstance(nonce, str) or not request.app.state.session_store.consume_native_challenge(nonce):
+        raise ApiError("INVALID_NATIVE_CHALLENGE", "The native sign-in challenge is invalid or expired.", 401)
+    try:
+        token_data = await request.app.state.supabase_auth_client.exchange_google_id_token(id_token=id_token, nonce=nonce)
+        validate_token_pair(token_data)
+    except Exception as error:
+        raise ApiError("NATIVE_EXCHANGE_FAILED", "The Google ID token could not be exchanged.", 401) from error
+    return JSONResponse(token_pair_response(token_data), headers={"Cache-Control": "no-store"})
+
+
+@router.post("/token/refresh", summary="Refresh a native Supabase token pair", description="Refreshes a native Supabase refresh token and returns the provider's rotated pair.")
+async def refresh_token(request: Request) -> JSONResponse:
+    require_auth_configuration(request)
+    payload = await request_json_object(request)
+    value = payload.get("refresh_token") if isinstance(payload, dict) else None
+    if not isinstance(value, str):
+        raise ApiError("INVALID_REFRESH_TOKEN", "A valid Supabase refresh token is required.", 401)
+    try:
+        token_data = await request.app.state.supabase_auth_client.refresh_session(refresh_token=value)
+        validate_token_pair(token_data)
+    except Exception as error:
+        raise ApiError("INVALID_REFRESH_TOKEN", "A valid Supabase refresh token is required.", 401) from error
+    return JSONResponse(token_pair_response(token_data), headers={"Cache-Control": "no-store"})
+
+
+def token_pair_response(token_data: dict[str, Any]) -> dict[str, Any]:
+    return {name: token_data[name] for name in ("access_token", "refresh_token", "expires_in") if name in token_data} | {"token_type": token_data.get("token_type", "bearer")}
+
+
+async def request_json_object(request: Request) -> dict[str, Any] | None:
+    try:
+        payload = await request.json()
+    except (json.JSONDecodeError, UnicodeDecodeError):
+        return None
+    return payload if isinstance(payload, dict) else None

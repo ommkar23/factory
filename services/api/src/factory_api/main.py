@@ -4,7 +4,7 @@ from fastapi.openapi.utils import get_openapi
 
 from factory_api.config import Settings
 from factory_api.errors import ApiError, api_error_handler
-from factory_api.routers.auth import SupabaseAuthClient, router as auth_router
+from factory_api.routers.auth import SupabaseAuthClient, clear_token_cookies, router as auth_router, set_token_cookies
 from factory_api.routers.health import router as health_router
 from factory_api.routers.weather import router as weather_router
 from factory_api.session_store import create_session_store
@@ -29,13 +29,24 @@ def create_app(
             settings.supabase_url, settings.supabase_publishable_key, settings.supabase_authorization_url
         )
     app.add_exception_handler(ApiError, api_error_handler)
+
+    @app.middleware("http")
+    async def persist_refreshed_browser_tokens(request, call_next):
+        response = await call_next(request)
+        token_data = getattr(request.state, "refreshed_token_data", None)
+        if getattr(request.state, "clear_browser_tokens", False):
+            clear_token_cookies(response)
+        elif token_data is not None:
+            set_token_cookies(response, token_data)
+        return response
+
     if settings.cors_allow_origins:
         app.add_middleware(
             CORSMiddleware,
             allow_origins=list(settings.cors_allow_origins),
             allow_credentials=True,
             allow_methods=["GET", "POST"],
-            allow_headers=[],
+            allow_headers=["Authorization"],
         )
     app.include_router(health_router)
     app.include_router(auth_router)
@@ -59,6 +70,14 @@ def factory_openapi(app: FastAPI) -> dict:
         for parameter in operation["parameters"]:
             if parameter["name"] in names:
                 parameter["required"] = True
+    schema.setdefault("components", {}).setdefault("securitySchemes", {}).update({
+        "SupabaseBearer": {"type": "http", "scheme": "bearer", "bearerFormat": "JWT"},
+        "SupabaseCookie": {"type": "apiKey", "in": "cookie", "name": "Factory-Access-Token"},
+    })
+    for path, methods in schema["paths"].items():
+        if path.startswith("/app/"):
+            for operation in methods.values():
+                operation["security"] = [{"SupabaseBearer": []}, {"SupabaseCookie": []}]
     app.openapi_schema = schema
     return schema
 
