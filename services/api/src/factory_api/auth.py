@@ -74,8 +74,6 @@ def principal_from_claims(claims: dict) -> AuthenticatedPrincipal:
 
 
 async def get_current_principal(request: Request) -> AuthenticatedPrincipal:
-    if request.app.state.settings.is_development:
-        return AuthenticatedPrincipal(subject="development-bypass")
     try:
         bearer = _single_bearer_token(request)
         cookie = _access_cookie(request)

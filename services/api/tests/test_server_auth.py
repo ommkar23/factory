@@ -1,7 +1,9 @@
 import hashlib
+from dataclasses import replace
 from pathlib import Path
 from urllib.parse import parse_qs, urlparse
 
+import pytest
 from starlette.testclient import TestClient
 
 from factory_api.config import Settings
@@ -15,6 +17,7 @@ class FakeSupabaseAuthProvider:
         self.refreshes: list[str] = []
         self.challenges: list[str] = []
         self.logged_out: list[str] = []
+        self.password_sign_ins: list[tuple[str, str]] = []
 
     def authorization_url(self, *, callback_url: str, code_challenge: str, state: str) -> str:
         assert callback_url == "https://api.factory.example/auth/callback"
@@ -46,6 +49,10 @@ class FakeSupabaseAuthProvider:
         if refresh_token == "bad-refresh":
             raise Exception("bad refresh")
         return {"access_token": "rotated-access-token", "refresh_token": "rotated-refresh-token", "expires_in": 3600, "token_type": "bearer", "user": {"id": "5d594e47-d4d1-4bbd-a461-f4794fc491a6"}}
+
+    async def password_sign_in(self, *, email: str, password: str) -> dict:
+        self.password_sign_ins.append((email, password))
+        return {"access_token": "development-access-token", "refresh_token": "development-refresh-token", "expires_in": 3600, "token_type": "bearer"}
 
     async def exchange_google_id_token(self, *, id_token: str, nonce: str) -> dict:
         self.challenges.append(nonce)
@@ -301,3 +308,152 @@ def test_explicit_browser_origin_may_send_authorization_header(tmp_path: Path) -
 
     assert response.status_code == 200
     assert "authorization" in response.headers["access-control-allow-headers"].lower()
+
+
+def test_development_protected_routes_require_a_supabase_credential(tmp_path: Path) -> None:
+    from factory_api.dependencies import get_weather_provider
+
+    provider = FakeSupabaseAuthProvider()
+    app = create_app(
+        settings=replace(production_settings(tmp_path), environment="development"),
+        supabase_auth_client=provider,
+    )
+    app.dependency_overrides[get_weather_provider] = lambda: FakeWeatherProvider()
+
+    response = TestClient(app).get("/app/weather/v1/locations?q=Portland")
+
+    assert response.status_code == 401
+    assert response.json()["error"]["code"] == "INVALID_CREDENTIALS"
+
+
+def test_enabled_development_issuer_returns_provider_tokens_that_authorize_app_routes(tmp_path: Path) -> None:
+    from factory_api.dependencies import get_weather_provider
+
+    provider = FakeSupabaseAuthProvider()
+    app = create_app(
+        settings=replace(
+            production_settings(tmp_path),
+            environment="development",
+            auth_public_url="http://localhost:3004",
+            dev_auth_enabled=True,
+            dev_auth_email="development@example.com",
+            dev_auth_password="development-password",
+            dev_auth_secret="development-secret",
+        ),
+        supabase_auth_client=provider,
+    )
+    app.dependency_overrides[get_weather_provider] = lambda: FakeWeatherProvider()
+    client = TestClient(app, base_url="http://localhost:3004")
+
+    rejected = client.post("/auth/dev/token", headers={"X-Dev-Auth-Secret": "wrong-secret"})
+    issued = client.post("/auth/dev/token", headers={"X-Dev-Auth-Secret": "development-secret"})
+    authorized = client.get("/app/weather/v1/locations?q=Portland", headers={"Authorization": "Bearer development-access-token"})
+
+    assert rejected.status_code == 401
+    assert rejected.headers["cache-control"] == "no-store"
+    schema = app.openapi()
+    assert schema["paths"]["/auth/dev/token"]["post"]["security"] == [{"DevAuthSecret": []}]
+    assert schema["components"]["securitySchemes"]["DevAuthSecret"] == {"type": "apiKey", "in": "header", "name": "X-Dev-Auth-Secret"}
+    assert issued.status_code == 200
+    assert issued.headers["cache-control"] == "no-store"
+    assert issued.json() == {"access_token": "development-access-token", "refresh_token": "development-refresh-token", "expires_in": 3600, "token_type": "bearer"}
+    assert provider.password_sign_ins == [("development@example.com", "development-password")]
+    assert authorized.status_code == 200
+    assert provider.verified == ["development-access-token"]
+
+
+def development_settings(tmp_path: Path) -> Settings:
+    return replace(
+        production_settings(tmp_path),
+        cors_allow_origins=("http://localhost:3000",),
+        environment="development",
+        auth_public_url="http://localhost:3004",
+        dev_auth_enabled=True,
+        dev_auth_email="development@example.com",
+        dev_auth_password="development-password",
+        dev_auth_secret="development-secret",
+    )
+
+
+def test_development_session_uses_http_localhost_cookies_and_authorizes_cookie_jar(tmp_path: Path) -> None:
+    from factory_api.dependencies import get_weather_provider
+
+    provider = FakeSupabaseAuthProvider()
+    app = create_app(settings=development_settings(tmp_path), supabase_auth_client=provider)
+    app.dependency_overrides[get_weather_provider] = lambda: FakeWeatherProvider()
+    client = TestClient(app, base_url="http://localhost:3004")
+
+    rejected = client.post("/auth/dev/session")
+    issued = client.post("/auth/dev/session", headers={"X-Dev-Auth-Secret": "development-secret"})
+    authorized = client.get("/app/weather/v1/locations?q=Portland")
+
+    assert rejected.status_code == 401
+    assert provider.password_sign_ins == [("development@example.com", "development-password")]
+    assert issued.status_code == 204
+    assert issued.headers["cache-control"] == "no-store"
+    access_cookie = _cookie(issued, "Factory-Access-Token")
+    refresh_cookie = _cookie(issued, "Factory-Refresh-Token")
+    for cookie in (access_cookie, refresh_cookie):
+        assert "HttpOnly" in cookie and "SameSite=lax" in cookie and "Path=/" in cookie
+        assert "Secure" not in cookie
+    assert "Max-Age=3600" in access_cookie
+    assert "Max-Age=2592000" in refresh_cookie
+    assert authorized.status_code == 200
+    assert provider.verified == ["development-access-token"]
+
+
+def test_development_issuer_is_not_registered_when_disabled_and_rejects_invalid_configuration(tmp_path: Path) -> None:
+    disabled = create_app(
+        settings=replace(production_settings(tmp_path), environment="development"),
+        supabase_auth_client=FakeSupabaseAuthProvider(),
+    )
+
+    production = create_app(settings=production_settings(tmp_path), supabase_auth_client=FakeSupabaseAuthProvider())
+    assert TestClient(disabled).post("/auth/dev/token").status_code == 404
+    assert "/auth/dev/token" not in disabled.openapi()["paths"]
+    assert TestClient(production).post("/auth/dev/token").status_code == 404
+    assert "/auth/dev/token" not in production.openapi()["paths"]
+    with pytest.raises(RuntimeError, match="permitted only"):
+        replace(production_settings(tmp_path), dev_auth_enabled=True, dev_auth_email="development@example.com", dev_auth_password="development-password", dev_auth_secret="development-secret")
+
+
+def test_development_cors_allows_only_the_documented_local_issuer_headers(tmp_path: Path) -> None:
+    app = create_app(settings=development_settings(tmp_path), supabase_auth_client=FakeSupabaseAuthProvider())
+
+    response = TestClient(app).options(
+        "/auth/dev/session",
+        headers={
+            "Origin": "http://localhost:3000",
+            "Access-Control-Request-Method": "POST",
+            "Access-Control-Request-Headers": "authorization, content-type, x-dev-auth-secret",
+        },
+    )
+
+    assert response.status_code == 200
+    assert response.headers["access-control-allow-origin"] == "http://localhost:3000"
+    assert response.headers["access-control-allow-credentials"] == "true"
+    allowed_headers = response.headers["access-control-allow-headers"].lower()
+    assert "authorization" in allowed_headers and "content-type" in allowed_headers and "x-dev-auth-secret" in allowed_headers
+
+
+def test_enabled_development_issuer_requires_complete_supabase_auth_configuration() -> None:
+    with pytest.raises(RuntimeError, match="requires complete Supabase auth configuration"):
+        Settings(
+            cors_allow_origins=(),
+            environment="development",
+            supabase_url=None,
+            supabase_publishable_key=None,
+            auth_public_url=None,
+            auth_allowed_return_paths=("/",),
+            auth_session_encryption_key=None,
+            auth_session_database_url=None,
+            dev_auth_enabled=True,
+            dev_auth_email="development@example.com",
+            dev_auth_password="development-password",
+            dev_auth_secret="development-secret",
+        )
+
+
+def test_credentialed_cors_rejects_wildcard_origins() -> None:
+    with pytest.raises(RuntimeError, match="must not contain \"\\*\""):
+        replace(production_settings(Path("/tmp")), cors_allow_origins=("*",))

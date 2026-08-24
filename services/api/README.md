@@ -9,3 +9,5 @@ Protected app routes accept exactly one credential: a Supabase access JWT in Aut
 Native clients use a one-time Google nonce then receive or refresh provider token pairs only. Browser cookie refresh rotates cookies server-side and failed refresh or logout clears them.
 
 Run all API tests: docker run --rm -v $PWD:/workspace -w /workspace python:3.12.14-slim sh -c pip install -e .[dev] and pytest -q.
+
+For local development only, `./scripts/setup-factory-dev.sh` creates or resets a confirmed Supabase test login and writes its email/password plus a random issuer secret to ignored `services/api/.env`. With `DEV_AUTH_ENABLED=true`, use `X-Dev-Auth-Secret` with POST `/auth/dev/token` for a Postman/native token pair or POST `/auth/dev/session` for an HttpOnly localhost cookie jar. These routes are not registered outside explicit development.

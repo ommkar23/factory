@@ -2,6 +2,7 @@ from dataclasses import dataclass, field
 
 from starlette.testclient import TestClient
 
+from factory_api.config import Settings
 from factory_api.dependencies import get_weather_provider
 from factory_api.main import create_app
 from factory_api.providers.open_meteo import ProviderPayloadError, UpstreamHttpError
@@ -52,10 +53,28 @@ class FakeWeatherProvider:
         return self.conditions
 
 
+class FakeSupabaseAuthProvider:
+    async def verify_access_token(self, token: str) -> dict:
+        assert token == "weather-test-token"
+        return {"sub": "5d594e47-d4d1-4bbd-a461-f4794fc491a6"}
+
+
 def client_for(provider: FakeWeatherProvider) -> TestClient:
-    app = create_app()
+    app = create_app(
+        settings=Settings(
+            cors_allow_origins=(),
+            environment="development",
+            supabase_url="http://supabase.example",
+            supabase_publishable_key="publishable-key",
+            auth_public_url="http://localhost:3004",
+            auth_allowed_return_paths=("/",),
+            auth_session_encryption_key="AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=",
+            auth_session_database_url="sqlite:////tmp/factory-weather-test-states.db",
+        ),
+        supabase_auth_client=FakeSupabaseAuthProvider(),
+    )
     app.dependency_overrides[get_weather_provider] = lambda: provider
-    return TestClient(app)
+    return TestClient(app, headers={"Authorization": "Bearer weather-test-token"})
 
 
 def test_locations_returns_normalized_response_and_cache_policy() -> None:

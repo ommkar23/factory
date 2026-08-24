@@ -87,7 +87,7 @@ services:
       - ./services/api/.env
     environment:
       ENVIRONMENT: development
-      CORS_ALLOW_ORIGINS: http://localhost:3001,http://localhost:3002,http://localhost:3003
+      CORS_ALLOW_ORIGINS: http://localhost:3000,http://localhost:3001,http://localhost:3002,http://localhost:3003
     volumes:
       - api-sessions:/data/factory-api
     ports:

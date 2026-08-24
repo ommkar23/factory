@@ -20,6 +20,10 @@ PY
 fi
 
 key=$(grep "^SUPABASE_PUBLISHABLE_KEY=" supabase/.env | cut -d= -f2-)
+if [[ -z "$key" ]]; then
+  key=$(grep "^ANON_KEY=" supabase/.env | cut -d= -f2-)
+fi
+[[ -n "$key" ]] || { echo "No local Supabase publishable or anon key is configured." >&2; exit 1; }
 for app in home live-splash weather; do
   umask 077
   printf "FACTORY_SHARED_ORIGIN=false\nNEXT_PUBLIC_SUPABASE_URL=http://localhost:8000\nNEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=%s\n" "$key" > "apps/$app/.env.local"
@@ -31,12 +35,38 @@ then
   session_key=$(python3 -c "import base64, secrets; print(base64.urlsafe_b64encode(secrets.token_bytes(32)).decode())")
   printf "SUPABASE_URL=http://api-gw:8000\nSUPABASE_AUTHORIZATION_URL=http://localhost:8000\nSUPABASE_PUBLISHABLE_KEY=%s\nAUTH_PUBLIC_URL=http://localhost:3004\nAUTH_ALLOWED_RETURN_PATHS=/,/weather,/live-splash\nAUTH_SESSION_ENCRYPTION_KEY=%s\nAUTH_SESSION_DATABASE_URL=sqlite:////data/factory-api/sessions.db\n" "$key" "$session_key" > services/api/.env
   unset session_key
-  chmod 600 services/api/.env
 fi
+ensure_api_env_value() {
+  local name=$1
+  local value=$2
+  grep -q "^${name}=" services/api/.env || printf "%s=%s\n" "$name" "$value" >> services/api/.env
+}
+ensure_api_env_value DEV_AUTH_ENABLED true
+ensure_api_env_value DEV_AUTH_EMAIL factory-development@example.test
+if ! grep -q "^DEV_AUTH_PASSWORD=" services/api/.env; then
+  ensure_api_env_value DEV_AUTH_PASSWORD "$(python3 -c "import secrets; print(secrets.token_urlsafe(32))")"
+fi
+if ! grep -q "^DEV_AUTH_SECRET=" services/api/.env; then
+  ensure_api_env_value DEV_AUTH_SECRET "$(python3 -c "import secrets; print(secrets.token_urlsafe(32))")"
+fi
+chmod 600 services/api/.env
 unset key
 
 docker compose config >/dev/null
 docker compose up -d --build
+service_role_key=$(grep "^SERVICE_ROLE_KEY=" supabase/.env | cut -d= -f2-)
+dev_auth_email=$(grep "^DEV_AUTH_EMAIL=" services/api/.env | cut -d= -f2-)
+dev_auth_password=$(grep "^DEV_AUTH_PASSWORD=" services/api/.env | cut -d= -f2-)
+provisioned=false
+for _ in {1..30}; do
+  if SUPABASE_AUTH_URL=http://127.0.0.1:8000/auth/v1 SUPABASE_SERVICE_ROLE_KEY="$service_role_key" DEV_AUTH_EMAIL="$dev_auth_email" DEV_AUTH_PASSWORD="$dev_auth_password" python3 scripts/provision-dev-auth-user.py; then
+    provisioned=true
+    break
+  fi
+  sleep 1
+done
+[[ "$provisioned" == true ]] || { echo "Local Supabase development user provisioning failed." >&2; exit 1; }
+unset provisioned service_role_key dev_auth_email dev_auth_password
 for volume in home-node-modules home-pnpm-cache live-splash-node-modules live-splash-pnpm-cache weather-node-modules weather-pnpm-cache; do
   docker volume create "factory-dev_${volume}" >/dev/null
   docker run --rm -v "factory-dev_${volume}:/v" alpine:3.22 chown -R 1001:1002 /v >/dev/null

@@ -1,5 +1,6 @@
 import base64
 import hashlib
+import hmac
 import json
 import secrets
 from typing import Any
@@ -20,6 +21,7 @@ COOKIE_NAME = ACCESS_TOKEN_COOKIE_NAME
 OAUTH_TRANSACTION_COOKIE_NAME = "Factory-OAuth-Transaction"
 OAUTH_TRANSACTION_MAX_AGE_SECONDS = 300
 router = APIRouter(prefix="/auth", tags=["authentication"])
+dev_router = APIRouter(prefix="/auth/dev", tags=["development authentication"])
 
 
 AUTH_NOT_CONFIGURED_CODE = "AUTH_NOT_CONFIGURED"
@@ -84,6 +86,9 @@ class SupabaseAuthClient:
 
     async def exchange_code(self, *, code: str, code_verifier: str) -> dict[str, Any]:
         return await self._token_request("pkce", {"auth_code": code, "code_verifier": code_verifier})
+
+    async def password_sign_in(self, *, email: str, password: str) -> dict[str, Any]:
+        return await self._token_request("password", {"email": email, "password": password})
 
     async def refresh_session(self, *, refresh_token: str) -> dict[str, Any]:
         return await self._token_request("refresh_token", {"refresh_token": refresh_token})
@@ -178,7 +183,7 @@ async def login(request: Request, next_path: str = Query("/", alias="next", desc
         OAUTH_TRANSACTION_COOKIE_NAME,
         transaction,
         httponly=True,
-        secure=True,
+        secure=settings.browser_cookie_secure,
         samesite="lax",
         path="/",
         max_age=OAUTH_TRANSACTION_MAX_AGE_SECONDS,
@@ -220,8 +225,8 @@ async def callback(
     except (SupabaseAuthError, ValueError):
         return oauth_error_response("OAUTH_EXCHANGE_FAILED", "The sign-in code could not be exchanged.")
     response = RedirectResponse(oauth_state.next_path, status_code=303, headers={"Cache-Control": "no-store"})
-    set_token_cookies(response, token_data)
-    response.delete_cookie(OAUTH_TRANSACTION_COOKIE_NAME, path="/", httponly=True, secure=True, samesite="lax")
+    set_token_cookies(response, token_data, secure=request.app.state.settings.browser_cookie_secure)
+    response.delete_cookie(OAUTH_TRANSACTION_COOKIE_NAME, path="/", httponly=True, secure=request.app.state.settings.browser_cookie_secure, samesite="lax")
     return response
 
 
@@ -234,14 +239,17 @@ def validate_token_pair(token_data: dict[str, Any]) -> None:
         raise ValueError("Supabase returned an invalid token pair.")
 
 
-def set_token_cookies(response: Response, token_data: dict[str, Any]) -> None:
-    response.set_cookie(ACCESS_TOKEN_COOKIE_NAME, token_data["access_token"], httponly=True, secure=True, samesite="lax", path="/", max_age=token_data["expires_in"])
-    response.set_cookie(REFRESH_TOKEN_COOKIE_NAME, token_data["refresh_token"], httponly=True, secure=True, samesite="lax", path="/")
+REFRESH_TOKEN_COOKIE_MAX_AGE_SECONDS = 60 * 60 * 24 * 30
 
 
-def clear_token_cookies(response: Response) -> None:
+def set_token_cookies(response: Response, token_data: dict[str, Any], *, secure: bool = True) -> None:
+    response.set_cookie(ACCESS_TOKEN_COOKIE_NAME, token_data["access_token"], httponly=True, secure=secure, samesite="lax", path="/", max_age=token_data["expires_in"])
+    response.set_cookie(REFRESH_TOKEN_COOKIE_NAME, token_data["refresh_token"], httponly=True, secure=secure, samesite="lax", path="/", max_age=token_data.get("refresh_expires_in", REFRESH_TOKEN_COOKIE_MAX_AGE_SECONDS))
+
+
+def clear_token_cookies(response: Response, *, secure: bool = True) -> None:
     for name in (ACCESS_TOKEN_COOKIE_NAME, REFRESH_TOKEN_COOKIE_NAME):
-        response.delete_cookie(name, path="/", httponly=True, secure=True, samesite="lax")
+        response.delete_cookie(name, path="/", httponly=True, secure=secure, samesite="lax")
 
 def oauth_error_response(code: str, message: str) -> JSONResponse:
     response = JSONResponse({"error": {"code": code, "message": message}}, status_code=400, headers={"Cache-Control": "no-store"})
@@ -287,7 +295,7 @@ async def logout(request: Request) -> Response:
         except Exception:
             pass
     response = Response(status_code=204, headers={"Cache-Control": "no-store"})
-    clear_token_cookies(response)
+    clear_token_cookies(response, secure=request.app.state.settings.browser_cookie_secure)
     return response
 
 
@@ -340,3 +348,42 @@ async def request_json_object(request: Request) -> dict[str, Any] | None:
     except (json.JSONDecodeError, UnicodeDecodeError):
         return None
     return payload if isinstance(payload, dict) else None
+
+
+DEV_AUTH_ERROR_CODE = "INVALID_DEVELOPMENT_AUTH"
+DEV_AUTH_ERROR_MESSAGE = "The development auth credential is invalid."
+
+
+def require_development_auth_secret(request: Request) -> None:
+    values = request.headers.getlist("x-dev-auth-secret")
+    secret = request.app.state.settings.dev_auth_secret
+    if len(values) != 1 or not secret or not hmac.compare_digest(values[0], secret):
+        raise ApiError(DEV_AUTH_ERROR_CODE, DEV_AUTH_ERROR_MESSAGE, 401)
+
+
+async def issue_development_token_pair(request: Request) -> dict[str, Any]:
+    require_auth_configuration(request)
+    require_development_auth_secret(request)
+    settings = request.app.state.settings
+    try:
+        token_data = await request.app.state.supabase_auth_client.password_sign_in(
+            email=settings.dev_auth_email, password=settings.dev_auth_password
+        )
+        validate_token_pair(token_data)
+        return token_data
+    except Exception as error:
+        raise ApiError("DEVELOPMENT_AUTH_ISSUANCE_FAILED", "The local Supabase test login could not be authenticated.", 503) from error
+
+
+@dev_router.post("/token", summary="Issue local Supabase test tokens", description="Requires the local development issuer secret and returns a Supabase token pair for the configured local test login.")
+async def development_token(request: Request) -> JSONResponse:
+    token_data = await issue_development_token_pair(request)
+    return JSONResponse(token_pair_response(token_data), headers={"Cache-Control": "no-store"})
+
+
+@dev_router.post("/session", status_code=204, summary="Issue local Supabase test cookies", description="Requires the local development issuer secret and sets HttpOnly Supabase token cookies for the configured local test login.")
+async def development_session(request: Request) -> Response:
+    token_data = await issue_development_token_pair(request)
+    response = Response(status_code=204, headers={"Cache-Control": "no-store"})
+    set_token_cookies(response, token_data, secure=request.app.state.settings.browser_cookie_secure)
+    return response
