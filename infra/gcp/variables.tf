@@ -48,22 +48,38 @@ variable "github_branch" {
   }
 }
 
-variable "api_image" {
-  description = "Initial immutable image for factory-api. Set after the bootstrap image push."
-  type        = string
+variable "service_images" {
+  description = "Initial immutable, digest-qualified image for each Factory Cloud Run service."
+  type        = map(string)
+  nullable    = false
+
+  validation {
+    condition = length(var.service_images) == 0 || (
+      length(setsubtract(toset(keys(var.service_images)), toset(["api", "home", "live-splash", "weather"]))) == 0 &&
+      length(setsubtract(toset(["api", "home", "live-splash", "weather"]), toset(keys(var.service_images)))) == 0
+    )
+    error_message = "service_images must define exactly api, home, live-splash, and weather."
+  }
 }
 
-variable "home_image" {
-  description = "Initial immutable image for factory-home. Set after the bootstrap image push."
+variable "supabase_url" {
+  description = "Production Supabase project origin used only by the Factory API."
   type        = string
+
+  validation {
+    condition     = startswith(var.supabase_url, "https://")
+    error_message = "supabase_url must be an HTTPS origin."
+  }
 }
 
-variable "live_splash_image" {
-  description = "Initial immutable image for factory-live-splash. Set after the bootstrap image push."
+variable "supabase_publishable_key" {
+  description = "Production Supabase publishable key used only by the Factory API."
   type        = string
+  sensitive   = true
 }
 
-variable "weather_image" {
-  description = "Initial immutable image for factory-weather. Set after the bootstrap image push."
-  type        = string
+variable "cloud_run_deletion_protection" {
+  description = "Protect production Cloud Run services from accidental deletion."
+  type        = bool
+  default     = true
 }

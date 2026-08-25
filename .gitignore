@@ -5,9 +5,9 @@ node_modules/
 dist/
 coverage/
 storybook-static/
-plans/
-# Hermes-managed project worktrees (local workspace state)
+# Hermes-managed project worktrees and runtime state
 .worktrees/
+.hermes/runtime/
 .env
 .env.*
 !.env.example

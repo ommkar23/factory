@@ -4,8 +4,9 @@ on:
   push:
     branches: [main]
     paths:
-      - "services/api/**"
-      - "infra/gcp/**"
+      - "services/api/src/**"
+      - "services/api/Dockerfile"
+      - "services/api/pyproject.toml"
       - ".github/workflows/deploy-api-cloud-run.yml"
   workflow_dispatch:
 

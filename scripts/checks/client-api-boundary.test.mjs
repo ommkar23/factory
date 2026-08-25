@@ -6,7 +6,9 @@ import { resolve } from "node:path";
 import {
   analyzeClientApiBoundary,
   collectClientBoundaryFiles,
+  trackedClientBoundaryPaths,
 } from "./client-api-boundary.mjs";
+import { factoryApps } from "../../factory.config.mjs";
 
 test("rejects app-owned data route handlers", () => {
   const violations = analyzeClientApiBoundary([
@@ -197,12 +199,16 @@ test("rejects unallowlisted dynamic network calls", () => {
 });
 
 test("discovers every app and browser-facing shared runtime source", () => {
-  const files = collectClientBoundaryFiles(resolve(import.meta.dirname, ".."));
+  const files = collectClientBoundaryFiles(
+    resolve(import.meta.dirname, "../.."),
+  );
   const paths = new Set(files.map((file) => file.path));
 
-  for (const app of ["home", "live-splash", "weather"]) {
-    assert.ok(paths.has(`apps/${app}/package.json`));
-    assert.ok([...paths].some((path) => path.startsWith(`apps/${app}/app/`)));
+  for (const app of factoryApps) {
+    assert.ok(paths.has(`${app.directory}/package.json`));
+    assert.ok(
+      [...paths].some((path) => path.startsWith(`${app.directory}/app/`)),
+    );
   }
   for (const sharedSource of [
     "packages/auth/src/client.js",
@@ -221,20 +227,30 @@ test("discovers every app and browser-facing shared runtime source", () => {
   );
 });
 
+test("boundary discovery excludes machine-local environment files", () => {
+  const repositoryRoot = resolve(import.meta.dirname, "../..");
+  const paths = trackedClientBoundaryPaths(repositoryRoot);
+
+  assert.ok(paths.some((path) => path.endsWith("/.env.example")));
+  assert.ok(paths.every((path) => !path.endsWith("/.env.local")));
+});
+
 test("the current repository satisfies the client API boundary", () => {
-  const files = collectClientBoundaryFiles(resolve(import.meta.dirname, ".."));
+  const files = collectClientBoundaryFiles(
+    resolve(import.meta.dirname, "../.."),
+  );
 
   assert.deepEqual(analyzeClientApiBoundary(files), []);
 });
 
 test("the root check runs the client API boundary guard", () => {
-  const repositoryRoot = resolve(import.meta.dirname, "..");
+  const repositoryRoot = resolve(import.meta.dirname, "../..");
   const manifest = JSON.parse(
     readFileSync(resolve(repositoryRoot, "package.json"), "utf8"),
   );
 
   assert.match(
     manifest.scripts.check,
-    /node --test scripts\/client-api-boundary\.test\.mjs/,
+    /node --test scripts\/checks\/client-api-boundary\.test\.mjs/,
   );
 });

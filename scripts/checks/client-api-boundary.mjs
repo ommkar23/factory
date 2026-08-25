@@ -1,26 +1,22 @@
-import { readdirSync, readFileSync } from "node:fs";
-import { join, relative, sep } from "node:path";
+import { existsSync, readFileSync } from "node:fs";
+import { execFileSync } from "node:child_process";
+import { join } from "node:path";
 
-const ALLOWED_APP_API_ROUTES = new Set([
-  "api/auth/dev/bootstrap",
-  "api/health",
-]);
-const ALLOWED_APP_DEPENDENCIES = new Set(["next", "react", "react-dom"]);
-const ALLOWED_PACKAGE_DEPENDENCIES = new Map([
-  ["packages/auth/package.json", new Set(["next"])],
-  ["packages/contracts/package.json", new Set()],
-  [
-    "packages/ui/package.json",
-    new Set([
-      "@base-ui/react",
-      "class-variance-authority",
-      "clsx",
-      "lucide-react",
-      "tailwind-merge",
-    ]),
-  ],
-]);
-const DEFAULT_PACKAGE_DEPENDENCIES = new Set(["next", "react", "react-dom"]);
+import { clientBoundary } from "../../factory.config.mjs";
+
+const ALLOWED_APP_API_ROUTES = new Set(clientBoundary.allowedAppApiRoutes);
+const ALLOWED_APP_DEPENDENCIES = new Set(clientBoundary.allowedAppDependencies);
+const ALLOWED_PACKAGE_DEPENDENCIES = new Map(
+  Object.entries(clientBoundary.allowedPackageDependencies).map(
+    ([manifest, dependencies]) => [manifest, new Set(dependencies)],
+  ),
+);
+const DEFAULT_PACKAGE_DEPENDENCIES = new Set(
+  clientBoundary.allowedAppDependencies,
+);
+const DYNAMIC_NETWORK_ADAPTERS = new Map(
+  Object.entries(clientBoundary.dynamicNetworkAdapters),
+);
 
 function isAllowedFetchArgument(argument) {
   return (
@@ -48,16 +44,14 @@ function hasUnapprovedNetworkCall(file) {
     }
   }
 
+  const dynamicAdapter = DYNAMIC_NETWORK_ADAPTERS.get(file.path);
   for (const match of file.content.matchAll(/\bfetcher\s*\(\s*([^,\n)]+)/g)) {
-    if (
-      file.path !== "apps/weather/lib/weather-api-client.js" ||
-      match[1].trim() !== "url"
-    ) {
+    if (!dynamicAdapter || match[1].trim() !== dynamicAdapter.argumentName) {
       return true;
     }
   }
 
-  if (file.path === "apps/weather/lib/weather-api-client.js") {
+  if (dynamicAdapter) {
     for (const match of file.content.matchAll(
       /\bgetJson\s*\(\s*fetcher\s*,\s*/g,
     )) {
@@ -96,41 +90,38 @@ const EXCLUDED_PATH_SEGMENTS = new Set([
 const RUNTIME_SOURCE_EXTENSION = /\.[cm]?[jt]sx?$/;
 const NON_RUNTIME_SOURCE_FILE = /\.(?:test|spec|stories)\.[cm]?[jt]sx?$/;
 
-function walkBoundaryFiles(repositoryRoot, directory, files) {
-  for (const entry of readdirSync(directory, { withFileTypes: true })) {
-    if (entry.isDirectory() && EXCLUDED_PATH_SEGMENTS.has(entry.name)) {
-      continue;
-    }
-
-    const absolutePath = join(directory, entry.name);
-    if (entry.isDirectory()) {
-      walkBoundaryFiles(repositoryRoot, absolutePath, files);
-      continue;
-    }
-    if (!entry.isFile()) {
-      continue;
-    }
-
-    const path = relative(repositoryRoot, absolutePath).split(sep).join("/");
-    const isManifest = /^(?:apps|packages)\/[^/]+\/package\.json$/.test(path);
-    const isAppConfig = /^apps\/[^/]+\/\.env(?:\..+)?$/.test(path);
-    const isRuntimeSource =
-      RUNTIME_SOURCE_EXTENSION.test(path) &&
-      !NON_RUNTIME_SOURCE_FILE.test(path) &&
-      (/^apps\/[^/]+\//.test(path) || /^packages\/[^/]+\/src\//.test(path));
-
-    if (isManifest || isAppConfig || isRuntimeSource) {
-      files.push({ content: readFileSync(absolutePath, "utf8"), path });
-    }
+function isBoundaryFile(path) {
+  const segments = path.split("/");
+  if (segments.some((segment) => EXCLUDED_PATH_SEGMENTS.has(segment))) {
+    return false;
   }
+
+  const isManifest = /^(?:apps|packages)\/[^/]+\/package\.json$/.test(path);
+  const isAppConfig = /^apps\/[^/]+\/\.env\.example$/.test(path);
+  const isRuntimeSource =
+    RUNTIME_SOURCE_EXTENSION.test(path) &&
+    !NON_RUNTIME_SOURCE_FILE.test(path) &&
+    (/^apps\/[^/]+\//.test(path) || /^packages\/[^/]+\/src\//.test(path));
+  return isManifest || isAppConfig || isRuntimeSource;
+}
+
+export function trackedClientBoundaryPaths(repositoryRoot) {
+  return execFileSync("git", ["ls-files", "-z", "--", "apps", "packages"], {
+    cwd: repositoryRoot,
+    encoding: "utf8",
+  })
+    .split("\0")
+    .filter(Boolean)
+    .filter(isBoundaryFile)
+    .filter((path) => existsSync(join(repositoryRoot, path)))
+    .sort();
 }
 
 export function collectClientBoundaryFiles(repositoryRoot) {
-  const files = [];
-  for (const directory of ["apps", "packages"]) {
-    walkBoundaryFiles(repositoryRoot, join(repositoryRoot, directory), files);
-  }
-  return files.sort((left, right) => left.path.localeCompare(right.path));
+  return trackedClientBoundaryPaths(repositoryRoot).map((path) => ({
+    content: readFileSync(join(repositoryRoot, path), "utf8"),
+    path,
+  }));
 }
 
 function getAppApiRoute(path) {

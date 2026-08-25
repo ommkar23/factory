@@ -14,6 +14,20 @@
 - Home links use `LIVE_SPLASH_URL` and `WEATHER_URL`, defaulting to local ports.
 - `compose.yml` runs all apps plus Storybook on port 6006.
 
+## Plans
+
+1. Write plans in .hermes/plans folder
+2. Compact and declarative plans that define what to do and what to verify.
+3. A plan has a list of tasks. Each task has two parts - to-do and to-verify. One sentence each for each part.
+4. All the tasks to be implemented sequentially.
+5. Use delegate tool to carry out each task.
+
+Suppose a plan has 4 tasks.
+
+1. delegate(task_1)
+2. delegate(task_2)
+3. ... and so on
+
 ## Architecture
 
 - Keep view, presentation, business logic, data models, and API layers separate.
@@ -26,11 +40,15 @@
 ## Delivery
 
 - Work in local branches or worktrees; review and merge locally.
-- Before implementing any feature, write its plan in `plans/` and obtain a review of that plan.
-- Deploy Storybook from `main` to GitHub Pages at `/factory/storybook/`.
-- For branch work, deploy Storybook only to the local `storybook` service with Podman Compose or Docker Compose; do not publish branch builds to GitHub Pages.
+
 - Push only the resulting `main` branch. Do not create GitHub issues or pull requests unless requested.
 - Never commit credentials, tokens, or `.env` files.
+
+## Land the plane
+
+1. Stop local deployment and remove the docker containers.
+2. Merge to main.
+3. Delete the worktree.
 
 ## Verification
 

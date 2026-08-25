@@ -16,7 +16,12 @@ def required(name: str) -> str:
     return value
 
 
-def api_request(url: str, headers: dict[str, str], method: str = "GET", payload: dict | None = None) -> dict:
+def api_request(
+    url: str,
+    headers: dict[str, str],
+    method: str = "GET",
+    payload: dict | None = None,
+) -> dict:
     body = json.dumps(payload).encode() if payload is not None else None
     request = Request(url, data=body, method=method, headers=headers)
     try:
@@ -31,7 +36,8 @@ def api_request(url: str, headers: dict[str, str], method: str = "GET", payload:
 
 def find_user(admin_users_url: str, headers: dict[str, str], email: str) -> dict | None:
     for page in range(1, 11):
-        response = api_request(f"{admin_users_url}?{urlencode({"page": page, "per_page": 1000})}", headers)
+        query = urlencode({"page": page, "per_page": 1000})
+        response = api_request(f"{admin_users_url}?{query}", headers)
         users = response.get("users")
         if not isinstance(users, list):
             raise RuntimeError("Local Supabase Auth returned an invalid user list.")
@@ -48,18 +54,32 @@ def main() -> None:
     service_role_key = required("SUPABASE_SERVICE_ROLE_KEY")
     email = required("DEV_AUTH_EMAIL")
     password = required("DEV_AUTH_PASSWORD")
-    headers = {"apikey": service_role_key, "Authorization": f"Bearer {service_role_key}", "Content-Type": "application/json"}
+    headers = {
+        "apikey": service_role_key,
+        "Authorization": f"Bearer {service_role_key}",
+        "Content-Type": "application/json",
+    }
     users_url = f"{auth_url}/admin/users"
     user = find_user(users_url, headers, email)
     attributes = {"password": password, "email_confirm": True}
     if user is None:
-        result = api_request(users_url, headers, method="POST", payload={"email": email, **attributes})
+        result = api_request(
+            users_url,
+            headers,
+            method="POST",
+            payload={"email": email, **attributes},
+        )
         user = result.get("user", result)
     else:
         user_id = user.get("id")
         if not isinstance(user_id, str):
             raise RuntimeError("Local Supabase Auth returned a user without an ID.")
-        result = api_request(f"{users_url}/{user_id}", headers, method="PUT", payload=attributes)
+        result = api_request(
+            f"{users_url}/{user_id}",
+            headers,
+            method="PUT",
+            payload=attributes,
+        )
         user = result.get("user", result)
     user_id = user.get("id") if isinstance(user, dict) else None
     if not isinstance(user_id, str):
