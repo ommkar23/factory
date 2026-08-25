@@ -1,6 +1,7 @@
 import { existsSync } from "node:fs";
 
 const LOCAL_APP_NAMES = ["home", "live-splash", "weather"];
+const LOCAL_BOOTSTRAP_PATH = "/api/auth/dev/bootstrap";
 
 function skipped(reason) {
   return { ready: false, reason: `E2E skipped: ${reason}` };
@@ -101,6 +102,9 @@ function parseLocalApp(item) {
     item.bootstrapPath,
     `${item.name || "unnamed"}.bootstrapPath`,
   );
+  if (bootstrapPath.value && bootstrapPath.value !== LOCAL_BOOTSTRAP_PATH) {
+    bootstrapPath.error = `${item.name || "unnamed"}.bootstrapPath must be ${LOCAL_BOOTSTRAP_PATH}`;
+  }
   const protectedApiPath = parseSameOriginPath(
     item.protectedApiPath,
     `${item.name || "unnamed"}.protectedApiPath`,

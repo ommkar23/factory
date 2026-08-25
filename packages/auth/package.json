@@ -7,7 +7,6 @@
     ".": "./src/core.js",
     "./client": "./src/client.js",
     "./server": "./src/server.js",
-    "./routes": "./src/routes.js",
     "./proxy": "./src/proxy.js",
     "./ui": "./src/auth-controls.jsx"
   },
@@ -29,8 +28,6 @@
     "vitest": "3.2.4"
   },
   "dependencies": {
-    "@supabase/ssr": "^0.12.4",
-    "@supabase/supabase-js": "^2.112.3",
     "next": "16.1.1"
   }
 }

@@ -12,15 +12,14 @@ Create these GitHub Environment variables after the foundation Terraform apply:
 - `GAR_LOCATION` — Terraform output `artifact_registry_location`
 - `GAR_REPOSITORY` — Terraform output `artifact_registry_repository_id`
 - `CLOUD_RUN_REGION` — Terraform output `cloud_run_region` (`asia-south1`)
-- `NEXT_PUBLIC_SUPABASE_URL`
-- `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`
 
-The two Supabase values are public client configuration and are embedded into the Next.js build. Configure Supabase Auth with this callback URL only:
+No Supabase URL, publishable key, or development issuer secret is configured for a Next.js build or browser runtime. The API is the sole Supabase client. Configure Supabase Auth with this callback URL only:
 
 `https://factory.markagen.ai/auth/callback`
 
 The workflow sets these production runtime values for every service:
 
+- `FACTORY_API_URL=https://factory.markagen.ai` — server-only origin for the Next.js server’s session refresh/current-user calls and build-time rewrites.
 - `FACTORY_SHARED_ORIGIN=true`
 - `LIVE_SPLASH_URL=https://factory.markagen.ai/live-splash`
 - `WEATHER_URL=https://factory.markagen.ai/weather`

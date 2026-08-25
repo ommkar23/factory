@@ -21,9 +21,8 @@ jobs:
     environment: production
     env:
       IMAGE_PREFIX: ${{ vars.GAR_LOCATION }}-docker.pkg.dev/${{ vars.GCP_PROJECT_ID }}/${{ vars.GAR_REPOSITORY }}
+      FACTORY_API_URL: "https://factory.markagen.ai"
       FACTORY_SHARED_ORIGIN: "true"
-      NEXT_PUBLIC_SUPABASE_URL: ${{ vars.NEXT_PUBLIC_SUPABASE_URL }}
-      NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: ${{ vars.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY }}
       LIVE_SPLASH_URL: https://factory.markagen.ai/live-splash
       WEATHER_URL: https://factory.markagen.ai/weather
     steps:
@@ -62,9 +61,8 @@ jobs:
             docker build \
               -f Dockerfile \
               --build-arg "APP=$app" \
+              --build-arg "FACTORY_API_URL=$FACTORY_API_URL" \
               --build-arg "FACTORY_SHARED_ORIGIN=$FACTORY_SHARED_ORIGIN" \
-              --build-arg "NEXT_PUBLIC_SUPABASE_URL=$NEXT_PUBLIC_SUPABASE_URL" \
-              --build-arg "NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=$NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY" \
               --tag "$IMAGE_PREFIX/$app:${{ github.sha }}" \
               .
             docker push "$IMAGE_PREFIX/$app:${{ github.sha }}"
@@ -78,9 +76,8 @@ jobs:
           project_id: ${{ vars.GCP_PROJECT_ID }}
           region: ${{ vars.CLOUD_RUN_REGION }}
           env_vars: |-
+            FACTORY_API_URL=${{ env.FACTORY_API_URL }}
             FACTORY_SHARED_ORIGIN=${{ env.FACTORY_SHARED_ORIGIN }}
-            NEXT_PUBLIC_SUPABASE_URL=${{ env.NEXT_PUBLIC_SUPABASE_URL }}
-            NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=${{ env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY }}
             LIVE_SPLASH_URL=${{ env.LIVE_SPLASH_URL }}
             WEATHER_URL=${{ env.WEATHER_URL }}
 
@@ -92,9 +89,8 @@ jobs:
           project_id: ${{ vars.GCP_PROJECT_ID }}
           region: ${{ vars.CLOUD_RUN_REGION }}
           env_vars: |-
+            FACTORY_API_URL=${{ env.FACTORY_API_URL }}
             FACTORY_SHARED_ORIGIN=${{ env.FACTORY_SHARED_ORIGIN }}
-            NEXT_PUBLIC_SUPABASE_URL=${{ env.NEXT_PUBLIC_SUPABASE_URL }}
-            NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=${{ env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY }}
             LIVE_SPLASH_URL=${{ env.LIVE_SPLASH_URL }}
             WEATHER_URL=${{ env.WEATHER_URL }}
 
@@ -106,8 +102,7 @@ jobs:
           project_id: ${{ vars.GCP_PROJECT_ID }}
           region: ${{ vars.CLOUD_RUN_REGION }}
           env_vars: |-
+            FACTORY_API_URL=${{ env.FACTORY_API_URL }}
             FACTORY_SHARED_ORIGIN=${{ env.FACTORY_SHARED_ORIGIN }}
-            NEXT_PUBLIC_SUPABASE_URL=${{ env.NEXT_PUBLIC_SUPABASE_URL }}
-            NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=${{ env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY }}
             LIVE_SPLASH_URL=${{ env.LIVE_SPLASH_URL }}
             WEATHER_URL=${{ env.WEATHER_URL }}

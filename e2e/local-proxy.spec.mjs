@@ -25,13 +25,8 @@ test("uses a same-origin server-only development bootstrap on each local app", a
       );
       expect(publicResponse?.status()).toBe(200);
 
-      await page.goto(new URL(app.protectedPagePath, app.origin).toString());
-      await expect.poll(() => new URL(page.url()).pathname).toBe(app.loginPath);
-      const loginUrl = new URL(page.url());
-      expect(loginUrl.origin).toBe(app.origin);
-      expect(loginUrl.searchParams.get("next")).toBe(app.protectedPagePath);
-
       let bootstrapRequest;
+      let bootstrapResponse;
       page.on("request", (request) => {
         if (
           request.url() === new URL(app.bootstrapPath, app.origin).toString()
@@ -39,15 +34,20 @@ test("uses a same-origin server-only development bootstrap on each local app", a
           bootstrapRequest = request;
         }
       });
-      const bootstrapStatus = await page.evaluate(async (path) => {
-        const response = await fetch(path, {
-          method: "POST",
-          credentials: "same-origin",
-        });
-        return response.status;
-      }, app.bootstrapPath);
-      expect(bootstrapStatus).toBe(204);
+      page.on("response", (response) => {
+        if (
+          response.url() === new URL(app.bootstrapPath, app.origin).toString()
+        ) {
+          bootstrapResponse = response;
+        }
+      });
+
+      await page.goto(new URL(app.protectedPagePath, app.origin).toString());
+      await expect
+        .poll(() => new URL(page.url()).pathname)
+        .toBe(app.protectedPagePath);
       expect(bootstrapRequest).toBeDefined();
+      expect(bootstrapResponse?.status()).toBe(204);
       expect(new URL(bootstrapRequest.url()).origin).toBe(app.origin);
       expect(bootstrapRequest.headers()["x-dev-auth-secret"]).toBeUndefined();
 

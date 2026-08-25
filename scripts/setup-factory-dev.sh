@@ -24,11 +24,6 @@ if [[ -z "$key" ]]; then
   key=$(grep "^ANON_KEY=" supabase/.env | cut -d= -f2-)
 fi
 [[ -n "$key" ]] || { echo "No local Supabase publishable or anon key is configured." >&2; exit 1; }
-for app in home live-splash weather; do
-  umask 077
-  printf "FACTORY_SHARED_ORIGIN=false\nNEXT_PUBLIC_SUPABASE_URL=http://localhost:8000\nNEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=%s\n" "$key" > "apps/$app/.env.local"
-  chmod 600 "apps/$app/.env.local"
-done
 if [[ ! -f services/api/.env ]];
 then
   umask 077
@@ -50,7 +45,14 @@ if ! grep -q "^DEV_AUTH_SECRET=" services/api/.env; then
   ensure_api_env_value DEV_AUTH_SECRET "$(python3 -c "import secrets; print(secrets.token_urlsafe(32))")"
 fi
 chmod 600 services/api/.env
-unset key
+dev_auth_secret=$(grep "^DEV_AUTH_SECRET=" services/api/.env | cut -d= -f2-)
+[[ -n "$dev_auth_secret" ]] || { echo "DEV_AUTH_SECRET is not configured." >&2; exit 1; }
+for app in home live-splash weather; do
+  umask 077
+  printf "FACTORY_SHARED_ORIGIN=false\nFACTORY_API_URL=http://api:8000\nDEV_AUTH_SECRET=%s\n" "$dev_auth_secret" > "apps/$app/.env.local"
+  chmod 600 "apps/$app/.env.local"
+done
+unset dev_auth_secret key
 
 docker compose config >/dev/null
 docker compose up -d --build

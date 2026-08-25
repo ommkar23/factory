@@ -28,4 +28,37 @@ describe("Weather login page", () => {
       LoginPage({ searchParams: Promise.resolve({}) }),
     ).rejects.toMatchObject({ digest: "NEXT_REDIRECT;replace;/;307;" });
   });
+
+  it("preserves a validated local protected return path for OAuth", async () => {
+    getCurrentUser.mockResolvedValue(null);
+
+    const page = await LoginPage({
+      searchParams: Promise.resolve({ next: "/" }),
+    });
+
+    expect(page.props.returnTo).toBe("/");
+  });
+
+  it("rejects an external OAuth return path", async () => {
+    getCurrentUser.mockResolvedValue(null);
+
+    const page = await LoginPage({
+      searchParams: Promise.resolve({ next: "https://evil.example" }),
+    });
+
+    expect(page.props.returnTo).toBe("/");
+  });
+
+  it("passes only validated protected return paths to OAuth", async () => {
+    getCurrentUser.mockResolvedValue(null);
+
+    for (const [next, returnTo] of [
+      ["/", "/"],
+      ["/weather", "/weather"],
+      ["https://evil.example", "/"],
+    ]) {
+      const page = await LoginPage({ searchParams: Promise.resolve({ next }) });
+      expect(page.props.returnTo).toBe(returnTo);
+    }
+  });
 });

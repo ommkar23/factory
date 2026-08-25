@@ -1,46 +1,35 @@
-import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
-import {
-  DEVELOPMENT_BYPASS_USER,
-  getSupabaseConfig,
-  isDevelopmentAuthBypass,
-} from "./core.js";
-export async function createSupabaseServerClient() {
-  const cookieStore = await cookies();
-  const { publishableKey, url } = getSupabaseConfig();
-  return createServerClient(url, publishableKey, {
-    cookies: {
-      getAll() {
-        return cookieStore.getAll();
-      },
-      setAll(cookiesToSet) {
-        try {
-          cookiesToSet.forEach(({ name, options, value }) => {
-            cookieStore.set(name, value, options);
-          });
-        } catch {
-          // Server Components cannot write cookies. proxy.ts persists refreshes.
-        }
-      },
-    },
-  });
+import { getFactoryApiUrl } from "./core.js";
+
+function getRequestCookieHeader(cookieStore) {
+  return cookieStore
+    .getAll()
+    .map(({ name, value }) => `${name}=${value}`)
+    .join("; ");
 }
+
 export async function getCurrentUser() {
-  if (isDevelopmentAuthBypass()) {
-    return DEVELOPMENT_BYPASS_USER;
+  const cookieStore = await cookies();
+  const cookie = getRequestCookieHeader(cookieStore);
+  const response = await fetch(`${getFactoryApiUrl()}/auth/session`, {
+    cache: "no-store",
+    headers: cookie ? { cookie } : {},
+  });
+  if (!response.ok) {
+    return null;
   }
-  const supabase = await createSupabaseServerClient();
-  const { data, error } = await supabase.auth.getClaims();
-  if (error || !data?.claims?.sub) {
+  const session = await response.json();
+  if (!session?.user || typeof session.user.id !== "string") {
     return null;
   }
   return {
-    id: data.claims.sub,
-    email: typeof data.claims.email === "string" ? data.claims.email : null,
+    id: session.user.id,
+    email: typeof session.user.email === "string" ? session.user.email : null,
     name: null,
     avatarUrl: null,
   };
 }
+
 export async function requireCurrentUser() {
   const user = await getCurrentUser();
   if (!user) {

@@ -28,4 +28,16 @@ describe("Factory login page", () => {
       LoginPage({ searchParams: Promise.resolve({}) }),
     ).rejects.toMatchObject({ digest: "NEXT_REDIRECT;replace;/;307;" });
   });
+
+  it("passes only validated protected return paths to OAuth", async () => {
+    getCurrentUser.mockResolvedValue(null);
+
+    for (const [next, returnTo] of [
+      ["/", "/"],
+      ["https://evil.example", "/"],
+    ]) {
+      const page = await LoginPage({ searchParams: Promise.resolve({ next }) });
+      expect(page.props.returnTo).toBe(returnTo);
+    }
+  });
 });

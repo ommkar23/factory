@@ -15,6 +15,7 @@ export default async function HomePage() {
       <AppHeader
         appName="Factory"
         containerClassName="max-w-5xl"
+        loggedOutPath="/logged-out"
         loginPath={getLoginPath("")}
         user={user}
       />

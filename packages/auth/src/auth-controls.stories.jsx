@@ -14,17 +14,18 @@ export default meta;
 export const GoogleOAuth = {
   args: {
     appName: "Factory",
-    callbackPath: "/auth/callback",
+    autoBootstrap: false,
+    returnTo: "/",
   },
 };
 export const AccountMenu = {
   args: {
     appName: "Factory",
-    callbackPath: "/auth/callback",
+    returnTo: "/",
   },
   render: () => (
     <div className="flex justify-end p-8">
-      <ProfileMenu loginPath="/login" user={user} />
+      <ProfileMenu loggedOutPath="/logged-out" loginPath="/login" user={user} />
     </div>
   ),
 };

@@ -12,9 +12,9 @@
     "dev": "turbo run dev",
     "lint": "turbo run lint",
     "test": "turbo run test",
-    "format:check": "prettier --check $(git ls-files -- \"*.js\" \"*.jsx\" \"*.mjs\" \"*.json\" \"*.md\" \"*.yml\" \"*.yaml\" \"*.css\")",
-    "format:write": "prettier --write $(git ls-files -- \"*.js\" \"*.jsx\" \"*.mjs\" \"*.json\" \"*.md\" \"*.yml\" \"*.yaml\" \"*.css\")",
-    "check": "pnpm format:check && turbo run lint test build",
+    "format:check": "node scripts/prettier-tracked.mjs check",
+    "format:write": "node scripts/prettier-tracked.mjs write",
+    "check": "node --test scripts/format-check-deleted-paths.test.mjs && pnpm format:check && turbo run lint test build",
     "test:e2e": "node e2e/run-playwright.mjs"
   },
   "devDependencies": {

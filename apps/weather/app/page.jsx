@@ -1,5 +1,5 @@
 import React from "react";
-import { getLoginPath, getRequestBasePath } from "@factory/auth";
+import { getAuthPath, getLoginPath, getRequestBasePath } from "@factory/auth";
 import { getCurrentUser } from "@factory/auth/server";
 import { AppHeader } from "@factory/auth/ui";
 import { redirect } from "next/navigation";
@@ -15,6 +15,7 @@ export default async function HomePage() {
       <AppHeader
         appName="Weather"
         containerClassName="max-w-[76rem]"
+        loggedOutPath={getAuthPath(appBasePath, "/logged-out")}
         loginPath={getLoginPath(appBasePath)}
         user={user}
       />

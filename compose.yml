@@ -19,6 +19,7 @@ services:
       PNPM_HOME: /tmp/pnpm
       LIVE_SPLASH_URL: http://localhost:3002
       WEATHER_URL: http://localhost:3003
+      FACTORY_API_URL: http://api:8000
     working_dir: /workspace
     user: 1001:1002
     volumes:
@@ -44,6 +45,7 @@ services:
       HOME: /tmp
       COREPACK_HOME: /tmp/corepack
       PNPM_HOME: /tmp/pnpm
+      FACTORY_API_URL: http://api:8000
     working_dir: /workspace
     user: 1001:1002
     volumes:
@@ -69,6 +71,7 @@ services:
       HOME: /tmp
       COREPACK_HOME: /tmp/corepack
       PNPM_HOME: /tmp/pnpm
+      FACTORY_API_URL: http://api:8000
     working_dir: /workspace
     user: 1001:1002
     volumes:

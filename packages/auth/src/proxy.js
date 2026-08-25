@@ -1,29 +1,45 @@
-import { createServerClient } from "@supabase/ssr";
 import { NextResponse } from "next/server";
-import { getSupabaseConfig, isDevelopmentAuthBypass } from "./core.js";
+import { getFactoryApiUrl } from "./core.js";
+
+function hasFactoryAuthCookie(cookie) {
+  return /(^|;\s*)Factory-(Access|Refresh)-Token=/.test(cookie ?? "");
+}
+
+function getSetCookies(response) {
+  return response.headers.getSetCookie?.() ?? [];
+}
+
+function applySessionCookies(request, cookies) {
+  for (const cookie of cookies) {
+    const [nameValue] = cookie.split(";", 1);
+    const separator = nameValue.indexOf("=");
+    if (separator > 0) {
+      request.cookies.set(
+        nameValue.slice(0, separator),
+        nameValue.slice(separator + 1),
+      );
+    }
+  }
+}
+
+function relaySessionCookies(response, cookies) {
+  for (const cookie of cookies) {
+    response.headers.append("set-cookie", cookie);
+  }
+}
+
 export async function updateAuthSession(request) {
-  if (isDevelopmentAuthBypass()) {
+  const cookie = request.headers.get("cookie");
+  if (!hasFactoryAuthCookie(cookie)) {
     return NextResponse.next({ request });
   }
-  const { publishableKey, url } = getSupabaseConfig();
-  let response = NextResponse.next({ request });
-  const supabase = createServerClient(url, publishableKey, {
-    cookies: {
-      getAll() {
-        return request.cookies.getAll();
-      },
-      setAll(cookiesToSet) {
-        cookiesToSet.forEach(({ name, value }) =>
-          request.cookies.set(name, value),
-        );
-        response = NextResponse.next({ request });
-        cookiesToSet.forEach(({ name, options, value }) => {
-          response.cookies.set(name, value, options);
-        });
-      },
-    },
+  const session = await fetch(`${getFactoryApiUrl()}/auth/session`, {
+    cache: "no-store",
+    headers: { cookie },
   });
-  // getClaims validates the JWT; never authorize requests using getSession here.
-  await supabase.auth.getClaims();
+  const cookies = getSetCookies(session);
+  applySessionCookies(request, cookies);
+  const response = NextResponse.next({ request });
+  relaySessionCookies(response, cookies);
   return response;
 }

@@ -2,31 +2,56 @@
 import React from "react";
 import { useEffect, useRef, useState } from "react";
 import { signIn, signOut } from "./client.js";
-import { getUserInitials, isDevelopmentAuthBypass } from "./core.js";
-export function LoginScreen({ appName, authError, callbackPath }) {
+import { getUserInitials } from "./core.js";
+export function LoginScreen({
+  appName,
+  authError,
+  returnTo,
+  autoBootstrap = process.env.NODE_ENV === "development",
+}) {
+  const isDevelopment = autoBootstrap;
+  const bootstrapStarted = useRef(false);
   const [error, setError] = useState(
     authError === "oauth_callback_failed"
       ? "We couldn't complete your sign-in. Please try again."
       : null,
   );
-  const [pending, setPending] = useState(false);
+  const [bootstrapFailed, setBootstrapFailed] = useState(false);
+  const [pending, setPending] = useState(isDevelopment);
+
+  useEffect(() => {
+    if (!isDevelopment || bootstrapStarted.current) return;
+
+    bootstrapStarted.current = true;
+    fetch("/api/auth/dev/bootstrap", {
+      credentials: "same-origin",
+      method: "POST",
+    })
+      .then((response) => {
+        if (!response.ok) throw new Error("Development bootstrap failed.");
+        window.location.replace(returnTo);
+      })
+      .catch(() => {
+        setBootstrapFailed(true);
+        setPending(false);
+      });
+  }, [isDevelopment, returnTo]);
+
   async function handleSignIn() {
     setError(null);
     setPending(true);
     try {
-      const redirectTo = new URL(
-        callbackPath,
-        window.location.origin,
-      ).toString();
-      await signIn({ redirectTo });
+      await signIn({ next: returnTo });
     } catch (reason) {
       setError(reason instanceof Error ? reason.message : "Unable to sign in.");
       setPending(false);
     }
   }
+
   const actionLabel = pending
     ? "Connecting to Google…"
     : "Continue with Google";
+
   return (
     <main className="flex min-h-screen items-start justify-center bg-muted/40 px-4 py-12 sm:items-center">
       <section
@@ -51,21 +76,44 @@ export function LoginScreen({ appName, authError, callbackPath }) {
             </p>
           </div>
 
-          <div className="mt-6 space-y-4">
-            <button
-              className="flex min-h-11 w-full items-center justify-center gap-3 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground shadow-sm transition-colors hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50"
-              disabled={pending}
-              onClick={handleSignIn}
-              type="button"
-            >
-              <GoogleMark />
-              {actionLabel}
-            </button>
+          {isDevelopment ? (
+            <div className="mt-6">
+              {!bootstrapFailed ? (
+                <p className="text-sm text-muted-foreground" role="status">
+                  Preparing your local development session…
+                </p>
+              ) : (
+                <div
+                  className="rounded-md border border-destructive/30 bg-destructive/10 p-3 text-sm"
+                  role="alert"
+                >
+                  <p className="font-medium">
+                    Unable to start your local development session.
+                  </p>
+                  <p className="mt-1 text-muted-foreground">
+                    Check that the local development services are running, then
+                    refresh.
+                  </p>
+                </div>
+              )}
+            </div>
+          ) : (
+            <div className="mt-6 space-y-4">
+              <button
+                className="flex min-h-11 w-full items-center justify-center gap-3 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground shadow-sm transition-colors hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50"
+                disabled={pending}
+                onClick={handleSignIn}
+                type="button"
+              >
+                <GoogleMark />
+                {actionLabel}
+              </button>
 
-            <p className="text-center text-xs leading-5 text-muted-foreground">
-              You’ll be redirected to Google to sign in securely.
-            </p>
-          </div>
+              <p className="text-center text-xs leading-5 text-muted-foreground">
+                You’ll be redirected to Google to sign in securely.
+              </p>
+            </div>
+          )}
 
           {error ? (
             <div
@@ -81,7 +129,7 @@ export function LoginScreen({ appName, authError, callbackPath }) {
     </main>
   );
 }
-export function ProfileMenu({ loginPath, user }) {
+export function ProfileMenu({ loggedOutPath, loginPath, user }) {
   const [error, setError] = useState(null);
   const [isOpen, setIsOpen] = useState(false);
   const [pending, setPending] = useState(false);
@@ -101,7 +149,7 @@ export function ProfileMenu({ loginPath, user }) {
     setPending(true);
     try {
       await signOut();
-      window.location.replace(loginPath);
+      window.location.replace(loggedOutPath);
     } catch (reason) {
       setError(
         reason instanceof Error ? reason.message : "Unable to sign out.",
@@ -110,7 +158,6 @@ export function ProfileMenu({ loginPath, user }) {
     }
   }
   const accountLabel = user.name ?? user.email ?? "Signed-in user";
-  const showSignOut = !isDevelopmentAuthBypass();
   return (
     <div className="relative">
       <button
@@ -153,7 +200,7 @@ export function ProfileMenu({ loginPath, user }) {
               </p>
             ) : null}
           </div>
-          {showSignOut ? (
+          {
             <>
               <div className="my-1 h-px bg-border" role="presentation" />
               <button
@@ -171,20 +218,30 @@ export function ProfileMenu({ loginPath, user }) {
                 </p>
               ) : null}
             </>
-          ) : null}
+          }
         </div>
       ) : null}
     </div>
   );
 }
-export function AppHeader({ appName, containerClassName, loginPath, user }) {
+export function AppHeader({
+  appName,
+  containerClassName,
+  loggedOutPath,
+  loginPath,
+  user,
+}) {
   return (
     <header className="border-b border-border bg-background/95">
       <div
         className={`mx-auto flex min-h-14 items-center justify-between px-4 sm:px-6 ${containerClassName}`}
       >
         <span className="text-sm font-medium">{appName}</span>
-        <ProfileMenu loginPath={loginPath} user={user} />
+        <ProfileMenu
+          loggedOutPath={loggedOutPath}
+          loginPath={loginPath}
+          user={user}
+        />
       </div>
     </header>
   );

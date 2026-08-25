@@ -1,5 +1,5 @@
 import React from "react";
-import { getLoginPath, getRequestBasePath } from "@factory/auth";
+import { getAuthPath, getLoginPath, getRequestBasePath } from "@factory/auth";
 import { getCurrentUser } from "@factory/auth/server";
 import { AppHeader } from "@factory/auth/ui";
 import {
@@ -23,6 +23,7 @@ export default async function HomePage() {
       <AppHeader
         appName="Live Splash"
         containerClassName="max-w-xl"
+        loggedOutPath={getAuthPath(appBasePath, "/logged-out")}
         loginPath={getLoginPath(appBasePath)}
         user={user}
       />

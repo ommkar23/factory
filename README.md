@@ -38,7 +38,7 @@ cd factory
 ./scripts/setup-factory-dev.sh
 ```
 
-The script creates ignored runtime configuration and Supabase secrets when absent, validates Compose, starts the three apps plus the self-hosted Supabase stack, and waits for local readiness. It does not install Docker, overwrite existing secrets, or commit files.
+The script creates ignored runtime configuration and Supabase server secrets when absent, validates Compose, starts the three apps plus the self-hosted Supabase stack, and waits for local readiness. It writes only the local development issuer secret and internal Factory API URL to each app's ignored `.env.local`; no browser-exposed Supabase variables are created. It does not install Docker, overwrite existing secrets, or commit files.
 
 From a development Mac, tunnel the loopback-only services:
 
@@ -55,12 +55,11 @@ Open Home, Live Splash, and Weather at http://localhost:3001, :3002, and :3003. 
 
 ## Server-only API authentication
 
-The FastAPI service owns Supabase Google OAuth at `/auth/login` and persists only encrypted short-lived PKCE/state records. Browser clients receive HttpOnly Supabase access and refresh cookies, while native/API clients use Supabase access JWTs in Authorization Bearer. See [services/api/README.md](services/api/README.md) for required production configuration and the API contract.
+Factory API owns Supabase Google OAuth and persists only encrypted short-lived PKCE/state records. Browsers use same-origin `/auth/*` and `/app/*` paths, and receive only HttpOnly `Factory-Access-Token` and `Factory-Refresh-Token` cookies. The API owns login, callback, session refresh, and logout; Next.js apps do not own callback routes, client token handling, or Supabase clients. For local development, a browser calls its app's `/api/auth/dev/bootstrap`, which is development-only and relays cookies after the app server authenticates to the API with a server-held secret. See [services/api/README.md](services/api/README.md) and [docs/api.md](docs/api.md) for configuration and contract details.
 
 ## Home app
 
-Factory Home is the application directory at `http://localhost:3002`. Start the
-three applications in separate terminals:
+Factory Home is the application directory at `http://localhost:3002`. Start the three applications in separate terminals:
 
 ```bash
 pnpm --filter @factory/live-splash dev
@@ -68,11 +67,6 @@ pnpm --filter @factory/weather dev
 pnpm --filter @factory/home dev
 ```
 
-Home links to Live Splash at `http://localhost:3000` and Weather at
-`http://localhost:3001` by default. For independently hosted deployments,
-configure public absolute HTTPS URLs with `LIVE_SPLASH_URL` and `WEATHER_URL`.
+Home links to Live Splash at `http://localhost:3000` and Weather at `http://localhost:3001` by default. For independently hosted deployments, configure server-side absolute HTTPS URLs with `LIVE_SPLASH_URL` and `WEATHER_URL`.
 
-For the shared origin `https://factory.markagen.ai`, build Weather with
-`FACTORY_SHARED_ORIGIN=true` (serves `/weather`) and Live Splash with
-`FACTORY_SHARED_ORIGIN=true` (serves `/live-splash`), then route those path
-prefixes to their corresponding applications without stripping the prefix.
+For the shared origin `https://factory.markagen.ai`, build Weather with `FACTORY_SHARED_ORIGIN=true` (serves `/weather`) and Live Splash with `FACTORY_SHARED_ORIGIN=true` (serves `/live-splash`), then route those path prefixes to their corresponding applications without stripping the prefix.

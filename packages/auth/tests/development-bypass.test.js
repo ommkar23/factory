@@ -1,61 +1,56 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-const { createServerClient, getClaims } = vi.hoisted(() => ({
-  createServerClient: vi.fn(),
-  getClaims: vi.fn(),
-}));
-vi.mock("@supabase/ssr", () => ({
-  createServerClient: createServerClient.mockImplementation(() => ({
-    auth: { getClaims },
-  })),
-}));
-vi.mock("next/headers", () => ({ cookies: vi.fn() }));
-import { getCurrentUser } from "../src/server";
-const originalNodeEnv = process.env.NODE_ENV;
-const originalSupabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-const originalSupabaseKey = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
-function restoreEnvironmentVariable(name, value) {
-  if (value === undefined) {
-    delete process.env[name];
-  } else {
-    process.env[name] = value;
-  }
-}
+
+const { cookies } = vi.hoisted(() => ({ cookies: vi.fn() }));
+vi.mock("next/headers", () => ({ cookies }));
+
+import { getCurrentUser, requireCurrentUser } from "../src/server.js";
+
 afterEach(() => {
-  restoreEnvironmentVariable("NODE_ENV", originalNodeEnv);
-  restoreEnvironmentVariable("NEXT_PUBLIC_SUPABASE_URL", originalSupabaseUrl);
-  restoreEnvironmentVariable(
-    "NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY",
-    originalSupabaseKey,
-  );
-  createServerClient.mockClear();
-  getClaims.mockReset();
+  vi.unstubAllGlobals();
+  cookies.mockReset();
 });
-describe("development authentication bypass", () => {
-  it("returns a local user without contacting Supabase in development", async () => {
-    process.env.NODE_ENV = "development";
+
+describe("Factory API server authentication", () => {
+  it("reads the current user from the Factory session endpoint using request cookies", async () => {
+    cookies.mockResolvedValue({
+      getAll: () => [
+        { name: "Factory-Access-Token", value: "browser-token" },
+        { name: "Factory-Refresh-Token", value: "browser-refresh" },
+      ],
+    });
+    const fetch = vi.fn().mockResolvedValue({
+      json: vi.fn().mockResolvedValue({
+        user: { email: "ada@example.com", id: "user-1" },
+      }),
+      ok: true,
+    });
+    vi.stubGlobal("fetch", fetch);
+
     await expect(getCurrentUser()).resolves.toEqual({
-      id: "development-bypass",
-      email: "developer@factory.local",
-      name: "Factory Developer",
       avatarUrl: null,
-    });
-    expect(createServerClient).not.toHaveBeenCalled();
-  });
-  it("uses Supabase claims in production", async () => {
-    process.env.NODE_ENV = "production";
-    process.env.NEXT_PUBLIC_SUPABASE_URL = "https://project.supabase.co";
-    process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY = "test-publishable-key";
-    getClaims.mockResolvedValue({
-      data: { claims: { email: "ada@example.com", sub: "production-user" } },
-      error: null,
-    });
-    await expect(getCurrentUser()).resolves.toEqual({
-      id: "production-user",
       email: "ada@example.com",
+      id: "user-1",
       name: null,
-      avatarUrl: null,
     });
-    expect(createServerClient).toHaveBeenCalledOnce();
-    expect(getClaims).toHaveBeenCalledOnce();
+    expect(fetch).toHaveBeenCalledWith("http://localhost:3004/auth/session", {
+      cache: "no-store",
+      headers: {
+        cookie:
+          "Factory-Access-Token=browser-token; Factory-Refresh-Token=browser-refresh",
+      },
+    });
+  });
+
+  it("treats an unauthenticated Factory session as no current user", async () => {
+    cookies.mockResolvedValue({ getAll: () => [] });
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue({ ok: false, status: 401 }),
+    );
+
+    await expect(getCurrentUser()).resolves.toBeNull();
+    await expect(requireCurrentUser()).rejects.toThrow(
+      "Authentication is required.",
+    );
   });
 });

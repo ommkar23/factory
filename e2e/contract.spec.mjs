@@ -39,19 +39,19 @@ test("accepts the local route contract without contacting a service", () => {
       {
         name: "home",
         origin: "http://localhost:3001",
-        bootstrapPath: "/auth/dev/session",
+        bootstrapPath: "/api/auth/dev/bootstrap",
         protectedApiPath: "/app/weather/v1/locations?q=Portland",
       },
       {
         name: "live-splash",
         origin: "http://localhost:3002",
-        bootstrapPath: "/auth/dev/session",
+        bootstrapPath: "/api/auth/dev/bootstrap",
         protectedApiPath: "/app/weather/v1/locations?q=Portland",
       },
       {
         name: "weather",
         origin: "http://localhost:3003",
-        bootstrapPath: "/auth/dev/session",
+        bootstrapPath: "/api/auth/dev/bootstrap",
         protectedApiPath: "/app/weather/v1/locations?q=Portland",
       },
     ]),
@@ -85,5 +85,23 @@ test("rejects paths that could leave the local app origin", () => {
   expect(result).toEqual({
     ready: false,
     reason: expect.stringContaining("root-relative"),
+  });
+});
+
+test("rejects the protected API development issuer as a browser bootstrap path", () => {
+  const result = parseLocalProxyApps(
+    JSON.stringify(
+      ["home", "live-splash", "weather"].map((name) => ({
+        name,
+        origin: "http://localhost:3001",
+        bootstrapPath: "/auth/dev/session",
+        protectedApiPath: "/app/weather/v1/locations?q=Portland",
+      })),
+    ),
+  );
+
+  expect(result).toEqual({
+    ready: false,
+    reason: expect.stringContaining("/api/auth/dev/bootstrap"),
   });
 });
