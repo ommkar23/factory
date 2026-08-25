@@ -44,8 +44,14 @@ test("Compose resources and random host bindings are isolated by project", () =>
 
   assert.notEqual(first.name, second.name);
   for (const service of ["auth", "db", "api-gw", "realtime"]) {
-    assert.match(first.services[service].container_name, /^factory-worktree-a-/);
-    assert.match(second.services[service].container_name, /^factory-worktree-b-/);
+    assert.match(
+      first.services[service].container_name,
+      /^factory-worktree-a-/,
+    );
+    assert.match(
+      second.services[service].container_name,
+      /^factory-worktree-b-/,
+    );
   }
   for (const [service, target] of [
     ["gateway", 8080],
@@ -58,10 +64,22 @@ test("Compose resources and random host bindings are isolated by project", () =>
     assert.equal(port.host_ip, "127.0.0.1");
     assert.equal(port.published, undefined);
   }
+  for (const [service, target] of [
+    ["db", "/var/lib/postgresql/data"],
+    ["storage", "/var/lib/storage"],
+    ["imgproxy", "/var/lib/storage"],
+  ]) {
+    const volume = first.services[service].volumes.find(
+      (candidate) => candidate.target === target,
+    );
+    assert.equal(volume.type, "volume");
+  }
   assert.equal(
-    first.services.db.volumes.find(
-      (volume) => volume.target === "/var/lib/postgresql/data",
-    ).type,
-    "volume",
+    first.services.storage.volumes.find(
+      (volume) => volume.target === "/var/lib/storage",
+    ).source,
+    first.services.imgproxy.volumes.find(
+      (volume) => volume.target === "/var/lib/storage",
+    ).source,
   );
 });
