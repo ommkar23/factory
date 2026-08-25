@@ -81,7 +81,7 @@ jobs:
         run: pnpm --filter @factory/ui package:pages -- --output "$RUNNER_TEMP/factory-pages"
 
       - name: Upload Pages artifact
-        uses: actions/upload-pages-artifact@v3
+        uses: actions/upload-pages-artifact@v5
         with:
           path: ${{ runner.temp }}/factory-pages
 
