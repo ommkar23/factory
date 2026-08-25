@@ -102,3 +102,5 @@ jobs:
         run: terraform -chdir=infra/gcp init -backend=false
       - name: Validate Terraform
         run: terraform -chdir=infra/gcp validate
+      - name: Test Terraform security boundaries
+        run: terraform -chdir=infra/gcp test
