@@ -15,13 +15,15 @@
 - `compose.yml` runs all apps plus Storybook on port 6006.
 
 ## Plans
-1. Write plans in .hermes/plans folder
-2. Compact and declarative plans that define what to do and what to verify. 
-3. A plan has a list of tasks. Each task has two parts - to-do and to-verify. One sentence each for each part. 
-4. All the tasks to be implemented sequentially. 
-5. Use delegate tool to carry out each task. 
 
-Suppose a plan has 4 tasks. 
+1. Write plans in .hermes/plans folder
+2. Compact and declarative plans that define what to do and what to verify.
+3. A plan has a list of tasks. Each task has two parts - to-do and to-verify. One sentence each for each part.
+4. All the tasks to be implemented sequentially.
+5. Use delegate tool to carry out each task.
+
+Suppose a plan has 4 tasks.
+
 1. delegate(task_1)
 2. delegate(task_2)
 3. ... and so on
@@ -43,10 +45,10 @@ Suppose a plan has 4 tasks.
 - Never commit credentials, tokens, or `.env` files.
 
 ## Land the plane
-1. Stop local deployment and remove the docker containers. 
-2. Merge to main. 
-3. Delete the worktree.
 
+1. Stop local deployment and remove the docker containers.
+2. Merge to main.
+3. Delete the worktree.
 
 ## Verification
 

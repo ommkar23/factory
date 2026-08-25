@@ -35,6 +35,7 @@
 **What:** Convert `packages/contracts/src/index.ts` and all Auth source/test/story files to JS/JSX, remove Auth compile-time types while preserving runtime exports/auth behavior, update exports/scripts, and delete their TypeScript configurations.
 
 **Files:**
+
 - Rename `packages/contracts/src/index.ts` → `index.js`.
 - Rename `packages/auth/src/*.ts` → `*.js`, `*.tsx` → `*.jsx`, `packages/auth/tests/*.test.ts` → `*.test.js`, and `*.test.tsx` → `*.test.jsx`.
 - Modify `packages/contracts/package.json` and `packages/auth/package.json` to use new export paths and remove `tsc` scripts/direct `typescript` and `@types/*` devDependencies.
@@ -49,6 +50,7 @@
 **What:** Convert UI components, tests, stories, Vitest and Storybook config to JS/JSX; replace the `StatusMessageProps` compile-time contract with a runtime public-API assertion; remove declaration-only artifacts; and update export/import maps, story globs, artifact target paths, and test include globs without changing component behavior or story IDs.
 
 **Files:**
+
 - Rename `packages/ui/src/**/*.ts` → `*.js`, `**/*.tsx` → `*.jsx`, `packages/ui/tests/**/*.ts` → `*.js`, `**/*.tsx` → `*.jsx`, `.storybook/*.ts` → `.mjs`/`.js`, and `vitest.config.ts` → `vitest.config.mjs`.
 - Modify `packages/ui/package.json`, `packages/ui/scripts/package-pages-artifact.mjs`, and `packages/ui/tests/public-api.test.js` (after rename) to use `.js`/`.jsx` source paths and runtime assertions instead of `StatusMessageProps`.
 - Modify `packages/ui/components.json` to set `tsx` to `false` so generated components stay JavaScript.
@@ -64,6 +66,7 @@
 **What:** Convert every Home App Router route, component, library, proxy, test, story, and Vitest config to JS/JSX; remove TypeScript-only annotations, update test discovery/package metadata, and remove obsolete TS files.
 
 **Files:**
+
 - Rename `apps/home/app/**/*.{ts,tsx}`, `components/*.tsx`, `lib/*.ts`, `proxy.ts`, `stories/*.tsx`, `tests/*.{ts,tsx}`, and `vitest.config.ts` to matching `.js`, `.jsx`, or `.mjs` extensions.
 - Modify `apps/home/package.json` to remove `typecheck`, direct TypeScript/@types deps, and old file references; update `apps/home/tests/auth-routes.test.mjs` string fixtures from `.ts` to `.js`.
 - Delete `apps/home/tsconfig.json` and `apps/home/next-env.d.ts`.
@@ -77,6 +80,7 @@
 **What:** Convert every Live Splash route, proxy, story, and test to JS/JSX; replace explicit Vitest TS paths, remove direct TypeScript dependencies, and delete obsolete TS config/declarations.
 
 **Files:**
+
 - Rename `apps/live-splash/app/**/*.{ts,tsx}`, `proxy.ts`, `stories/*.tsx`, and `tests/*.{ts,tsx}` to matching `.js`/`.jsx` files.
 - Modify `apps/live-splash/package.json` to remove `typecheck`, direct TypeScript/@types deps, and explicit `.ts`/`.tsx` test names; update `tests/auth-routes.test.mjs` and `tests/baseline.test.mjs` string fixtures.
 - Modify `apps/live-splash/components.json` to set `tsx` to `false`.
@@ -91,6 +95,7 @@
 **What:** Convert Weather domain/provider/API code, fixtures, hooks, components, App Router routes, proxy, stories, tests, and Vitest config to JS/JSX while preserving validated weather parsing, errors, comparison, and UI behavior.
 
 **Files:**
+
 - Rename `apps/weather/app/**/*.{ts,tsx}`, `components/*.{ts,tsx}`, `fixtures/*.ts`, `hooks/*.ts`, `lib/**/*.ts`, `proxy.ts`, `stories/*.tsx`, `tests/*.{ts,tsx}`, and `vitest.config.ts` to matching JavaScript extensions.
 - Modify `apps/weather/package.json` to remove `typecheck`, direct TypeScript/@types deps, and old file references; update extension-sensitive source-text tests `tests/auth-routes.test.mjs`, `tests/scaffold.test.mjs`, and `tests/weather-ui.test.mjs`.
 - Modify `apps/weather/components.json` to set `tsx` to `false`.
@@ -105,6 +110,7 @@
 **What:** In an isolated Compose staging worktree, convert both Deno functions to `.js` and remove only TypeScript syntax, but first explicitly prove/configure JavaScript entrypoint resolution for the custom `EdgeRuntime.userWorkers.create` dispatcher so the gateway, Hello worker, and JWT-routing main worker retain their behavior.
 
 **Files:**
+
 - Rename `supabase/volumes/functions/main/index.ts` → `index.js` and `supabase/volumes/functions/hello/index.ts` → `index.js`.
 - Modify `supabase/volumes/functions/main/index.js` to remove annotations and `as jose.JSONWebKeySet` while preserving HS256/ES256/RS256 JWT checks, CORS handling, worker limits, import-map use, and gateway errors.
 - Modify `supabase/volumes/functions/hello/index.js` to remove the declaration-only Edge Runtime import while retaining the `withSupabase` handler.
@@ -120,6 +126,7 @@
 **What:** Once no workspace source needs TypeScript, delete `packages/typescript-config`, remove all direct `typescript` and `@types/node`/`@types/react`/`@types/react-dom` devDependencies, remove `typecheck` from root/package scripts and Turbo dependencies, refresh the lockfile, and make root `check` run formatting, lint, tests, and builds only.
 
 **Files:**
+
 - Modify `package.json`, `turbo.json`, and `pnpm-lock.yaml`.
 - Delete the full `packages/typescript-config/` package.
 - Confirm all application/workspace package manifests have neither TypeScript-only scripts nor direct TypeScript/@types devDependencies.

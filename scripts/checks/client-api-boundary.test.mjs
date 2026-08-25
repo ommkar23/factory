@@ -6,7 +6,9 @@ import { resolve } from "node:path";
 import {
   analyzeClientApiBoundary,
   collectClientBoundaryFiles,
+  trackedClientBoundaryPaths,
 } from "./client-api-boundary.mjs";
+import { factoryApps } from "../../factory.config.mjs";
 
 test("rejects app-owned data route handlers", () => {
   const violations = analyzeClientApiBoundary([
@@ -202,9 +204,11 @@ test("discovers every app and browser-facing shared runtime source", () => {
   );
   const paths = new Set(files.map((file) => file.path));
 
-  for (const app of ["home", "live-splash", "weather"]) {
-    assert.ok(paths.has(`apps/${app}/package.json`));
-    assert.ok([...paths].some((path) => path.startsWith(`apps/${app}/app/`)));
+  for (const app of factoryApps) {
+    assert.ok(paths.has(`${app.directory}/package.json`));
+    assert.ok(
+      [...paths].some((path) => path.startsWith(`${app.directory}/app/`)),
+    );
   }
   for (const sharedSource of [
     "packages/auth/src/client.js",
@@ -221,6 +225,14 @@ test("discovers every app and browser-facing shared runtime source", () => {
         ) && !/\.(?:test|spec|stories)\.[cm]?[jt]sx?$/.test(path),
     ),
   );
+});
+
+test("boundary discovery excludes machine-local environment files", () => {
+  const repositoryRoot = resolve(import.meta.dirname, "../..");
+  const paths = trackedClientBoundaryPaths(repositoryRoot);
+
+  assert.ok(paths.some((path) => path.endsWith("/.env.example")));
+  assert.ok(paths.every((path) => !path.endsWith("/.env.local")));
 });
 
 test("the current repository satisfies the client API boundary", () => {

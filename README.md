@@ -32,28 +32,33 @@ pnpm check
 
 Use any Linux VM provider. Recommended baseline: 4 vCPU, 16 GB RAM, 80 GB persistent disk, a non-root SSH user, and Docker Engine with the Compose plugin. Restrict inbound access to SSH; Factory and Supabase bind only to VM loopback.
 
-Install Docker, Git, curl, Python 3, Node.js 24, and agent-browser using your distribution package manager or supported installers. On Linux VMs, install agent-browser with `npm install -g agent-browser`, then run `agent-browser install --with-deps`. If the VM requires it, configure agent-browser to launch Chrome with `--no-sandbox`. Clone Factory with GitHub HTTPS credentials, then run:
+Install Docker, Git, curl, Python 3.12, Node.js 24, Portless, and agent-browser using supported installers. Install the Node.js tools with `npm install -g portless agent-browser`, then run `agent-browser install --with-deps`. If the VM requires it, configure agent-browser to launch Chrome with `--no-sandbox`.
+
+Clone Factory, then use the worktree-aware lifecycle command:
 
 ```bash
 cd factory
-./scripts/setup-factory-dev.sh
+./scripts/worktree-dev up
+./scripts/worktree-dev status
+./scripts/worktree-dev clean
 ```
 
-The script creates ignored runtime configuration and Supabase server secrets when absent, validates Compose, starts the three apps, Factory API, Storybook, and the self-hosted Supabase stack, and waits for local readiness. It writes only the local development issuer secret and internal Factory API URL to each app's ignored `.env.local`; no browser-exposed Supabase variables are created. It does not install Docker, overwrite existing secrets, or commit files.
+The command derives an isolated Compose project from the canonical worktree path, uses Docker-assigned loopback ports, and registers stable worktree-prefixed `.localhost` URLs with Portless. It records owned aliases and resources in `.hermes/runtime/`, creates local secrets only when absent, and removes its aliases, containers, networks, volumes, generated secrets, and ledger during idempotent cleanup. `./scripts/setup-factory-dev.sh` remains a compatibility alias for `worktree-dev up`.
 
-From a development Mac, tunnel the loopback-only services:
+For remote VMs, start Portless without TLS on one unprivileged port before bringing up Factory:
 
 ```bash
-ssh -N \
-  -L 3001:127.0.0.1:3001 \
-  -L 3002:127.0.0.1:3002 \
-  -L 3003:127.0.0.1:3003 \
-  -L 6006:127.0.0.1:6006 \
-  -L 8000:127.0.0.1:8000 \
-  <user>@<vm-host>
+portless proxy start --no-tls -p 8080
+./scripts/worktree-dev up
 ```
 
-Open Home, Live Splash, Weather, and Storybook at http://localhost:3001, :3002, :3003, and :6006. The Supabase gateway remains private and is available through the tunnel at http://localhost:8000. Stop the stack with `docker compose down`.
+Tunnel that single proxy entry point from the development machine:
+
+```bash
+ssh -N -L 8080:127.0.0.1:8080 <user>@<vm-host>
+```
+
+Use the URLs printed by `worktree-dev up`; linked worktrees automatically receive distinct hostnames.
 
 ## Server-only API authentication
 

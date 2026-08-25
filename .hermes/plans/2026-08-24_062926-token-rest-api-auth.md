@@ -13,6 +13,7 @@
 ### Task 1: Define the token-auth contract and configuration
 
 **Files:**
+
 - Modify: `services/api/pyproject.toml`, `services/api/src/factory_api/config.py`, `services/api/README.md`, `docs/api.md`
 - Test: `services/api/tests/test_auth.py`
 
@@ -24,6 +25,7 @@
 ### Task 2: Implement reusable JWT verification
 
 **Files:**
+
 - Create: `services/api/src/factory_api/auth.py`
 - Modify: `services/api/src/factory_api/dependencies.py`, `services/api/src/factory_api/errors.py`
 - Test: `services/api/tests/test_auth.py`
@@ -36,6 +38,7 @@
 ### Task 3: Protect the API and OpenAPI contract
 
 **Files:**
+
 - Modify: `services/api/src/factory_api/routers/weather.py`, `services/api/src/factory_api/main.py`, `services/api/tests/test_weather.py`, `services/api/tests/test_openapi.py`
 
 1. Attach the principal dependency at `/app/weather/v1`; leave `/health` public for Compose/load balancers.
@@ -46,6 +49,7 @@
 ### Task 4: Validate packaging and deployment wiring
 
 **Files:**
+
 - Modify: `compose.yml`, `services/api/README.md` (if needed)
 
 1. Wire variable names/placeholders only; production has no token-validation fallback.

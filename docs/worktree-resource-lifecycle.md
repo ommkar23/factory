@@ -93,14 +93,8 @@ The lifecycle wrapper should register a shell trap that runs cleanup on normal i
 
 The garbage collector may remove a resource only when its worktree no longer exists and no active lifecycle lease references it. It must produce a report of every removed or retained resource.
 
-## Apply this policy to Factory
+## Factory implementation
 
-Factory should make these changes first:
+`scripts/worktree-dev` derives a stable Compose project from the canonical worktree path and owns `up`, `status`, `logs`, and `clean`. Compose uses project-scoped named volumes, Docker-assigned loopback ports, host-user application processes, and parameterized Supabase container names. Portless provides stable worktree-prefixed URLs while the ignored `.hermes/runtime/` ledger records aliases and generated configuration ownership.
 
-1. Replace the `supabase/volumes/db/data` bind mount with a worktree-labeled named volume
-2. Replace the fixed `factory-dev` Compose project name with a worktree-derived name
-3. Remove or parameterize fixed Supabase container names and host ports
-4. Route setup, deployment, testing, and teardown through the lifecycle wrapper
-5. Add a Linux integration test that starts a worktree stack, interrupts it, runs cleanup, and proves that no labeled resource or undeletable file remains
-
-These changes remove the root-owned bind-mount failure mode and make resource cleanup deterministic without privileged filesystem deletion.
+The Supabase database uses a named volume rather than a writable bind mount. Cleanup removes aliases before project containers, networks, volumes, generated secrets, and the ledger. The lifecycle integration test must continue proving that interrupted startup and repeated cleanup leave no worktree-owned resources or foreign-owned files.

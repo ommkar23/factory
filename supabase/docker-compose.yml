@@ -12,7 +12,7 @@ name: supabase
 
 services:
   studio:
-    container_name: supabase-studio
+    container_name: ${COMPOSE_PROJECT_NAME:?COMPOSE_PROJECT_NAME required}-supabase-studio
     image: supabase/studio:2026.08.03-sha-022b374
     restart: unless-stopped
     healthcheck:
@@ -67,7 +67,7 @@ services:
   # Envoy is the default API gateway
   # See: https://github.com/orgs/supabase/discussions/48048
   api-gw:
-    container_name: supabase-envoy
+    container_name: ${COMPOSE_PROJECT_NAME:?COMPOSE_PROJECT_NAME required}-supabase-envoy
     image: envoyproxy/envoy:v1.39.0
     restart: unless-stopped
     networks:
@@ -87,7 +87,7 @@ services:
       studio:
         condition: service_healthy
     ports:
-      - 127.0.0.1:${API_GW_HTTP_PORT:-${KONG_HTTP_PORT:-8000}}:8000/tcp
+      - 127.0.0.1::8000/tcp
     volumes:
       - ./volumes/api/envoy/envoy.yaml:/etc/envoy/envoy.yaml:ro
       - ./volumes/api/envoy/cds.yaml:/etc/envoy/cds.yaml:ro
@@ -106,7 +106,7 @@ services:
     entrypoint: ["/bin/sh", "/docker-entrypoint.sh"]
 
   auth:
-    container_name: supabase-auth
+    container_name: ${COMPOSE_PROJECT_NAME:?COMPOSE_PROJECT_NAME required}-supabase-auth
     image: supabase/gotrue:v2.189.0
     restart: unless-stopped
     healthcheck:
@@ -246,7 +246,7 @@ services:
       # GOTRUE_HOOK_SEND_EMAIL_SECRETS: "v1,whsec_VGhpcyBpcyBhbiBleGFtcGxlIG9mIGEgc2hvcnRlciBCYXNlNjQgc3RyaW5n"
 
   rest:
-    container_name: supabase-rest
+    container_name: ${COMPOSE_PROJECT_NAME:?COMPOSE_PROJECT_NAME required}-supabase-rest
     image: postgrest/postgrest:v14.12
     restart: unless-stopped
     depends_on:
@@ -279,8 +279,12 @@ services:
     command: ["postgrest"]
 
   realtime:
-    # This container name looks inconsistent but is correct because realtime constructs tenant id by parsing the subdomain
-    container_name: realtime-dev.supabase-realtime
+    # Realtime constructs its tenant ID from this compatibility network alias.
+    container_name: ${COMPOSE_PROJECT_NAME:?COMPOSE_PROJECT_NAME required}-supabase-realtime
+    networks:
+      default:
+        aliases:
+          - realtime-dev.supabase-realtime
     image: supabase/realtime:v2.102.3
     restart: unless-stopped
     depends_on:
@@ -326,7 +330,7 @@ services:
 
   # To use S3 backed storage: docker compose -f docker-compose.yml -f docker-compose.s3.yml up
   storage:
-    container_name: supabase-storage
+    container_name: ${COMPOSE_PROJECT_NAME:?COMPOSE_PROJECT_NAME required}-supabase-storage
     image: supabase/storage-api:v1.60.4
     restart: unless-stopped
     depends_on:
@@ -389,7 +393,7 @@ services:
       - ./volumes/storage:/var/lib/storage:z
 
   imgproxy:
-    container_name: supabase-imgproxy
+    container_name: ${COMPOSE_PROJECT_NAME:?COMPOSE_PROJECT_NAME required}-supabase-imgproxy
     image: darthsim/imgproxy:v3.30.1
     restart: unless-stopped
     volumes:
@@ -407,7 +411,7 @@ services:
       IMGPROXY_MAX_SRC_RESOLUTION: 16.8
 
   meta:
-    container_name: supabase-meta
+    container_name: ${COMPOSE_PROJECT_NAME:?COMPOSE_PROJECT_NAME required}-supabase-meta
     image: supabase/postgres-meta:v0.96.6
     restart: unless-stopped
     depends_on:
@@ -424,7 +428,7 @@ services:
       CRYPTO_KEY: ${PG_META_CRYPTO_KEY}
 
   functions:
-    container_name: supabase-edge-functions
+    container_name: ${COMPOSE_PROJECT_NAME:?COMPOSE_PROJECT_NAME required}-supabase-edge-functions
     image: supabase/edge-runtime:v1.74.0
     restart: unless-stopped
     volumes:
@@ -460,7 +464,7 @@ services:
 
   # Comment out everything below this point if you are using an external Postgres database
   db:
-    container_name: supabase-db
+    container_name: ${COMPOSE_PROJECT_NAME:?COMPOSE_PROJECT_NAME required}-supabase-db
     # To upgrade an existing Postgres 15 database in place, see utils/upgrade-pg17.sh.
     image: supabase/postgres:17.6.1.136
     restart: unless-stopped
@@ -473,7 +477,7 @@ services:
       # Initialize the database settings with JWT_SECRET and JWT_EXP
       - ./volumes/db/jwt.sql:/docker-entrypoint-initdb.d/init-scripts/99-jwt.sql:Z
       # PGDATA directory is persisted between restarts
-      - ./volumes/db/data:/var/lib/postgresql/data:Z
+      - db-data:/var/lib/postgresql/data
       # Changes required for internal supabase data such as _analytics
       - ./volumes/db/_supabase.sql:/docker-entrypoint-initdb.d/migrations/97-_supabase.sql:Z
       # Changes required for Analytics support
@@ -507,12 +511,12 @@ services:
 
   # Update the DATABASE_URL if you are using an external Postgres database
   supavisor:
-    container_name: supabase-pooler
+    container_name: ${COMPOSE_PROJECT_NAME:?COMPOSE_PROJECT_NAME required}-supabase-pooler
     image: supabase/supavisor:2.9.5
     restart: unless-stopped
     ports:
-      - 127.0.0.1:${POSTGRES_PORT}:5432
-      - 127.0.0.1:${POOLER_PROXY_PORT_TRANSACTION}:6543
+      - 127.0.0.1::5432
+      - 127.0.0.1::6543
     volumes:
       - ./volumes/pooler/pooler.exs:/etc/pooler/pooler.exs:ro,z
     healthcheck:
@@ -561,4 +565,5 @@ services:
 
 volumes:
   db-config:
+  db-data:
   deno-cache:

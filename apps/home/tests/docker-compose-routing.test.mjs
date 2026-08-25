@@ -9,15 +9,20 @@ const repoRoot = path.resolve(
   "../../..",
 );
 
-test("Docker development Home links target the tunnelled app ports", async () => {
+test("Docker development uses one shared-origin gateway", async () => {
   const compose = await readFile(path.join(repoRoot, "compose.yml"), "utf8");
   const homeService = compose.match(
     /^  home:\n([\s\S]*?)(?=^  [a-z-]+:\n|^volumes:)/m,
   )?.[1];
 
   assert.ok(homeService, "home service must be present");
-  assert.match(homeService, /LIVE_SPLASH_URL: http:\/\/localhost:3002/);
-  assert.match(homeService, /WEATHER_URL: http:\/\/localhost:3003/);
+  assert.match(
+    homeService,
+    /LIVE_SPLASH_URL:.*FACTORY_PUBLIC_URL.*live-splash/,
+  );
+  assert.match(homeService, /WEATHER_URL:.*FACTORY_PUBLIC_URL.*weather/);
+  assert.match(homeService, /FACTORY_SHARED_ORIGIN: "true"/);
+  assert.match(compose, /^  gateway:/m);
 });
 
 test("Docker development app services install dependencies noninteractively", async () => {
@@ -36,10 +41,11 @@ test("Docker development app services install dependencies noninteractively", as
   }
 });
 
-test("Docker development publishes Storybook and waits for readiness", async () => {
-  const [compose, setup] = await Promise.all([
+test("Docker development publishes Storybook on a random loopback port", async () => {
+  const [compose, setup, lifecycle] = await Promise.all([
     readFile(path.join(repoRoot, "compose.yml"), "utf8"),
     readFile(path.join(repoRoot, "scripts/setup-factory-dev.sh"), "utf8"),
+    readFile(path.join(repoRoot, "scripts/worktree-dev"), "utf8"),
   ]);
   const storybookService = compose.match(
     /^  storybook:\n([\s\S]*?)(?=^  [a-z-]+:\n|^volumes:)/m,
@@ -47,7 +53,8 @@ test("Docker development publishes Storybook and waits for readiness", async () 
 
   assert.ok(storybookService, "storybook service must be present");
   assert.match(storybookService, /pnpm --filter @factory\/ui/);
-  assert.match(storybookService, /127\.0\.0\.1:6006:6006/);
-  assert.match(setup, /docker compose up[^\n]*storybook/);
-  assert.match(setup, /http:\/\/127\.0\.0\.1:6006\//);
+  assert.match(storybookService, /127\.0\.0\.1::6006/);
+  assert.match(setup, /worktree-dev" up/);
+  assert.match(lifecycle, /portless alias/);
+  assert.match(lifecycle, /published_port storybook 6006/);
 });

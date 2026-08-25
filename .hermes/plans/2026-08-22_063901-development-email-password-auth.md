@@ -19,12 +19,12 @@ Development environments use local Supabase email/password authentication instea
 
 ## Verification
 
-| Outcome to verify | Evidence |
-| --- | --- |
-| Development email/password flow works | Automated tests and a browser run show successful sign-up, sign-in, session restoration, and sign-out. |
-| Account replacement is correct | Automated tests and a browser run show the old password is rejected and the replacement password succeeds for the same email. |
-| UI behavior is correct | Automated tests show all required sign-up fields, password-mismatch validation, local auth actions, and the absence of password recovery. |
-| Cross-app session recognition works | Browser evidence shows one authenticated session is recognized by Home, Live Splash, and Weather. |
-| Production behavior is preserved | Automated tests confirm existing OAuth behavior and canonical callback handling; deployment configuration review shows public URLs, callbacks, and Cloud Run settings are unchanged. |
-| Development-only boundaries hold | Automated tests confirm email/password and account-management capabilities are unavailable outside development; no private credentials appear in tracked files or command output. |
-| Repository quality is acceptable | Focused tests, affected app tests, typecheck, formatting, and the project check pass; Compose configuration validates; `git diff --check` is clean; independent review is recorded. |
+| Outcome to verify                     | Evidence                                                                                                                                                                             |
+| ------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Development email/password flow works | Automated tests and a browser run show successful sign-up, sign-in, session restoration, and sign-out.                                                                               |
+| Account replacement is correct        | Automated tests and a browser run show the old password is rejected and the replacement password succeeds for the same email.                                                        |
+| UI behavior is correct                | Automated tests show all required sign-up fields, password-mismatch validation, local auth actions, and the absence of password recovery.                                            |
+| Cross-app session recognition works   | Browser evidence shows one authenticated session is recognized by Home, Live Splash, and Weather.                                                                                    |
+| Production behavior is preserved      | Automated tests confirm existing OAuth behavior and canonical callback handling; deployment configuration review shows public URLs, callbacks, and Cloud Run settings are unchanged. |
+| Development-only boundaries hold      | Automated tests confirm email/password and account-management capabilities are unavailable outside development; no private credentials appear in tracked files or command output.    |
+| Repository quality is acceptable      | Focused tests, affected app tests, typecheck, formatting, and the project check pass; Compose configuration validates; `git diff --check` is clean; independent review is recorded.  |
