@@ -2,6 +2,8 @@
 
 The repository deploys only from `main` (or the manually approved `workflow_dispatch`) through the GitHub `production` Environment. It uses GitHub OIDC Workload Identity Federation; do not add a Google service-account key or an OAuth client secret to GitHub.
 
+Home, Live Splash, Weather, API, and Storybook have independent workflows. A push to `main` deploys only services whose runtime path filters match; documentation, tests, stories, and development-only configuration do not deploy applications. Each service can also be dispatched manually, while shared runtime changes intentionally trigger every affected Next.js application.
+
 ## GitHub `production` Environment variables
 
 Create these GitHub Environment variables after the foundation Terraform apply:
@@ -60,7 +62,7 @@ terraform apply \
 ```
 
 2. Put the Terraform outputs into the GitHub `production` Environment variables above.
-3. With an approved human bootstrap principal, build and push one immutable image for each app to the newly created Artifact Registry repository. Use the image digests as `api_image`, `home_image`, `live_splash_image`, and `weather_image`.
+3. With an approved human principal, build and push one immutable image for each app to the newly created Artifact Registry repository using the repository Dockerfiles. Use the image digests as `api_image`, `home_image`, `live_splash_image`, and `weather_image`.
 4. Run a full `terraform apply` with those four digest-qualified images. This creates the services, serverless NEGs, external Application Load Balancer, HTTPS certificate, and global IP. GitHub Actions subsequently owns each service image and the public runtime environment values; Terraform deliberately ignores those changing container fields.
 
 Terraform restricts WIF to repository `ommkar23/factory` and `refs/heads/main`. The GitHub deploy service account receives only Artifact Registry writer, Cloud Run admin, and Service Account User on the dedicated runtime identity.

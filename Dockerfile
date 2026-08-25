@@ -28,8 +28,6 @@ COPY packages/auth/package.json packages/auth/package.json
 COPY packages/contracts/package.json packages/contracts/package.json
 COPY packages/ui/package.json packages/ui/package.json
 
-# Do not use BuildKit-only cache mounts: Cloud Build's docker builder uses
-# classic `docker build` for the one-time bootstrap images.
 RUN test -n "$APP" && \
     test -f "apps/$APP/package.json" && \
     pnpm --filter "@factory/$APP..." install --frozen-lockfile

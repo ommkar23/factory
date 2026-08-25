@@ -1,0 +1,35 @@
+name: Deploy Home to Cloud Run
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "apps/home/app/**"
+      - "apps/home/components/**"
+      - "apps/home/lib/**"
+      - "apps/home/public/**"
+      - "apps/home/next.config.mjs"
+      - "apps/home/package.json"
+      - "apps/home/postcss.config.mjs"
+      - "apps/home/proxy.js"
+      - "packages/auth/src/**"
+      - "!packages/auth/src/**/*.stories.*"
+      - "packages/auth/package.json"
+      - "packages/ui/src/**"
+      - "!packages/ui/src/**/*.stories.*"
+      - "packages/ui/package.json"
+      - "Dockerfile"
+      - ".github/workflows/deploy-app-cloud-run.yml"
+      - ".github/workflows/deploy-home-cloud-run.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  deploy:
+    uses: ./.github/workflows/deploy-app-cloud-run.yml
+    with:
+      app: home
+      service: factory-home

@@ -11,7 +11,7 @@ Multi-app JavaScript and Next.js monorepo for building products while extracting
 - `services/api` — the FastAPI boundary for authentication and external providers.
 - `supabase` — pinned self-hosted Supabase development configuration.
 - `infra/gcp` — production Google Cloud infrastructure.
-- `tooling/` and `scripts/` — repository-wide development automation.
+- `scripts/` — repository-wide development automation.
 - `.github/` — ownership policy and GitHub Actions.
 
 ## Local integration workflow

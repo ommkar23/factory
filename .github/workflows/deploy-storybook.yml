@@ -1,6 +1,26 @@
 name: Deploy Storybook review site
 
 on:
+  push:
+    branches: [main]
+    paths:
+      - "apps/home/components/**"
+      - "apps/home/lib/**"
+      - "apps/home/stories/**"
+      - "apps/live-splash/app/page.jsx"
+      - "apps/live-splash/stories/**"
+      - "apps/weather/components/**"
+      - "apps/weather/fixtures/**"
+      - "apps/weather/hooks/**"
+      - "apps/weather/lib/**"
+      - "apps/weather/stories/**"
+      - "packages/auth/src/**"
+      - "packages/auth/package.json"
+      - "packages/ui/.storybook/**"
+      - "packages/ui/scripts/package-pages-artifact.mjs"
+      - "packages/ui/src/**"
+      - "packages/ui/package.json"
+      - ".github/workflows/deploy-storybook.yml"
   workflow_dispatch:
     inputs:
       ref:
@@ -32,7 +52,7 @@ jobs:
       - name: Check out requested revision
         uses: actions/checkout@v4
         with:
-          ref: ${{ inputs.ref }}
+          ref: ${{ inputs.ref || github.sha }}
 
       - name: Set up pnpm
         uses: pnpm/action-setup@v4

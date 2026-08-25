@@ -1,7 +1,6 @@
 name: CI
 
 on:
-  pull_request:
   push:
     branches:
       - main
@@ -14,6 +13,40 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  changes:
+    name: Detect changed areas
+    runs-on: ubuntu-latest
+    outputs:
+      api: ${{ steps.filter.outputs.api }}
+      infrastructure: ${{ steps.filter.outputs.infrastructure }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - id: filter
+        name: Classify changed files
+        env:
+          BEFORE_SHA: ${{ github.event.before }}
+        run: |
+          if [[ "$BEFORE_SHA" =~ ^0+$ ]]; then
+            git ls-tree --full-tree --name-only -r "$GITHUB_SHA" > changed-files
+          else
+            git diff --name-only "$BEFORE_SHA" "$GITHUB_SHA" > changed-files
+          fi
+
+          if grep -q '^services/api/' changed-files; then
+            echo "api=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "api=false" >> "$GITHUB_OUTPUT"
+          fi
+
+          if grep -q '^infra/gcp/' changed-files; then
+            echo "infrastructure=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "infrastructure=false" >> "$GITHUB_OUTPUT"
+          fi
+
   check:
     name: Check
     runs-on: ubuntu-latest
@@ -39,3 +72,33 @@ jobs:
 
       - name: Run checks
         run: pnpm check
+
+  api:
+    name: API tests
+    needs: changes
+    if: needs.changes.outputs.api == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Run API tests
+        run: >-
+          docker run --rm -v "$PWD:/workspace" -w /workspace/services/api
+          python:3.12.14-slim sh -c
+          "pip install --disable-pip-version-check --root-user-action=ignore -e .[dev] && pytest"
+
+  infrastructure:
+    name: Terraform validation
+    needs: changes
+    if: needs.changes.outputs.infrastructure == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: hashicorp/setup-terraform@v3
+      - name: Check Terraform formatting
+        run: terraform -chdir=infra/gcp fmt -check -recursive
+      - name: Initialize Terraform
+        run: terraform -chdir=infra/gcp init -backend=false
+      - name: Validate Terraform
+        run: terraform -chdir=infra/gcp validate

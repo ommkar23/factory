@@ -49,21 +49,21 @@ variable "github_branch" {
 }
 
 variable "api_image" {
-  description = "Initial immutable image for factory-api. Set after the bootstrap image push."
+  description = "Initial immutable image for factory-api."
   type        = string
 }
 
 variable "home_image" {
-  description = "Initial immutable image for factory-home. Set after the bootstrap image push."
+  description = "Initial immutable image for factory-home."
   type        = string
 }
 
 variable "live_splash_image" {
-  description = "Initial immutable image for factory-live-splash. Set after the bootstrap image push."
+  description = "Initial immutable image for factory-live-splash."
   type        = string
 }
 
 variable "weather_image" {
-  description = "Initial immutable image for factory-weather. Set after the bootstrap image push."
+  description = "Initial immutable image for factory-weather."
   type        = string
 }

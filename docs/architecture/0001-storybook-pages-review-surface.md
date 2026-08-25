@@ -8,25 +8,18 @@ not host product APIs, user data, or application runtime services.
 
 ## Publishing a reviewed revision
 
-1. Open **Actions → Deploy Storybook review site → Run workflow**.
-2. Run the workflow from `main` and supply an explicit reviewed Git ref (normally
-   `main`, a reviewed protected branch, or a reviewed tag/SHA).
-3. The build checks out only that requested ref, installs dependencies with
-   `pnpm install --frozen-lockfile`, runs the `@factory/ui` lint and test scripts, builds its static
-   Storybook with the `/factory/storybook/` base path, packages it as the
-   `storybook/` child of the Pages artifact, and creates static redirects for
-   Home, Live Splash, and Weather from generated Storybook metadata.
-4. The dependency-ordered deploy job publishes that artifact to the restricted
-   `github-pages` environment. Discover the deployed URL from the run's deploy
-   job or the repository's Pages settings; the canonical Storybook URL is
-   normally `https://ommkar23.github.io/factory/storybook/`, with app entries at
-   `/factory/storybook/home/`, `/factory/storybook/live-splash/`, and
-   `/factory/storybook/weather/`.
+Relevant UI and story changes pushed to `main` publish Storybook automatically. An
+operator can also run **Actions → Deploy Storybook review site → Run workflow** and
+supply an explicit reviewed Git ref such as `main`, a tag, or a commit SHA.
 
-The workflow is deliberately only `workflow_dispatch`/`workflow_call`; it has no
-`pull_request`, `push`, or scheduled trigger. Build access is `contents: read`.
-Only the deployment job has `pages: write` and `id-token: write`; it does not
-check out or execute the selected revision.
+The build checks out the triggering revision, installs frozen dependencies, validates
+`@factory/ui`, builds with the `/factory/storybook/` base path, and packages the Pages
+artifact with static app redirects. The deploy job publishes to the restricted
+`github-pages` environment. The canonical URL is normally
+`https://ommkar23.github.io/factory/storybook/`.
+
+Build access is `contents: read`. Only the deployment job has `pages: write` and
+`id-token: write`; it does not check out or execute the selected revision.
 
 ## Rollback
 
