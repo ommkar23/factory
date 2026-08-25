@@ -21,7 +21,7 @@ Start the migrated local applications and API with each application holding its 
 - `bootstrapPath`: the app's same-origin server-only `/api/auth/dev/bootstrap` endpoint
 - `protectedApiPath`: a successful same-origin `/app/*` request
 
-Optional `publicPath`, `protectedPagePath`, and `loginPath` default to `/api/health`, `/`, and `/login`. The suite checks the public route, unauthenticated root-relative login redirect, bootstrap request (including absence of an `X-Dev-Auth-Secret` browser header), HttpOnly Lax Factory cookies, session, protected API request, and logout for every local app origin.
+Optional `publicPath`, `protectedPagePath`, and `loginPath` default to `/api/health`, `/`, and `/login`. The suite checks the public route, unauthenticated root-relative login redirect, bootstrap request (including absence of an `X-Dev-Auth-Secret` browser header), HttpOnly Lax Factory cookies, session, protected API request, and logout for every local app origin. It also observes browser fetch/XHR traffic for the full flow, rejects any cross-origin API request, and requires the configured protected `/app/*` request to be observed.
 
 Example non-secret shape:
 

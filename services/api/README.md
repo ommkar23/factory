@@ -1,12 +1,12 @@
 # Factory API
 
-The shared FastAPI service is the server-only Supabase AuthProvider adapter. It calls Supabase Auth and external providers; browsers never call Supabase data services or receive Supabase configuration.
+The shared FastAPI service is Factory’s server-side API boundary. It owns all external-provider adapters and SDKs, provider credentials, response normalization, upstream timeouts, and safe error mapping. Browsers never call Supabase data services or other provider APIs, and they never receive provider configuration.
 
 Authentication routes: `GET /auth/login`, `GET /auth/callback`, `GET /auth/session`, `POST /auth/logout`, `POST /auth/native/challenge`, `POST /auth/native/exchange`, and `POST /auth/token/refresh`. Browser OAuth uses only encrypted short-lived PKCE/state records bound to `Factory-OAuth-Transaction`. The callback sets HttpOnly Secure SameSite=Lax `Factory-Access-Token` and `Factory-Refresh-Token` cookies; no Factory session or token record is persisted.
 
 Protected app routes accept exactly one credential: a Supabase access JWT in Authorization Bearer for native/API clients, or `Factory-Access-Token` for browser clients. The canonical principal is Supabase UUID sub. Asymmetric tokens are checked against Supabase JWKS for signature, issuer, audience, expiry, and subject. For legacy HS256 projects with no JWKS keys, the API verifies safely through Supabase Auth `GET /auth/v1/user`, never by accepting an unverified decode.
 
-Native clients use a one-time Google nonce then receive or refresh provider token pairs only. Browser cookie refresh rotates cookies server-side and failed refresh or logout clears them. Apps and browsers use same-origin `/auth/*` and `/app/*`; deployment routing and the Next.js local proxy send those paths to this API.
+Native clients use a one-time Google nonce then receive or refresh provider token pairs only. Browser cookie refresh rotates cookies server-side and failed refresh or logout clears them. Home, Live Splash, and Weather call only same-origin Factory `/auth/*` and `/app/*`; deployment routing and the Next.js local proxy send those paths to this API. App-local `/api/health` and the server-only development auth bootstrap are explicit exceptions. External navigation and attribution links are not API calls.
 
 Run all API tests: `docker run --rm -v $PWD:/workspace -w /workspace python:3.12.14-slim sh -c 'pip install -e .[dev] && pytest -q'`.
 

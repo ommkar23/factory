@@ -10,6 +10,7 @@ export class WeatherApiResponseError extends Error {
   }
 }
 const apiErrorCodes = new Set([
+  "INVALID_CREDENTIALS",
   "INVALID_REQUEST",
   "UPSTREAM_RATE_LIMITED",
   "UPSTREAM_TIMEOUT",
@@ -163,15 +164,12 @@ async function getJson(fetcher, url, signal) {
   }
   return body;
 }
-export function createSameOriginClient(
-  fetcher = fetch,
-  basePath = process.env.FACTORY_SHARED_ORIGIN === "true" ? "/weather" : "",
-) {
+export function createSameOriginClient(fetcher = fetch) {
   return {
     async searchLocations(query, options) {
       const body = await getJson(
         fetcher,
-        `${basePath}/api/locations?${new URLSearchParams({ q: query.trim() })}`,
+        `/app/weather/v1/locations?${new URLSearchParams({ q: query.trim() })}`,
         options?.signal,
       );
       if (!isRecord(body) || !Array.isArray(body.locations)) {
@@ -190,7 +188,7 @@ export function createSameOriginClient(
     async getCurrentConditions(location, options) {
       const body = await getJson(
         fetcher,
-        `${basePath}/api/weather?${new URLSearchParams({
+        `/app/weather/v1/current-conditions?${new URLSearchParams({
           latitude: String(location.latitude),
           longitude: String(location.longitude),
         })}`,

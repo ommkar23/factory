@@ -16,7 +16,7 @@ export default defineConfig({
     },
     {
       name: "local-proxy",
-      testMatch: "local-proxy.spec.mjs",
+      testMatch: ["contract.spec.mjs", "local-proxy.spec.mjs"],
     },
   ],
 });

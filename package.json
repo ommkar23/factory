@@ -14,7 +14,7 @@
     "test": "turbo run test",
     "format:check": "node scripts/prettier-tracked.mjs check",
     "format:write": "node scripts/prettier-tracked.mjs write",
-    "check": "node --test scripts/format-check-deleted-paths.test.mjs && pnpm format:check && turbo run lint test build",
+    "check": "node --test scripts/client-api-boundary.test.mjs scripts/format-check-deleted-paths.test.mjs && pnpm format:check && turbo run lint test build",
     "test:e2e": "node e2e/run-playwright.mjs"
   },
   "devDependencies": {

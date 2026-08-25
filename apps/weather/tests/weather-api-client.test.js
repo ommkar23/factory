@@ -1,12 +1,8 @@
-import { describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import {
   WeatherApiResponseError,
   createSameOriginClient,
 } from "../lib/weather-api-client";
-import {
-  createLocationsGetHandler,
-  createWeatherGetHandler,
-} from "../lib/weather-api";
 import {
   clearDayConditions,
   cloudyNightConditions,
@@ -20,6 +16,7 @@ function jsonResponse(body, status = 200) {
   });
 }
 describe("same-origin weather API client", () => {
+  afterEach(() => vi.unstubAllEnvs());
   it("URL-encodes a trimmed location query and returns validated normalized locations", async () => {
     const fetcher = vi
       .fn()
@@ -29,7 +26,7 @@ describe("same-origin weather API client", () => {
       client.searchLocations("  Portland & Maine  "),
     ).resolves.toEqual([selectedLocation]);
     expect(fetcher).toHaveBeenCalledWith(
-      "/api/locations?q=Portland+%26+Maine",
+      "/app/weather/v1/locations?q=Portland+%26+Maine",
       expect.objectContaining({ method: "GET" }),
     );
   });
@@ -42,18 +39,27 @@ describe("same-origin weather API client", () => {
       client.getCurrentConditions(selectedLocation),
     ).resolves.toEqual(clearDayConditions);
     expect(fetcher).toHaveBeenCalledWith(
-      "/api/weather?latitude=45.5234&longitude=-122.6762",
+      "/app/weather/v1/current-conditions?latitude=45.5234&longitude=-122.6762",
       expect.objectContaining({ method: "GET" }),
     );
   });
-  it("prefixes API requests when served beneath the shared-origin weather path", async () => {
+  it("keeps Factory API requests root-relative when served beneath the shared-origin weather path", async () => {
+    vi.stubEnv("FACTORY_SHARED_ORIGIN", "true");
     const fetcher = vi
       .fn()
-      .mockResolvedValue(jsonResponse({ locations: [selectedLocation] }));
-    const client = createSameOriginClient(fetcher, "/weather");
+      .mockResolvedValueOnce(jsonResponse({ locations: [selectedLocation] }))
+      .mockResolvedValueOnce(jsonResponse({ conditions: clearDayConditions }));
+    const client = createSameOriginClient(fetcher);
     await client.searchLocations("Portland");
-    expect(fetcher).toHaveBeenCalledWith(
-      "/weather/api/locations?q=Portland",
+    await client.getCurrentConditions(selectedLocation);
+    expect(fetcher).toHaveBeenNthCalledWith(
+      1,
+      "/app/weather/v1/locations?q=Portland",
+      expect.objectContaining({ method: "GET" }),
+    );
+    expect(fetcher).toHaveBeenNthCalledWith(
+      2,
+      "/app/weather/v1/current-conditions?latitude=45.5234&longitude=-122.6762",
       expect.objectContaining({ method: "GET" }),
     );
   });
@@ -80,12 +86,12 @@ describe("same-origin weather API client", () => {
     const second = client.getCurrentConditions(locations[1]);
     expect(fetcher).toHaveBeenNthCalledWith(
       1,
-      "/api/weather?latitude=45.5234&longitude=-122.6762",
+      "/app/weather/v1/current-conditions?latitude=45.5234&longitude=-122.6762",
       expect.objectContaining({ method: "GET" }),
     );
     expect(fetcher).toHaveBeenNthCalledWith(
       2,
-      "/api/weather?latitude=43.6574&longitude=-70.2589",
+      "/app/weather/v1/current-conditions?latitude=43.6574&longitude=-70.2589",
       expect.objectContaining({ method: "GET" }),
     );
     resolveSecond?.(jsonResponse({ conditions: cloudyNightConditions }));
@@ -127,32 +133,44 @@ describe("same-origin weather API client", () => {
     await expect(unaffected).resolves.toEqual(cloudyNightConditions);
     expect(fetcher).toHaveBeenNthCalledWith(
       2,
-      "/api/weather?latitude=43.6574&longitude=-70.2589",
+      "/app/weather/v1/current-conditions?latitude=43.6574&longitude=-70.2589",
       expect.objectContaining({ signal: secondController.signal }),
     );
   });
-  it("validates conditions and does not expose a server error message", async () => {
-    const serverMessage = "provider diagnostic that must not reach the UI";
-    const fetcher = vi.fn().mockResolvedValue(
-      jsonResponse(
-        {
-          error: {
-            code: "UPSTREAM_UNAVAILABLE",
-            message: serverMessage,
+  it.each([
+    ["INVALID_CREDENTIALS", 401],
+    ["INVALID_REQUEST", 400],
+    ["UPSTREAM_RATE_LIMITED", 429],
+    ["UPSTREAM_TIMEOUT", 504],
+    ["UPSTREAM_UNAVAILABLE", 502],
+    ["UPSTREAM_INVALID_RESPONSE", 502],
+  ])(
+    "accepts the %s error code without exposing the server message",
+    async (code, status) => {
+      const serverMessage = "provider diagnostic that must not reach the UI";
+      const fetcher = vi.fn().mockResolvedValue(
+        jsonResponse(
+          {
+            error: {
+              code,
+              message: serverMessage,
+            },
           },
-        },
-        503,
-      ),
-    );
-    const client = createSameOriginClient(fetcher);
-    await expect(client.getCurrentConditions(selectedLocation)).rejects.toEqual(
-      expect.objectContaining({
-        code: "UPSTREAM_UNAVAILABLE",
-        message: "The weather service returned an unexpected response.",
-        name: "WeatherApiResponseError",
-      }),
-    );
-  });
+          status,
+        ),
+      );
+      const client = createSameOriginClient(fetcher);
+      await expect(
+        client.getCurrentConditions(selectedLocation),
+      ).rejects.toEqual(
+        expect.objectContaining({
+          code,
+          message: "The weather service returned an unexpected response.",
+          name: "WeatherApiResponseError",
+        }),
+      );
+    },
+  );
   it("accepts a valid success envelope only with status 200", async () => {
     const fetcher = vi
       .fn()
@@ -179,28 +197,6 @@ describe("same-origin weather API client", () => {
     await expect(client.searchLocations("Portland")).rejects.toBeInstanceOf(
       WeatherApiResponseError,
     );
-  });
-  it("round-trips route handler responses through the same-origin client without a network call", async () => {
-    const locationsHandler = createLocationsGetHandler({
-      fetchLocations: vi.fn().mockResolvedValue([selectedLocation]),
-    });
-    const weatherHandler = createWeatherGetHandler({
-      fetchCurrentConditions: vi.fn().mockResolvedValue(clearDayConditions),
-    });
-    const fetcher = async (input) => {
-      const url = new URL(String(input), "http://weather.test");
-      const request = new Request(url);
-      if (url.pathname === "/api/locations") return locationsHandler(request);
-      if (url.pathname === "/api/weather") return weatherHandler(request);
-      return new Response(null, { status: 404 });
-    };
-    const client = createSameOriginClient(fetcher);
-    await expect(client.searchLocations(" Portland ")).resolves.toEqual([
-      selectedLocation,
-    ]);
-    await expect(
-      client.getCurrentConditions(selectedLocation),
-    ).resolves.toEqual(clearDayConditions);
   });
   it("fails safely for malformed success and error envelopes", async () => {
     const fetcher = vi

@@ -19,6 +19,9 @@
 - Keep view, presentation, business logic, data models, and API layers separate.
 - Define explicit interfaces at layer and package boundaries.
 - Keep application-specific code in `apps/*`; share code through `packages/*` only when reusable.
+- Home, Live Splash, and Weather call backend APIs only through same-origin Factory `/auth/*` and `/app/*` routes; do not call external providers from applications or browser-facing shared packages.
+- Keep external-provider adapters and SDKs, provider credentials, response normalization, upstream timeouts, and safe error mapping in `services/api`.
+- App-local `/api/health` and server-only `/api/auth/dev/bootstrap` are explicit exceptions. External navigation and attribution links are links, not API calls.
 
 ## Delivery
 

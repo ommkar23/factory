@@ -43,6 +43,38 @@ function parseSameOriginPath(value, label) {
   return { value };
 }
 
+export function browserApiContractViolations({
+  origin,
+  protectedApiPath,
+  requests,
+}) {
+  const browserApiRequests = requests.filter(({ resourceType }) =>
+    ["fetch", "xhr"].includes(resourceType),
+  );
+  const violations = browserApiRequests.flatMap(({ resourceType, url }) => {
+    const requestUrl = new URL(url);
+    if (requestUrl.origin !== origin) {
+      return [`cross-origin browser ${resourceType} request: ${url}`];
+    }
+
+    const prohibitedPath =
+      requestUrl.pathname.startsWith("/api/") &&
+      requestUrl.pathname !== LOCAL_BOOTSTRAP_PATH;
+    return prohibitedPath
+      ? [`disallowed same-origin browser ${resourceType} request: ${url}`]
+      : [];
+  });
+  const protectedApiUrl = new URL(protectedApiPath, origin).toString();
+
+  if (!browserApiRequests.some(({ url }) => url === protectedApiUrl)) {
+    violations.push(
+      `protected Factory request was not observed: ${protectedApiUrl}`,
+    );
+  }
+
+  return violations;
+}
+
 export function sharedOriginConfiguration(environment = process.env) {
   const origin = parseOrigin(
     environment.FACTORY_E2E_SHARED_ORIGIN_URL,
@@ -109,6 +141,15 @@ function parseLocalApp(item) {
     item.protectedApiPath,
     `${item.name || "unnamed"}.protectedApiPath`,
   );
+  if (
+    protectedApiPath.value &&
+    !new URL(
+      protectedApiPath.value,
+      "https://factory.invalid",
+    ).pathname.startsWith("/app/")
+  ) {
+    protectedApiPath.error = `${item.name || "unnamed"}.protectedApiPath must be a Factory /app/* route`;
+  }
   const publicPath = parseSameOriginPath(
     item.publicPath || "/api/health",
     `${item.name || "unnamed"}.publicPath`,

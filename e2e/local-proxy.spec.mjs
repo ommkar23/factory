@@ -1,5 +1,8 @@
 import { expect, test } from "@playwright/test";
-import { localProxyConfiguration } from "./support/live-config.mjs";
+import {
+  browserApiContractViolations,
+  localProxyConfiguration,
+} from "./support/live-config.mjs";
 
 const configuration = localProxyConfiguration();
 test.skip(!configuration.ready, configuration.reason);
@@ -20,14 +23,14 @@ test("uses a same-origin server-only development bootstrap on each local app", a
     const page = await context.newPage();
 
     try {
-      const publicResponse = await page.goto(
-        new URL(app.publicPath, app.origin).toString(),
-      );
-      expect(publicResponse?.status()).toBe(200);
-
+      const browserRequests = [];
       let bootstrapRequest;
       let bootstrapResponse;
       page.on("request", (request) => {
+        browserRequests.push({
+          resourceType: request.resourceType(),
+          url: request.url(),
+        });
         if (
           request.url() === new URL(app.bootstrapPath, app.origin).toString()
         ) {
@@ -41,6 +44,11 @@ test("uses a same-origin server-only development bootstrap on each local app", a
           bootstrapResponse = response;
         }
       });
+
+      const publicResponse = await page.goto(
+        new URL(app.publicPath, app.origin).toString(),
+      );
+      expect(publicResponse?.status()).toBe(200);
 
       await page.goto(new URL(app.protectedPagePath, app.origin).toString());
       await expect
@@ -66,6 +74,27 @@ test("uses a same-origin server-only development bootstrap on each local app", a
       });
       expect(sessionStatus).toBe(200);
 
+      if (app.name === "weather") {
+        const weatherRequestBoundary = browserRequests.length;
+        await page
+          .getByRole("combobox", { name: "Search city or postal code" })
+          .fill("Portland");
+        await expect
+          .poll(() =>
+            browserRequests
+              .slice(weatherRequestBoundary)
+              .some(({ resourceType, url }) => {
+                const requestUrl = new URL(url);
+                return (
+                  ["fetch", "xhr"].includes(resourceType) &&
+                  requestUrl.origin === app.origin &&
+                  requestUrl.pathname === "/app/weather/v1/locations"
+                );
+              }),
+          )
+          .toBe(true);
+      }
+
       const protectedStatus = await page.evaluate(async (path) => {
         const response = await fetch(path, { credentials: "same-origin" });
         return response.status;
@@ -81,6 +110,13 @@ test("uses a same-origin server-only development bootstrap on each local app", a
       });
       expect(logoutStatus).toBe(204);
       expect(factoryCookies(await context.cookies(app.origin))).toEqual([]);
+      expect(
+        browserApiContractViolations({
+          origin: app.origin,
+          protectedApiPath: app.protectedApiPath,
+          requests: browserRequests,
+        }),
+      ).toEqual([]);
     } finally {
       await context.close();
     }
