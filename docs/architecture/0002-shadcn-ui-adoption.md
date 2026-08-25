@@ -5,6 +5,8 @@
 - Owner: Factory UI maintainers
 - Governing issue: [#6](https://github.com/ommkar23/factory/issues/6)
 
+> Implementation note (2026-08-25): Factory subsequently migrated from TypeScript to JavaScript. Current `components.json` files use `"tsx": false`, and current delivery uses locally reviewed branches and worktrees without requiring remote issues or pull requests. The text below is retained as the historical decision and implementation record.
+
 ## Context
 
 Factory has two Next.js applications (`apps/weather` and `apps/live-splash`) that

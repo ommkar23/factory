@@ -12,17 +12,21 @@ Create these GitHub Environment variables after the foundation Terraform apply:
 - `GAR_LOCATION` — Terraform output `artifact_registry_location`
 - `GAR_REPOSITORY` — Terraform output `artifact_registry_repository_id`
 - `CLOUD_RUN_REGION` — Terraform output `cloud_run_region` (`asia-south1`)
+- `SUPABASE_URL` — production Supabase project origin, consumed only by the Factory API deployment workflow
+- `SUPABASE_PUBLISHABLE_KEY` — production Supabase publishable key, consumed only by the Factory API deployment workflow
 
-No Supabase URL, publishable key, or development issuer secret is configured for a Next.js build or browser runtime. The API is the sole Supabase client. Configure Supabase Auth with this callback URL only:
+The API deployment workflow reads the Supabase values from the GitHub `production` Environment and passes them only to `factory-api`; they are not configured for a Next.js build or browser runtime. The API is the sole Supabase client, and the development issuer secret is never configured in production. Configure Supabase Auth with this callback URL only:
 
 `https://factory.markagen.ai/auth/callback`
 
-The workflow sets these production runtime values for every service:
+The Next.js deployment workflow sets these production runtime values for the application services:
 
 - `FACTORY_API_URL=https://factory.markagen.ai` — server-only origin for the Next.js server’s session refresh/current-user calls and build-time rewrites.
 - `FACTORY_SHARED_ORIGIN=true`
 - `LIVE_SPLASH_URL=https://factory.markagen.ai/live-splash`
 - `WEATHER_URL=https://factory.markagen.ai/weather`
+
+Factory API session credentials are separate GCP Secret Manager secret versions named `factory-api-session-database-url` and `factory-api-session-encryption-key`. Terraform creates the secret containers and access policy but does not create secret versions; provision those values out of band before deploying the API.
 
 ## One-time Terraform order
 

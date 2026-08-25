@@ -1,4 +1,4 @@
-# Factory development: three clients plus the pinned official Supabase stack.
+# Factory development: three clients, Storybook, API, and the pinned official Supabase stack.
 name: factory-dev
 include:
   - path: ./supabase/docker-compose.yml
@@ -83,6 +83,27 @@ services:
     depends_on:
       api-gw:
         condition: service_started
+  storybook:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: dev
+    command: sh -c "pnpm install --frozen-lockfile && pnpm --filter @factory/ui
+      dev"
+    environment:
+      WATCHPACK_POLLING: "true"
+      CI: "true"
+      HOME: /tmp
+      COREPACK_HOME: /tmp/corepack
+      PNPM_HOME: /tmp/pnpm
+    working_dir: /workspace
+    user: 1001:1002
+    volumes:
+      - .:/workspace
+      - storybook-node-modules:/workspace/node_modules
+      - storybook-pnpm-cache:/pnpm
+    ports:
+      - 127.0.0.1:6006:6006
   api:
     build:
       context: ./services/api
@@ -115,4 +136,6 @@ volumes:
   live-splash-pnpm-cache: null
   weather-node-modules: null
   weather-pnpm-cache: null
+  storybook-node-modules: null
+  storybook-pnpm-cache: null
   api-sessions: null

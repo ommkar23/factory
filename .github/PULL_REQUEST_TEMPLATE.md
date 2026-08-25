@@ -1,15 +1,17 @@
+<!-- Factory normally integrates locally and does not use pull requests. Use this template only when a remote pull request was explicitly requested. -->
+
 ## Summary
 
 <!-- What changed and why? -->
 
-## Governing issue
+## Governing issue (optional)
 
-Closes #
+<!-- Link an explicitly requested issue when one exists. -->
 
 ## Scope and ownership
 
 - App/area:
-- Shared contracts, generated types, or migrations changed: No
+- Shared contracts, generated code, or migrations changed: No
 - Explicit owner (if applicable):
 
 ## Verification

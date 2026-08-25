@@ -12,6 +12,17 @@ Factory API is a server-owned HTTP backend. App endpoints use `/app/<app-name>/v
 
 The server validates asymmetric JWTs with Supabase JWKS. Legacy HS256 projects with no JWKS keys use authoritative Supabase Auth `GET /auth/v1/user` verification; unverified JWTs are never accepted.
 
+## Weather API
+
+Both weather routes require the provider-token authentication described above and return `Cache-Control: private, no-store`.
+
+- `GET /app/weather/v1/locations?q=<query>` accepts exactly one trimmed query from 2 through 100 characters and returns at most five normalized locations.
+- `GET /app/weather/v1/current-conditions?latitude=<latitude>&longitude=<longitude>` accepts exactly one numeric WGS84 latitude from -90 through 90 and longitude from -180 through 180 and returns normalized metric current conditions.
+
+Invalid or duplicate parameters return `400 INVALID_REQUEST`. Provider rate limits return `429 UPSTREAM_RATE_LIMITED`; unavailable providers return `502 UPSTREAM_UNAVAILABLE`, and invalid provider payloads return `502 UPSTREAM_INVALID_RESPONSE`.
+
+The FastAPI OpenAPI document is the authoritative field-level schema for successful and error responses.
+
 ## Local development test authentication
 
 Only when `ENVIRONMENT=development` and `DEV_AUTH_ENABLED=true`, the API registers `POST /auth/dev/token` and `POST /auth/dev/session`. Both require the `X-Dev-Auth-Secret` header and authenticate the bootstrap-created local Supabase test login with the password grant. `/auth/dev/token` returns a no-store Supabase access/refresh pair for Postman or native API tests. `/auth/dev/session` returns no content and sets no-store HttpOnly, SameSite=Lax Factory access/refresh cookies; they are non-Secure only when the configured API origin is localhost.

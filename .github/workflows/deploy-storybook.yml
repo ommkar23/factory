@@ -50,7 +50,7 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - name: Validate UI package
-        run: pnpm --filter @factory/ui lint && pnpm --filter @factory/ui typecheck && pnpm --filter @factory/ui test
+        run: pnpm --filter @factory/ui lint && pnpm --filter @factory/ui test
 
       - name: Build static Storybook
         run: pnpm --filter @factory/ui build

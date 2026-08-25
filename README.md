@@ -1,23 +1,24 @@
 # Factory
 
-Multi-app Next.js monorepo for building products while extracting reusable UI, contracts, configuration, and tooling.
+Multi-app JavaScript and Next.js monorepo for building products while extracting reusable UI, contracts, authentication, and tooling.
 
 ## Repository model
 
 - `apps/<app-name>` — independently owned Next.js applications.
+- `packages/auth` — shared same-origin authentication helpers and UI.
 - `packages/ui` — reusable, accessible UI primitives and composed components.
-- `packages/contracts` — shared TypeScript schemas and API contracts.
-- `packages/typescript-config` — shared TypeScript configuration.
-- `tooling/` — repository-wide development automation added when justified.
-- `.github/` — centralized issues, ownership policy, and GitHub Actions.
-
-All product work is tracked through GitHub issues in this repository. Use labels and milestones to identify the app, work type, priority, and lifecycle stage.
+- `packages/contracts` — shared JavaScript API contracts.
+- `services/api` — the FastAPI boundary for authentication and external providers.
+- `supabase` — pinned self-hosted Supabase development configuration.
+- `infra/gcp` — production Google Cloud infrastructure.
+- `tooling/` and `scripts/` — repository-wide development automation.
+- `.github/` — ownership policy and GitHub Actions.
 
 ## Local integration workflow
 
-Factory is a sole-owner repository. Implementers work in isolated local feature branches and worktrees, then hand lead-sde an immutable commit SHA with verification evidence. Implementers do not push feature branches, create GitHub pull requests, or integrate their own work.
+Create one focused local branch and isolated worktree for each coherent change. Review and verify the resulting commit locally, merge it into synchronized local `main`, and remove the worktree after stopping its development resources. Push only the resulting `main` branch.
 
-Lead-sde reviews the handoff after local technical checks and required human UI approval. Lead-sde locally squash-merges the reviewed feature into synchronized `main`, pushes `main` directly without force or weaker branch protection, and verifies CI for the exact pushed SHA.
+Do not create remote GitHub issues, pull requests, or feature branches unless explicitly requested. UI changes still require Storybook or equivalent visual evidence and human approval before local integration.
 
 ## Getting started
 
@@ -38,7 +39,7 @@ cd factory
 ./scripts/setup-factory-dev.sh
 ```
 
-The script creates ignored runtime configuration and Supabase server secrets when absent, validates Compose, starts the three apps plus the self-hosted Supabase stack, and waits for local readiness. It writes only the local development issuer secret and internal Factory API URL to each app's ignored `.env.local`; no browser-exposed Supabase variables are created. It does not install Docker, overwrite existing secrets, or commit files.
+The script creates ignored runtime configuration and Supabase server secrets when absent, validates Compose, starts the three apps, Factory API, Storybook, and the self-hosted Supabase stack, and waits for local readiness. It writes only the local development issuer secret and internal Factory API URL to each app's ignored `.env.local`; no browser-exposed Supabase variables are created. It does not install Docker, overwrite existing secrets, or commit files.
 
 From a development Mac, tunnel the loopback-only services:
 
@@ -47,19 +48,20 @@ ssh -N \
   -L 3001:127.0.0.1:3001 \
   -L 3002:127.0.0.1:3002 \
   -L 3003:127.0.0.1:3003 \
+  -L 6006:127.0.0.1:6006 \
   -L 8000:127.0.0.1:8000 \
   <user>@<vm-host>
 ```
 
-Open Home, Live Splash, and Weather at http://localhost:3001, :3002, and :3003. The Supabase gateway remains private and is available through the tunnel at http://localhost:8000.
+Open Home, Live Splash, Weather, and Storybook at http://localhost:3001, :3002, :3003, and :6006. The Supabase gateway remains private and is available through the tunnel at http://localhost:8000. Stop the stack with `docker compose down`.
 
 ## Server-only API authentication
 
 Factory API owns Supabase Google OAuth and persists only encrypted short-lived PKCE/state records. Browsers use same-origin `/auth/*` and `/app/*` paths, and receive only HttpOnly `Factory-Access-Token` and `Factory-Refresh-Token` cookies. The API owns login, callback, session refresh, and logout; Next.js apps do not own callback routes, client token handling, or Supabase clients. For local development, a browser calls its app's `/api/auth/dev/bootstrap`, which is development-only and relays cookies after the app server authenticates to the API with a server-held secret. See [services/api/README.md](services/api/README.md) and [docs/api.md](docs/api.md) for configuration and contract details.
 
-## Home app
+## Direct-process application development
 
-Factory Home is the application directory at `http://localhost:3002`. Start the three applications in separate terminals:
+Outside Compose, Factory Home runs at `http://localhost:3002`. Start the three applications in separate terminals:
 
 ```bash
 pnpm --filter @factory/live-splash dev

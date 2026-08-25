@@ -69,14 +69,14 @@ for _ in {1..30}; do
 done
 [[ "$provisioned" == true ]] || { echo "Local Supabase development user provisioning failed." >&2; exit 1; }
 unset provisioned service_role_key dev_auth_email dev_auth_password
-for volume in home-node-modules home-pnpm-cache live-splash-node-modules live-splash-pnpm-cache weather-node-modules weather-pnpm-cache; do
+for volume in home-node-modules home-pnpm-cache live-splash-node-modules live-splash-pnpm-cache weather-node-modules weather-pnpm-cache storybook-node-modules storybook-pnpm-cache; do
   docker volume create "factory-dev_${volume}" >/dev/null
   docker run --rm -v "factory-dev_${volume}:/v" alpine:3.22 chown -R 1001:1002 /v >/dev/null
 done
-docker compose up -d --force-recreate home live-splash weather
+docker compose up -d --force-recreate home live-splash weather storybook
 
 for _ in {1..30}; do
-  if curl -fsS --max-time 5 http://127.0.0.1:3001/ >/dev/null && curl -fsS --max-time 5 http://127.0.0.1:3002/ >/dev/null && curl -fsS --max-time 5 http://127.0.0.1:3003/ >/dev/null; then
+  if curl -fsS --max-time 5 http://127.0.0.1:3001/ >/dev/null && curl -fsS --max-time 5 http://127.0.0.1:3002/ >/dev/null && curl -fsS --max-time 5 http://127.0.0.1:3003/ >/dev/null && curl -fsS --max-time 5 http://127.0.0.1:6006/ >/dev/null; then
     echo "Factory development stack is ready."
     exit 0
   fi

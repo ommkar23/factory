@@ -12,7 +12,7 @@ not host product APIs, user data, or application runtime services.
 2. Run the workflow from `main` and supply an explicit reviewed Git ref (normally
    `main`, a reviewed protected branch, or a reviewed tag/SHA).
 3. The build checks out only that requested ref, installs dependencies with
-   `pnpm install --frozen-lockfile`, validates `@factory/ui`, builds its static
+   `pnpm install --frozen-lockfile`, runs the `@factory/ui` lint and test scripts, builds its static
    Storybook with the `/factory/storybook/` base path, packages it as the
    `storybook/` child of the Pages artifact, and creates static redirects for
    Home, Live Splash, and Weather from generated Storybook metadata.
