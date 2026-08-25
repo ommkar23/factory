@@ -22,7 +22,9 @@ export function existingPrettierTrackedFiles(files, exists = existsSync) {
 
 export function run(mode) {
   if (!["check", "write"].includes(mode)) {
-    throw new Error("Usage: node scripts/prettier-tracked.mjs <check|write>");
+    throw new Error(
+      "Usage: node scripts/checks/prettier-tracked.mjs <check|write>",
+    );
   }
 
   const tracked = execFileSync("git", ["ls-files", "-z"], {

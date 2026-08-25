@@ -6,7 +6,7 @@ import test from "node:test";
 
 test("format check ignores tracked files deleted from the working tree", () => {
   const result = spawnSync("pnpm", ["format:check"], {
-    cwd: new URL("..", import.meta.url),
+    cwd: new URL("../..", import.meta.url),
     encoding: "utf8",
   });
 
@@ -19,11 +19,13 @@ test("format check ignores tracked files deleted from the working tree", () => {
 
 test("filters deleted tracked paths before invoking Prettier", () => {
   const files = existingPrettierTrackedFiles(
-    ["scripts/format-check-deleted-paths.test.mjs", "deleted/route.js"],
+    ["scripts/checks/format-check-deleted-paths.test.mjs", "deleted/route.js"],
     (file) =>
-      file === "scripts/format-check-deleted-paths.test.mjs" ||
+      file === "scripts/checks/format-check-deleted-paths.test.mjs" ||
       existsSync(file),
   );
 
-  assert.deepEqual(files, ["scripts/format-check-deleted-paths.test.mjs"]);
+  assert.deepEqual(files, [
+    "scripts/checks/format-check-deleted-paths.test.mjs",
+  ]);
 });

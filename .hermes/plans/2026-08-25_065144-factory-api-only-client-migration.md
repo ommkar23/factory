@@ -25,7 +25,7 @@ Move all Home, Live Splash, and Weather data access to same-origin Factory `/aut
 ### 3. Enforce the boundary across every client app
 
 - **To do:** Add a repository-owned architecture test under `scripts/` and include it in the root check so runtime app/shared-client sources and dependencies reject third-party API SDKs, public provider credentials, provider URL requests, and app-owned data BFF routes while allowing links plus the documented health and server-only auth bootstrap routes.
-- **To verify:** The guard covers Home, Live Splash, Weather, and browser-facing shared packages; a fixture violation fails it, current allowed routes pass it, and `node --test scripts/client-api-boundary.test.mjs` succeeds.
+- **To verify:** The guard covers Home, Live Splash, Weather, and browser-facing shared packages; a fixture violation fails it, current allowed routes pass it, and `node --test scripts/checks/client-api-boundary.test.mjs` succeeds.
 
 ### 4. Document and exercise the API-only contract
 

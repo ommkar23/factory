@@ -197,7 +197,9 @@ test("rejects unallowlisted dynamic network calls", () => {
 });
 
 test("discovers every app and browser-facing shared runtime source", () => {
-  const files = collectClientBoundaryFiles(resolve(import.meta.dirname, ".."));
+  const files = collectClientBoundaryFiles(
+    resolve(import.meta.dirname, "../.."),
+  );
   const paths = new Set(files.map((file) => file.path));
 
   for (const app of ["home", "live-splash", "weather"]) {
@@ -222,19 +224,21 @@ test("discovers every app and browser-facing shared runtime source", () => {
 });
 
 test("the current repository satisfies the client API boundary", () => {
-  const files = collectClientBoundaryFiles(resolve(import.meta.dirname, ".."));
+  const files = collectClientBoundaryFiles(
+    resolve(import.meta.dirname, "../.."),
+  );
 
   assert.deepEqual(analyzeClientApiBoundary(files), []);
 });
 
 test("the root check runs the client API boundary guard", () => {
-  const repositoryRoot = resolve(import.meta.dirname, "..");
+  const repositoryRoot = resolve(import.meta.dirname, "../..");
   const manifest = JSON.parse(
     readFileSync(resolve(repositoryRoot, "package.json"), "utf8"),
   );
 
   assert.match(
     manifest.scripts.check,
-    /node --test scripts\/client-api-boundary\.test\.mjs/,
+    /node --test scripts\/checks\/client-api-boundary\.test\.mjs/,
   );
 });
