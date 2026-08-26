@@ -15,6 +15,15 @@ storybook_alias=""
 supabase_alias=""
 supabase_env_owned=false
 api_env_owned=false
+tailscale_requested=${FACTORY_TAILSCALE_SERVE:-false}
+tailscale_factory_port=""
+tailscale_storybook_port=""
+tailscale_factory_target=""
+tailscale_storybook_target=""
+tailscale_factory_previous_target=""
+tailscale_storybook_previous_target=""
+tailscale_factory_url=""
+tailscale_storybook_url=""
 
 compose() {
   COMPOSE_PROJECT_NAME="$project" docker compose --project-name "$project" "$@"
@@ -28,6 +37,14 @@ require_commands() {
     }
   done
   docker compose version >/dev/null
+  if [[ "$tailscale_requested" == true ]]; then
+    for command in tailscale flock; do
+      command -v "$command" >/dev/null || {
+        echo "$command is required for --tailscale." >&2
+        return 1
+      }
+    done
+  fi
 }
 
 load_ledger() {
@@ -71,6 +88,14 @@ write_ledger() {
     printf 'supabase_alias=%q\n' "$supabase_alias"
     printf 'supabase_env_owned=%q\n' "$supabase_env_owned"
     printf 'api_env_owned=%q\n' "$api_env_owned"
+    printf 'tailscale_factory_port=%q\n' "$tailscale_factory_port"
+    printf 'tailscale_storybook_port=%q\n' "$tailscale_storybook_port"
+    printf 'tailscale_factory_target=%q\n' "$tailscale_factory_target"
+    printf 'tailscale_storybook_target=%q\n' "$tailscale_storybook_target"
+    printf 'tailscale_factory_previous_target=%q\n' "$tailscale_factory_previous_target"
+    printf 'tailscale_storybook_previous_target=%q\n' "$tailscale_storybook_previous_target"
+    printf 'tailscale_factory_url=%q\n' "$tailscale_factory_url"
+    printf 'tailscale_storybook_url=%q\n' "$tailscale_storybook_url"
   } > "$ledger"
 }
 
@@ -173,6 +198,113 @@ remove_aliases() {
   done
 }
 
+tailscale_serve_status() {
+  tailscale serve status --json 2>/dev/null
+}
+
+tailscale_proxy_for_port() {
+  node scripts/worktree-tailscale.mjs proxy "$1" "$2"
+}
+
+reserved_tailscale_ports() {
+  local candidate
+  for candidate in "$runtime_dir"/*.env; do
+    [[ -f "$candidate" ]] || continue
+    grep -E '^tailscale_(factory|storybook)_port=[0-9]+$' "$candidate" | cut -d= -f2- || true
+  done
+}
+
+register_tailscale_target() {
+  local port=$1 target=$2 previous=${3:-} status current
+  status=$(tailscale_serve_status) || {
+    echo "Unable to read Tailscale Serve state; confirm Serve is enabled for this node." >&2
+    return 1
+  }
+  current=$(tailscale_proxy_for_port "$port" "$status")
+  if [[ -n "$current" && "$current" != "$target" && "$current" != "$previous" ]]; then
+    echo "Tailscale Serve HTTPS port $port is owned by another route; refusing to replace $current." >&2
+    return 1
+  fi
+  if [[ "$current" != "$target" ]]; then
+    tailscale serve --https="$port" --bg "$target" >/dev/null
+  fi
+}
+
+register_tailscale_routes() {
+  [[ "$tailscale_requested" == true ]] || return 0
+  mkdir -p "$runtime_dir"
+  exec 9>"$runtime_dir/tailscale-serve.lock"
+  flock 9
+
+  local gateway_port storybook_port status reserved ports hostname
+  gateway_port=$(published_port gateway 8080)
+  storybook_port=$(published_port storybook 6006)
+  tailscale_factory_previous_target=$tailscale_factory_target
+  tailscale_storybook_previous_target=$tailscale_storybook_target
+  tailscale_factory_target="http://127.0.0.1:${gateway_port}"
+  tailscale_storybook_target="http://127.0.0.1:${storybook_port}"
+  status=$(tailscale_serve_status) || {
+    echo "Unable to read Tailscale Serve state; confirm Serve is enabled for this node." >&2
+    return 1
+  }
+
+  if [[ -z "$tailscale_factory_port" || -z "$tailscale_storybook_port" ]]; then
+    reserved=$(reserved_tailscale_ports | paste -sd, -)
+    ports=$(node scripts/worktree-tailscale.mjs allocate "$worktree_hash" "$status" "$reserved")
+    read -r tailscale_factory_port tailscale_storybook_port <<< "$ports"
+  fi
+
+  hostname=$(node scripts/worktree-tailscale.mjs hostname "$(tailscale status --json)")
+  [[ -n "$hostname" ]] || {
+    echo "Tailscale did not report a MagicDNS hostname for this node." >&2
+    return 1
+  }
+  tailscale_factory_url="https://${hostname}:${tailscale_factory_port}"
+  tailscale_storybook_url="https://${hostname}:${tailscale_storybook_port}"
+  # Persist ownership before changing node-global Serve configuration so an
+  # interrupted startup can safely recover only this worktree's routes.
+  write_ledger
+  register_tailscale_target "$tailscale_factory_port" "$tailscale_factory_target" "$tailscale_factory_previous_target"
+  register_tailscale_target "$tailscale_storybook_port" "$tailscale_storybook_target" "$tailscale_storybook_previous_target"
+  tailscale_factory_previous_target=""
+  tailscale_storybook_previous_target=""
+  write_ledger
+  flock -u 9
+}
+
+remove_tailscale_target() {
+  local port=$1 expected=$2 previous=${3:-} status current
+  [[ -n "$port" && -n "$expected" ]] || return 0
+  if ! command -v tailscale >/dev/null; then
+    echo "tailscale is unavailable; preserving owned Serve HTTPS port $port." >&2
+    return 0
+  fi
+  status=$(tailscale_serve_status) || {
+    echo "Unable to inspect Tailscale Serve HTTPS port $port; preserving it." >&2
+    return 0
+  }
+  current=$(tailscale_proxy_for_port "$port" "$status")
+  if [[ "$current" == "$expected" || ( -n "$previous" && "$current" == "$previous" ) ]]; then
+    tailscale serve --https="$port" off >/dev/null
+  elif [[ -n "$current" ]]; then
+    echo "Tailscale Serve HTTPS port $port no longer matches this worktree; preserving $current." >&2
+  fi
+}
+
+remove_tailscale_routes() {
+  [[ -n "$tailscale_factory_port" || -n "$tailscale_storybook_port" ]] || return 0
+  if ! command -v tailscale >/dev/null || ! command -v flock >/dev/null; then
+    echo "tailscale or flock is unavailable; preserving owned Serve routes." >&2
+    return 0
+  fi
+  mkdir -p "$runtime_dir"
+  exec 9>"$runtime_dir/tailscale-serve.lock"
+  flock 9
+  remove_tailscale_target "$tailscale_factory_port" "$tailscale_factory_target" "$tailscale_factory_previous_target"
+  remove_tailscale_target "$tailscale_storybook_port" "$tailscale_storybook_target" "$tailscale_storybook_previous_target"
+  flock -u 9
+}
+
 provision_dev_user() {
   local supabase_port service_role_key dev_auth_email dev_auth_password
   supabase_port=$(published_port api-gw 8000)
@@ -213,6 +345,7 @@ wait_for_readiness() {
 clean() {
   load_ledger
   prepare_runtime_environment
+  remove_tailscale_routes
   remove_aliases
   compose down --volumes --remove-orphans || true
   if [[ "$supabase_env_owned" == true ]]; then
@@ -238,10 +371,14 @@ up() {
   register_aliases
   provision_dev_user
   wait_for_readiness
+  register_tailscale_routes
   write_ledger
   completed=true
   trap - EXIT INT TERM
   printf 'Factory:   %s\nStorybook: %s\nSupabase:  %s\n' "$factory_url" "$storybook_url" "$supabase_url"
+  if [[ -n "$tailscale_factory_url" ]]; then
+    printf 'Tailnet Factory:   %s\nTailnet Storybook: %s\n' "$tailscale_factory_url" "$tailscale_storybook_url"
+  fi
 }
 
 status() {
@@ -250,6 +387,9 @@ status() {
   compose ps
   if [[ -f "$ledger" ]]; then
     printf 'Factory:   %s\nStorybook: %s\nSupabase:  %s\n' "$factory_url" "$storybook_url" "$supabase_url"
+    if [[ -n "$tailscale_factory_url" ]]; then
+      printf 'Tailnet Factory:   %s\nTailnet Storybook: %s\n' "$tailscale_factory_url" "$tailscale_storybook_url"
+    fi
   fi
 }
 
@@ -258,10 +398,17 @@ logs() {
   compose logs --follow "${@:2}"
 }
 
+if [[ "${2:-}" == "--tailscale" ]]; then
+  tailscale_requested=true
+elif [[ -n "${2:-}" && "${1:-}" != "logs" ]]; then
+  echo "Unknown option: ${2}" >&2
+  exit 2
+fi
+
 case "${1:-}" in
   up) up ;;
   status) status ;;
   logs) logs "$@" ;;
   clean) require_commands; clean ;;
-  *) echo "Usage: scripts/worktree-dev <up|status|logs|clean>" >&2; exit 2 ;;
+  *) echo "Usage: scripts/worktree-dev <up [--tailscale]|status|logs|clean>" >&2; exit 2 ;;
 esac

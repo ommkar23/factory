@@ -14,7 +14,7 @@
     "test": "turbo run test",
     "format:check": "node scripts/checks/prettier-tracked.mjs check",
     "format:write": "node scripts/checks/prettier-tracked.mjs write",
-    "check": "node --test scripts/checks/client-api-boundary.test.mjs scripts/checks/format-check-deleted-paths.test.mjs scripts/checks/unified-deployment.test.mjs scripts/checks/unified-web.test.mjs scripts/checks/worktree-compose.test.mjs && python3 -m unittest discover -s scripts/tests && pnpm format:check && turbo run lint test build",
+    "check": "node --test scripts/checks/client-api-boundary.test.mjs scripts/checks/format-check-deleted-paths.test.mjs scripts/checks/unified-deployment.test.mjs scripts/checks/unified-web.test.mjs scripts/checks/worktree-compose.test.mjs scripts/checks/worktree-tailscale.test.mjs && python3 -m unittest discover -s scripts/tests && pnpm format:check && turbo run lint test build",
     "test:e2e": "node e2e/run-playwright.mjs"
   },
   "devDependencies": {

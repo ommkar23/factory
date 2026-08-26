@@ -34,7 +34,7 @@ cd factory
 ./scripts/worktree-dev clean
 ```
 
-The command derives a stable ID from the canonical worktree path, creates an isolated Compose project, assigns loopback ports, registers stable worktree-prefixed `.localhost` URLs with Portless, and tracks owned resources in `.hermes/runtime/`. `./scripts/setup-factory-dev.sh` is a compatibility alias for `worktree-dev up`.
+The command derives a stable ID from the canonical worktree path, creates an isolated Compose project, assigns loopback ports, registers stable worktree-prefixed `.localhost` URLs with Portless, optionally registers tailnet HTTPS endpoints with Tailscale Serve, and tracks owned resources in `.hermes/runtime/`. `./scripts/setup-factory-dev.sh` is a compatibility alias for `worktree-dev up`.
 
 ### Worktree resource ownership
 
@@ -61,25 +61,27 @@ docker volume ls --filter "label=com.factory.worktree=<worktree-id>"
 git worktree list
 ```
 
-No recorded listener, process, worktree-owned Docker resource, foreign-owned file, or removed worktree path may remain. Cleanup removes Portless aliases before Compose resources and generated secrets. Repeated cleanup and cleanup after interrupted startup must remain safe; stale-resource collection may remove resources only when their worktree is gone and no active lifecycle lease references them.
+No recorded listener, process, worktree-owned Docker resource, foreign-owned file, or removed worktree path may remain. Cleanup removes owned Tailscale Serve routes and Portless aliases before Compose resources and generated secrets. Repeated cleanup and cleanup after interrupted startup must remain safe; stale-resource collection may remove resources only when their worktree is gone and no active lifecycle lease references them.
 
 ### Remote access
 
-For remote VMs, choose an available unprivileged proxy port, start Portless without TLS, and then start Factory:
+Portless provides stable `.localhost` aliases for browsers running on the VM. To access a worktree from another device on the same tailnet, enable Tailscale Serve for the tailnet, install and log in to Tailscale on the VM, and allow the development user to manage this node's Serve configuration once:
 
 ```bash
-export PORTLESS_PORT=<available-port>
-portless proxy start --no-tls
-./scripts/worktree-dev up
+sudo tailscale set --operator="$USER"
+./scripts/worktree-dev up --tailscale
 ```
 
-Tunnel that proxy entry point from the development machine:
+The lifecycle command allocates two stable, collision-free HTTPS ports from the node's unprivileged worktree range, preserves existing foreign Serve routes, proxies the worktree's random Factory and Storybook loopback ports, and prints both tailnet URLs. Every linked worktree receives distinct ports; do not manually assign Serve ports.
 
 ```bash
-ssh -N -L "${PORTLESS_PORT}:127.0.0.1:${PORTLESS_PORT}" <user>@<vm-host>
+./scripts/worktree-dev status
+./scripts/worktree-dev clean
 ```
 
-Use the URLs printed by `worktree-dev up`. Linked worktrees receive distinct hostnames.
+`status` reports the recorded Portless and tailnet URLs. `clean` removes only Serve routes whose current targets still match that worktree, so repeated cleanup and cleanup after interrupted startup preserve other worktrees and manually managed routes. Tailscale MagicDNS and HTTPS remain tailnet-only; Supabase is not exposed through Serve.
+
+If Tailscale Serve is unavailable, run `./scripts/worktree-dev up` without the option and tunnel the VM-local Portless proxy over SSH instead.
 
 ## Running the unified web runtime directly
 
