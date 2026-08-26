@@ -17,6 +17,18 @@ describe("getAppDirectory", () => {
       },
     ]);
   });
+  it("uses same-origin route paths in the unified runtime", () => {
+    expect(
+      getAppDirectory({
+        FACTORY_SHARED_ORIGIN: "true",
+        LIVE_SPLASH_URL: "https://configured.example.test/live-splash",
+        WEATHER_URL: "https://configured.example.test/weather",
+      }),
+    ).toMatchObject([
+      { href: "/live-splash", id: "live-splash" },
+      { href: "/weather", id: "weather" },
+    ]);
+  });
   it("uses valid configured URLs without changing the app identities", () => {
     expect(
       getAppDirectory({

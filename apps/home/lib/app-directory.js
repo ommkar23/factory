@@ -1,24 +1,29 @@
 const DEFAULT_LIVE_SPLASH_URL = "http://localhost:3000";
 const DEFAULT_WEATHER_URL = "http://localhost:3001";
 export function getAppDirectory(environment = process.env) {
+  const sharedOrigin = environment.FACTORY_SHARED_ORIGIN === "true";
   return [
     {
       description: "Browse the Live Splash photo feed.",
-      href: resolveAppUrl(
-        "LIVE_SPLASH_URL",
-        environment.LIVE_SPLASH_URL,
-        DEFAULT_LIVE_SPLASH_URL,
-      ),
+      href: sharedOrigin
+        ? "/live-splash"
+        : resolveAppUrl(
+            "LIVE_SPLASH_URL",
+            environment.LIVE_SPLASH_URL,
+            DEFAULT_LIVE_SPLASH_URL,
+          ),
       id: "live-splash",
       name: "Live Splash",
     },
     {
       description: "Compare current weather across locations.",
-      href: resolveAppUrl(
-        "WEATHER_URL",
-        environment.WEATHER_URL,
-        DEFAULT_WEATHER_URL,
-      ),
+      href: sharedOrigin
+        ? "/weather"
+        : resolveAppUrl(
+            "WEATHER_URL",
+            environment.WEATHER_URL,
+            DEFAULT_WEATHER_URL,
+          ),
       id: "weather",
       name: "Weather",
     },
