@@ -55,10 +55,10 @@ variable "service_images" {
 
   validation {
     condition = length(var.service_images) == 0 || (
-      length(setsubtract(toset(keys(var.service_images)), toset(["api", "home", "live-splash", "weather"]))) == 0 &&
-      length(setsubtract(toset(["api", "home", "live-splash", "weather"]), toset(keys(var.service_images)))) == 0
+      length(setsubtract(toset(keys(var.service_images)), toset(["api", "home"]))) == 0 &&
+      length(setsubtract(toset(["api", "home"]), toset(keys(var.service_images)))) == 0
     )
-    error_message = "service_images must define exactly api, home, live-splash, and weather."
+    error_message = "service_images must define exactly api and home."
   }
 }
 

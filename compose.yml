@@ -1,4 +1,4 @@
-# Factory development: three clients, Storybook, API, and the pinned official Supabase stack.
+# Factory development: one unified web container, Storybook, API, and the pinned official Supabase stack.
 include:
   - path: ./supabase/docker-compose.yml
 
@@ -11,16 +11,10 @@ services:
       - >-
         chown -R ${HOST_UID:?HOST_UID required}:${HOST_GID:?HOST_GID required}
         /volumes/home-node-modules /volumes/home-pnpm-cache
-        /volumes/live-splash-node-modules /volumes/live-splash-pnpm-cache
-        /volumes/weather-node-modules /volumes/weather-pnpm-cache
         /volumes/storybook-node-modules /volumes/storybook-pnpm-cache
     volumes:
       - home-node-modules:/volumes/home-node-modules
       - home-pnpm-cache:/volumes/home-pnpm-cache
-      - live-splash-node-modules:/volumes/live-splash-node-modules
-      - live-splash-pnpm-cache:/volumes/live-splash-pnpm-cache
-      - weather-node-modules:/volumes/weather-node-modules
-      - weather-pnpm-cache:/volumes/weather-pnpm-cache
       - storybook-node-modules:/volumes/storybook-node-modules
       - storybook-pnpm-cache:/volumes/storybook-pnpm-cache
 
@@ -29,8 +23,9 @@ services:
       context: .
       dockerfile: Dockerfile
       target: dev
-    command: sh -c "pnpm install --frozen-lockfile && pnpm --filter @factory/home dev"
+    command: sh -c "pnpm install --frozen-lockfile && node scripts/unified-web.mjs"
     environment:
+      NODE_ENV: development
       WATCHPACK_POLLING: "true"
       CI: "true"
       HOME: /tmp
@@ -48,62 +43,8 @@ services:
       - home-node-modules:/workspace/node_modules
       - home-pnpm-cache:/pnpm
     depends_on:
-      api-gw:
-        condition: service_started
-      volume-init:
-        condition: service_completed_successfully
-
-  live-splash:
-    build:
-      context: .
-      dockerfile: Dockerfile
-      target: dev
-    command: sh -c "pnpm install --frozen-lockfile && pnpm --filter @factory/live-splash dev"
-    environment:
-      WATCHPACK_POLLING: "true"
-      CI: "true"
-      HOME: /tmp
-      COREPACK_HOME: /tmp/corepack
-      PNPM_HOME: /tmp/pnpm
-      FACTORY_API_URL: http://api:8000
-      FACTORY_SHARED_ORIGIN: "true"
-      DEV_AUTH_SECRET: ${DEV_AUTH_SECRET:?DEV_AUTH_SECRET required}
-    working_dir: /workspace
-    user: ${HOST_UID:?HOST_UID required}:${HOST_GID:?HOST_GID required}
-    volumes:
-      - .:/workspace
-      - live-splash-node-modules:/workspace/node_modules
-      - live-splash-pnpm-cache:/pnpm
-    depends_on:
-      api-gw:
-        condition: service_started
-      volume-init:
-        condition: service_completed_successfully
-
-  weather:
-    build:
-      context: .
-      dockerfile: Dockerfile
-      target: dev
-    command: sh -c "pnpm install --frozen-lockfile && pnpm --filter @factory/weather dev"
-    environment:
-      WATCHPACK_POLLING: "true"
-      CI: "true"
-      HOME: /tmp
-      COREPACK_HOME: /tmp/corepack
-      PNPM_HOME: /tmp/pnpm
-      FACTORY_API_URL: http://api:8000
-      FACTORY_SHARED_ORIGIN: "true"
-      DEV_AUTH_SECRET: ${DEV_AUTH_SECRET:?DEV_AUTH_SECRET required}
-    working_dir: /workspace
-    user: ${HOST_UID:?HOST_UID required}:${HOST_GID:?HOST_GID required}
-    volumes:
-      - .:/workspace
-      - weather-node-modules:/workspace/node_modules
-      - weather-pnpm-cache:/pnpm
-    depends_on:
-      api-gw:
-        condition: service_started
+      api:
+        condition: service_healthy
       volume-init:
         condition: service_completed_successfully
 
@@ -168,18 +109,10 @@ services:
         condition: service_healthy
       home:
         condition: service_started
-      live-splash:
-        condition: service_started
-      weather:
-        condition: service_started
 
 volumes:
   home-node-modules: null
   home-pnpm-cache: null
-  live-splash-node-modules: null
-  live-splash-pnpm-cache: null
-  weather-node-modules: null
-  weather-pnpm-cache: null
   storybook-node-modules: null
   storybook-pnpm-cache: null
   api-sessions: null

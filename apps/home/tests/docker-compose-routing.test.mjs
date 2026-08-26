@@ -9,35 +9,46 @@ const repoRoot = path.resolve(
   "../../..",
 );
 
-test("Docker development uses one shared-origin gateway", async () => {
-  const compose = await readFile(path.join(repoRoot, "compose.yml"), "utf8");
-  const homeService = compose.match(
-    /^  home:\n([\s\S]*?)(?=^  [a-z-]+:\n|^volumes:)/m,
+function serviceBlock(compose, service) {
+  return compose.match(
+    new RegExp(
+      `^  ${service}:\\n([\\s\\S]*?)(?=^  [a-z-]+:\\n|^volumes:)`,
+      "m",
+    ),
   )?.[1];
+}
 
-  assert.ok(homeService, "home service must be present");
-  assert.match(
-    homeService,
-    /LIVE_SPLASH_URL:.*FACTORY_PUBLIC_URL.*live-splash/,
-  );
-  assert.match(homeService, /WEATHER_URL:.*FACTORY_PUBLIC_URL.*weather/);
-  assert.match(homeService, /FACTORY_SHARED_ORIGIN: "true"/);
-  assert.match(compose, /^  gateway:/m);
+test("Docker development runs all Next.js apps in one Home container", async () => {
+  const compose = await readFile(path.join(repoRoot, "compose.yml"), "utf8");
+  const home = serviceBlock(compose, "home");
+
+  assert.ok(home, "home service must be present");
+  assert.match(home, /node scripts\/unified-web\.mjs/);
+  assert.match(home, /LIVE_SPLASH_URL:.*FACTORY_PUBLIC_URL.*live-splash/);
+  assert.match(home, /WEATHER_URL:.*FACTORY_PUBLIC_URL.*weather/);
+  assert.match(home, /FACTORY_SHARED_ORIGIN: "true"/);
+  assert.equal(serviceBlock(compose, "weather"), undefined);
+  assert.equal(serviceBlock(compose, "live-splash"), undefined);
+  assert.doesNotMatch(compose, /weather-node-modules|live-splash-node-modules/);
 });
 
-test("Docker development app services install dependencies noninteractively", async () => {
+test("the local gateway has one web upstream and an independent API upstream", async () => {
+  const nginx = await readFile(
+    path.join(repoRoot, "infra/dev/nginx.conf"),
+    "utf8",
+  );
+
+  assert.match(nginx, /proxy_pass http:\/\/home:8080/);
+  assert.match(nginx, /proxy_pass http:\/\/api:8000/);
+  assert.doesNotMatch(nginx, /http:\/\/(weather|live-splash):/);
+});
+
+test("Docker development installs dependencies noninteractively", async () => {
   const compose = await readFile(path.join(repoRoot, "compose.yml"), "utf8");
-
-  for (const service of ["home", "live-splash", "weather", "storybook"]) {
-    const serviceBlock = compose.match(
-      new RegExp(
-        `^  ${service}:\\n([\\s\\S]*?)(?=^  [a-z-]+:\\n|^volumes:)`,
-        "m",
-      ),
-    )?.[1];
-
-    assert.ok(serviceBlock, `${service} service must be present`);
-    assert.match(serviceBlock, /CI: "true"/);
+  for (const service of ["home", "storybook"]) {
+    const block = serviceBlock(compose, service);
+    assert.ok(block, `${service} service must be present`);
+    assert.match(block, /CI: "true"/);
   }
 });
 
@@ -47,13 +58,10 @@ test("Docker development publishes Storybook on a random loopback port", async (
     readFile(path.join(repoRoot, "scripts/setup-factory-dev.sh"), "utf8"),
     readFile(path.join(repoRoot, "scripts/worktree-dev"), "utf8"),
   ]);
-  const storybookService = compose.match(
-    /^  storybook:\n([\s\S]*?)(?=^  [a-z-]+:\n|^volumes:)/m,
-  )?.[1];
+  const storybook = serviceBlock(compose, "storybook");
 
-  assert.ok(storybookService, "storybook service must be present");
-  assert.match(storybookService, /pnpm --filter @factory\/ui/);
-  assert.match(storybookService, /127\.0\.0\.1::6006/);
+  assert.match(storybook, /pnpm --filter @factory\/ui/);
+  assert.match(storybook, /127\.0\.0\.1::6006/);
   assert.match(setup, /worktree-dev" up/);
   assert.match(lifecycle, /portless alias/);
   assert.match(lifecycle, /published_port storybook 6006/);

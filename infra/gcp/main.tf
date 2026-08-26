@@ -21,18 +21,6 @@ locals {
       paths = []
       port  = 8080
     }
-    live-splash = {
-      image = var.service_images["live-splash"]
-      name  = "factory-live-splash"
-      paths = ["/live-splash", "/live-splash/*"]
-      port  = 8080
-    }
-    weather = {
-      image = var.service_images["weather"]
-      name  = "factory-weather"
-      paths = ["/weather", "/weather/*"]
-      port  = 8080
-    }
   }
 
   api_environment = {
@@ -47,6 +35,13 @@ locals {
   api_secrets = {
     AUTH_SESSION_DATABASE_URL   = google_secret_manager_secret.api_session["factory-api-session-database-url"].secret_id
     AUTH_SESSION_ENCRYPTION_KEY = google_secret_manager_secret.api_session["factory-api-session-encryption-key"].secret_id
+  }
+
+  web_environment = {
+    FACTORY_API_URL       = "https://${var.domain_name}"
+    FACTORY_SHARED_ORIGIN = "true"
+    LIVE_SPLASH_URL       = "https://${var.domain_name}/live-splash"
+    WEATHER_URL           = "https://${var.domain_name}/weather"
   }
 }
 
@@ -208,7 +203,7 @@ resource "google_cloud_run_v2_service" "factory" {
       }
 
       dynamic "env" {
-        for_each = each.key == "api" ? local.api_environment : {}
+        for_each = each.key == "api" ? local.api_environment : local.web_environment
 
         content {
           name  = env.key

@@ -1,16 +1,7 @@
-name: Deploy application to Cloud Run
+name: Build and deploy unified Home
 
 on:
   workflow_call:
-    inputs:
-      app:
-        description: Application directory and image name
-        required: true
-        type: string
-      service:
-        description: Cloud Run service name
-        required: true
-        type: string
 
 permissions:
   contents: read
@@ -18,15 +9,15 @@ permissions:
 
 jobs:
   deploy:
-    name: Build and deploy ${{ inputs.app }}
+    name: Build and deploy unified Home
     runs-on: ubuntu-latest
     timeout-minutes: 30
     environment: production
     concurrency:
-      group: cloud-run-${{ inputs.app }}-production
+      group: cloud-run-home-production
       cancel-in-progress: false
     env:
-      IMAGE: ${{ vars.GAR_LOCATION }}-docker.pkg.dev/${{ vars.GCP_PROJECT_ID }}/${{ vars.GAR_REPOSITORY }}/${{ inputs.app }}:${{ github.sha }}
+      IMAGE: ${{ vars.GAR_LOCATION }}-docker.pkg.dev/${{ vars.GCP_PROJECT_ID }}/${{ vars.GAR_REPOSITORY }}/home:${{ github.sha }}
       FACTORY_API_URL: https://factory.markagen.ai
       FACTORY_SHARED_ORIGIN: "true"
       LIVE_SPLASH_URL: https://factory.markagen.ai/live-splash
@@ -61,21 +52,22 @@ jobs:
           username: oauth2accesstoken
           password: ${{ steps.auth.outputs.access_token }}
 
-      - name: Build and push production image
+      - name: Build and push unified production image
         run: |
           docker build \
             --file Dockerfile \
-            --build-arg "APP=${{ inputs.app }}" \
             --build-arg "FACTORY_API_URL=$FACTORY_API_URL" \
             --build-arg "FACTORY_SHARED_ORIGIN=$FACTORY_SHARED_ORIGIN" \
+            --build-arg "LIVE_SPLASH_URL=$LIVE_SPLASH_URL" \
+            --build-arg "WEATHER_URL=$WEATHER_URL" \
             --tag "$IMAGE" \
             .
           docker push "$IMAGE"
 
-      - name: Deploy ${{ inputs.service }}
+      - name: Deploy factory-home
         uses: google-github-actions/deploy-cloudrun@v3
         with:
-          service: ${{ inputs.service }}
+          service: factory-home
           image: ${{ env.IMAGE }}
           project_id: ${{ vars.GCP_PROJECT_ID }}
           region: ${{ vars.CLOUD_RUN_REGION }}

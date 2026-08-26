@@ -6,10 +6,8 @@ run "runtime_identity_and_secret_boundaries" {
   variables {
     project_id = "validation-project"
     service_images = {
-      api         = "example.invalid/api@sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
-      home        = "example.invalid/home@sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
-      live-splash = "example.invalid/live-splash@sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
-      weather     = "example.invalid/weather@sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+      api  = "example.invalid/api@sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+      home = "example.invalid/home@sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
     }
     supabase_url             = "https://example.supabase.co"
     supabase_publishable_key = "validation-only"
@@ -21,11 +19,8 @@ run "runtime_identity_and_secret_boundaries" {
   }
 
   assert {
-    condition = alltrue([
-      for service in ["home", "live-splash", "weather"] :
-      google_cloud_run_v2_service.factory[service].template[0].service_account == "factory-runtime@validation-project.iam.gserviceaccount.com"
-    ])
-    error_message = "Frontend services must use the unprivileged application runtime identity."
+    condition     = google_cloud_run_v2_service.factory["home"].template[0].service_account == "factory-runtime@validation-project.iam.gserviceaccount.com"
+    error_message = "The unified Home service must use the unprivileged application runtime identity."
   }
 
   assert {
@@ -49,5 +44,15 @@ run "runtime_identity_and_secret_boundaries" {
       for service in values(google_cloud_run_v2_service.factory) : service.deletion_protection
     ])
     error_message = "Every production Cloud Run service must enable deletion protection by default."
+  }
+
+  assert {
+    condition     = toset(keys(google_cloud_run_v2_service.factory)) == toset(["api", "home"])
+    error_message = "Production must contain only the API and unified Home Cloud Run services."
+  }
+
+  assert {
+    condition     = length(google_compute_url_map.https.path_matcher[0].path_rule) == 1
+    error_message = "Only the independent API may have a dedicated load-balancer path rule."
   }
 }

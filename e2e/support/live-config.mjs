@@ -218,12 +218,17 @@ export function parseLocalProxyApps(value) {
   const unexpectedNames = names.filter(
     (name) => !LOCAL_APP_NAMES.includes(name),
   );
+  const origins = parsed.flatMap((entry) =>
+    entry.value ? [entry.value.origin] : [],
+  );
+  const multipleOrigins = new Set(origins).size > 1;
 
   if (
     errors.length ||
     missingNames.length ||
     duplicateNames.length ||
-    unexpectedNames.length
+    unexpectedNames.length ||
+    multipleOrigins
   ) {
     const details = [
       ...errors,
@@ -239,6 +244,9 @@ export function parseLocalProxyApps(value) {
         ? [
             `unexpected local app entries: ${[...new Set(unexpectedNames)].join(", ")}`,
           ]
+        : []),
+      ...(multipleOrigins
+        ? ["all local applications must use one unified Factory origin"]
         : []),
     ];
     return skipped(details.join("; "));

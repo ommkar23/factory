@@ -27,7 +27,7 @@ test("requires a checked-in-free shared-origin identity-provider state file", ()
   });
 });
 
-test("requires all three local app origins and server-only bootstrap paths", () => {
+test("requires all three local routes and server-only bootstrap paths", () => {
   expect(parseLocalProxyApps("[]")).toEqual({
     ready: false,
     reason: expect.stringContaining("home"),
@@ -35,6 +35,49 @@ test("requires all three local app origins and server-only bootstrap paths", () 
 });
 
 test("accepts the local route contract without contacting a service", () => {
+  const result = parseLocalProxyApps(
+    JSON.stringify([
+      {
+        name: "home",
+        origin: "http://localhost:3001",
+        bootstrapPath: "/api/auth/dev/bootstrap",
+        protectedApiPath: "/app/weather/v1/locations?q=Portland",
+      },
+      {
+        name: "live-splash",
+        origin: "http://localhost:3001",
+        bootstrapPath: "/api/auth/dev/bootstrap",
+        protectedApiPath: "/app/weather/v1/locations?q=Portland",
+        publicPath: "/live-splash/api/health",
+        protectedPagePath: "/live-splash",
+        loginPath: "/live-splash/login",
+      },
+      {
+        name: "weather",
+        origin: "http://localhost:3001",
+        bootstrapPath: "/api/auth/dev/bootstrap",
+        protectedApiPath: "/app/weather/v1/locations?q=Portland",
+        publicPath: "/weather/api/health",
+        protectedPagePath: "/weather",
+        loginPath: "/weather/login",
+      },
+    ]),
+  );
+
+  expect(result).toEqual({
+    ready: true,
+    apps: expect.arrayContaining([
+      expect.objectContaining({
+        name: "home",
+        publicPath: "/api/health",
+        protectedPagePath: "/",
+        loginPath: "/login",
+      }),
+    ]),
+  });
+});
+
+test("rejects multiple local web origins", () => {
   const result = parseLocalProxyApps(
     JSON.stringify([
       {
@@ -57,17 +100,9 @@ test("accepts the local route contract without contacting a service", () => {
       },
     ]),
   );
-
   expect(result).toEqual({
-    ready: true,
-    apps: expect.arrayContaining([
-      expect.objectContaining({
-        name: "home",
-        publicPath: "/api/health",
-        protectedPagePath: "/",
-        loginPath: "/login",
-      }),
-    ]),
+    ready: false,
+    reason: expect.stringContaining("one unified Factory origin"),
   });
 });
 

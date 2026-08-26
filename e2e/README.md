@@ -14,22 +14,22 @@ The identity provider session must be able to complete the normal redirect from 
 
 ## Local-proxy prerequisites
 
-Start the migrated local applications and API with each application holding its own development auth secret server-side. Do not pass `X-Dev-Auth-Secret` to this command. Provide `FACTORY_E2E_LOCAL_PROXY_APPS` as a JSON array with exactly `home`, `live-splash`, and `weather` entries. Each entry needs:
+Start the unified Home container and API. The one Home container holds the development auth secret server-side; never pass `X-Dev-Auth-Secret` to this command. Provide `FACTORY_E2E_LOCAL_PROXY_APPS` as a JSON array describing the three route families on the same unified origin. Each entry needs:
 
 - `name`
-- `origin` (for example `http://localhost:3001`)
+- `origin` (the same unified Factory origin for every entry)
 - `bootstrapPath`: the app's same-origin server-only `/api/auth/dev/bootstrap` endpoint
 - `protectedApiPath`: a successful same-origin `/app/*` request
 
-Optional `publicPath`, `protectedPagePath`, and `loginPath` default to `/api/health`, `/`, and `/login`. The suite checks the public route, unauthenticated root-relative login redirect, bootstrap request (including absence of an `X-Dev-Auth-Secret` browser header), HttpOnly Lax Factory cookies, session, protected API request, and logout for every local app origin. It also observes browser fetch/XHR traffic for the full flow, rejects any cross-origin API request, and requires the configured protected `/app/*` request to be observed.
+Set app-prefixed `publicPath`, `protectedPagePath`, and `loginPath` for Weather and Live Splash; they default to `/api/health`, `/`, and `/login` for Home. The suite checks the public route, unauthenticated root-relative login redirect, bootstrap request (including absence of an `X-Dev-Auth-Secret` browser header), HttpOnly Lax Factory cookies, session, protected API request, and logout for every route family. It also observes browser fetch/XHR traffic for the full flow, rejects any cross-origin API request, and requires the configured protected `/app/*` request to be observed.
 
 Example non-secret shape:
 
 ```sh
 export FACTORY_E2E_LOCAL_PROXY_APPS='[
-  {"name":"home","origin":"http://localhost:3001","bootstrapPath":"/api/auth/dev/bootstrap","protectedApiPath":"/app/weather/v1/locations?q=Portland"},
-  {"name":"live-splash","origin":"http://localhost:3002","bootstrapPath":"/api/auth/dev/bootstrap","protectedApiPath":"/app/weather/v1/locations?q=Portland"},
-  {"name":"weather","origin":"http://localhost:3003","bootstrapPath":"/api/auth/dev/bootstrap","protectedApiPath":"/app/weather/v1/locations?q=Portland"}
+  {"name":"home","origin":"http://localhost:8080","bootstrapPath":"/api/auth/dev/bootstrap","protectedApiPath":"/app/weather/v1/locations?q=Portland"},
+  {"name":"live-splash","origin":"http://localhost:8080","bootstrapPath":"/api/auth/dev/bootstrap","protectedApiPath":"/app/weather/v1/locations?q=Portland","publicPath":"/live-splash/api/health","protectedPagePath":"/live-splash","loginPath":"/live-splash/login"},
+  {"name":"weather","origin":"http://localhost:8080","bootstrapPath":"/api/auth/dev/bootstrap","protectedApiPath":"/app/weather/v1/locations?q=Portland","publicPath":"/weather/api/health","protectedPagePath":"/weather","loginPath":"/weather/login"}
 ]'
 pnpm test:e2e -- --project=local-proxy
 ```

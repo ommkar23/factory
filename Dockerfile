@@ -1,5 +1,4 @@
 # syntax=docker/dockerfile:1.7
-# Build with --build-arg APP=home|weather|live-splash.
 FROM node:24-bookworm AS base
 
 ENV PNPM_HOME=/pnpm
@@ -18,54 +17,51 @@ CMD ["pnpm", "--version"]
 
 FROM base AS dependencies
 
-ARG APP
-
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml turbo.json ./
 COPY apps/home/package.json apps/home/package.json
 COPY apps/live-splash/package.json apps/live-splash/package.json
 COPY apps/weather/package.json apps/weather/package.json
 COPY packages/auth/package.json packages/auth/package.json
-COPY packages/contracts/package.json packages/contracts/package.json
 COPY packages/ui/package.json packages/ui/package.json
 
-RUN test -n "$APP" && \
-    test -f "apps/$APP/package.json" && \
-    pnpm --filter "@factory/$APP..." install --frozen-lockfile
+RUN pnpm --filter "@factory/home..." --filter "@factory/live-splash..." --filter "@factory/weather..." install --frozen-lockfile
 
 FROM dependencies AS builder
 
-ARG APP
-ARG FACTORY_SHARED_ORIGIN=false
+ARG FACTORY_SHARED_ORIGIN=true
 ARG FACTORY_API_URL
-
+ARG LIVE_SPLASH_URL
+ARG WEATHER_URL
 ENV FACTORY_SHARED_ORIGIN=$FACTORY_SHARED_ORIGIN
 ENV FACTORY_API_URL=$FACTORY_API_URL
+ENV LIVE_SPLASH_URL=$LIVE_SPLASH_URL
+ENV WEATHER_URL=$WEATHER_URL
 
 COPY . .
 
-RUN test -n "$APP" && \
-    test -f "apps/$APP/package.json" && \
-    pnpm --filter "@factory/$APP" build && \
-    mkdir -p "/runtime-public/apps/$APP" && \
-    if [ -d "apps/$APP/public" ]; then cp -a "apps/$APP/public/." "/runtime-public/apps/$APP/"; fi
+RUN pnpm --filter @factory/home build && \
+    pnpm --filter @factory/live-splash build && \
+    pnpm --filter @factory/weather build && \
+    for app in home live-splash weather; do \
+      mkdir -p "/runtimes/$app/apps/$app/.next" "/runtimes/$app/apps/$app/public"; \
+      cp -a "apps/$app/.next/standalone/." "/runtimes/$app/"; \
+      cp -a "apps/$app/.next/static" "/runtimes/$app/apps/$app/.next/static"; \
+      if [ -d "apps/$app/public" ]; then cp -a "apps/$app/public/." "/runtimes/$app/apps/$app/public/"; fi; \
+    done
 
 FROM node:24-bookworm-slim AS runner
 
-ARG APP
 ENV NODE_ENV=production
 ENV HOSTNAME=0.0.0.0
 ENV PORT=8080
 ENV NEXT_TELEMETRY_DISABLED=1
-ENV APP_NAME=$APP
 
 WORKDIR /app
-RUN groupadd --system --gid 1001 nextjs && \
-    useradd --system --uid 1001 --gid nextjs nextjs
+RUN groupadd --system --gid 1001 nextjs && useradd --system --uid 1001 --gid nextjs nextjs
 
-COPY --chown=nextjs:nextjs --from=builder /app/apps/${APP}/.next/standalone ./
-COPY --chown=nextjs:nextjs --from=builder /app/apps/${APP}/.next/static ./apps/${APP}/.next/static
-COPY --chown=nextjs:nextjs --from=builder /runtime-public/ ./
+COPY --chown=nextjs:nextjs --from=builder /runtimes /runtimes
+COPY --chown=nextjs:nextjs scripts/unified-web.mjs /app/scripts/unified-web.mjs
 
 USER nextjs
 EXPOSE 8080
-CMD ["sh", "-c", "node apps/$APP_NAME/server.js"]
+CMD ["node", "/app/scripts/unified-web.mjs"]

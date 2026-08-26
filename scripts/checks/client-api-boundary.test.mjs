@@ -212,7 +212,6 @@ test("discovers every app and browser-facing shared runtime source", () => {
   }
   for (const sharedSource of [
     "packages/auth/src/client.js",
-    "packages/contracts/src/index.js",
     "packages/ui/src/index.js",
   ]) {
     assert.ok(paths.has(sharedSource), `${sharedSource} must be covered`);

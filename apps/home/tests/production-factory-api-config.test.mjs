@@ -14,14 +14,12 @@ async function readRepositoryFile(file) {
   return readFile(path.join(repoRoot, file), "utf8");
 }
 
-test("production client images receive the reachable server-only Factory API origin", async () => {
+test("the unified production image receives the reachable server-only Factory API origin", async () => {
   const apps = ["home", "live-splash", "weather"];
-  const [deployment, dockerfile, ...workflows] = await Promise.all([
+  const [deployment, dockerfile, workflow] = await Promise.all([
     readRepositoryFile(".github/workflows/deploy-app-cloud-run.yml"),
     readRepositoryFile("Dockerfile"),
-    ...apps.map((app) =>
-      readRepositoryFile(`.github/workflows/deploy-${app}-cloud-run.yml`),
-    ),
+    readRepositoryFile(".github/workflows/deploy-home-cloud-run.yml"),
   ]);
 
   assert.ok(deployment.includes(productionApiOrigin));
@@ -30,32 +28,24 @@ test("production client images receive the reachable server-only Factory API ori
   assert.match(
     deployment,
     /--build-arg "FACTORY_API_URL=\$FACTORY_API_URL"/,
-    "production image builds must configure Next rewrites with the API origin",
+    "the production image must configure Next rewrites with the API origin",
   );
   assert.match(
     deployment,
     /FACTORY_API_URL=\$\{\{ env\.FACTORY_API_URL \}\}/,
-    "applications must receive FACTORY_API_URL at runtime",
+    "the unified runtime must receive FACTORY_API_URL",
   );
 
-  for (const [index, app] of apps.entries()) {
-    const workflow = workflows[index];
-    assert.match(workflow, new RegExp(`- "apps/${app}/app/\\*\\*"`));
-    assert.doesNotMatch(workflow, new RegExp(`apps/${app}/(?:tests|stories)/`));
-    assert.doesNotMatch(workflow, new RegExp(`apps/${app}/\\*\\*`));
-    assert.match(workflow, /workflow_dispatch:/);
-    assert.match(
-      workflow,
-      /uses: \.\/\.github\/workflows\/deploy-app-cloud-run\.yml/,
-    );
-    assert.match(workflow, new RegExp(`app: ${app}`));
-    assert.match(workflow, new RegExp(`service: factory-${app}`));
-
-    for (const otherApp of apps.filter((candidate) => candidate !== app)) {
-      assert.doesNotMatch(workflow, new RegExp(`apps/${otherApp}/`));
-    }
+  for (const app of apps) {
+    assert.match(workflow, new RegExp(`- "apps/${app}/\\*\\*"`));
   }
-
+  assert.match(workflow, /workflow_dispatch:/);
+  assert.match(
+    workflow,
+    /uses: \.\/\.github\/workflows\/deploy-app-cloud-run\.yml/,
+  );
+  assert.match(deployment, /service: factory-home/);
+  assert.doesNotMatch(deployment, /factory-(weather|live-splash)/);
   assert.doesNotMatch(deployment, /NEXT_PUBLIC_FACTORY_API_URL/);
   assert.doesNotMatch(dockerfile, /NEXT_PUBLIC_FACTORY_API_URL/);
 });

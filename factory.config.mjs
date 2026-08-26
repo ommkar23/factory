@@ -21,7 +21,6 @@ export const clientBoundary = Object.freeze({
   allowedAppDependencies: ["next", "react", "react-dom"],
   allowedPackageDependencies: {
     "packages/auth/package.json": ["@factory/ui", "next"],
-    "packages/contracts/package.json": [],
     "packages/ui/package.json": [
       "@base-ui/react",
       "class-variance-authority",

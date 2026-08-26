@@ -1,6 +1,6 @@
 # Factory API
 
-The shared FastAPI service is Factory’s server-side API boundary. It owns all external-provider adapters and SDKs, provider credentials, response normalization, upstream timeouts, and safe error mapping. Browsers never call Supabase data services or other provider APIs, and they never receive provider configuration.
+The shared FastAPI service is Factory’s server-side API boundary. It owns all external-provider adapters and SDKs, provider credentials, response normalization, upstream timeouts, and safe error mapping.
 
 Authentication routes: `GET /auth/login`, `GET /auth/callback`, `GET /auth/session`, `POST /auth/logout`, `POST /auth/native/challenge`, `POST /auth/native/exchange`, and `POST /auth/token/refresh`. Browser OAuth uses only encrypted short-lived PKCE/state records bound to `Factory-OAuth-Transaction`. The callback sets HttpOnly Secure SameSite=Lax `Factory-Access-Token` and `Factory-Refresh-Token` cookies; no Factory session or token record is persisted.
 

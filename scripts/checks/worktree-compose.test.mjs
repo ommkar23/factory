@@ -53,6 +53,13 @@ test("Compose resources and random host bindings are isolated by project", () =>
       /^factory-worktree-b-/,
     );
   }
+  assert.ok(first.services.home);
+  assert.equal(first.services.weather, undefined);
+  assert.equal(first.services["live-splash"], undefined);
+  assert.match(
+    first.services.home.command.join(" "),
+    /scripts\/unified-web\.mjs/,
+  );
   for (const [service, target] of [
     ["gateway", 8080],
     ["storybook", 6006],

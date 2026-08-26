@@ -1,79 +1,62 @@
 # Factory
 
-Multi-app JavaScript and Next.js monorepo for building products while extracting reusable UI, contracts, authentication, and tooling.
+Factory is a multi-application product platform built as a pnpm/Turborepo monorepo. It combines Next.js applications and reusable JavaScript packages with a FastAPI service for authentication, application APIs, and external-provider integrations.
 
-## Repository model
+## Technology stack
+
+### Runtimes and languages
+
+- **JavaScript** — application and shared-package language.
+- **Node.js 24+** — JavaScript runtime.
+- **pnpm 11+** — package manager.
+- **Python 3.12** (`>=3.12,<3.13`) — API runtime.
+
+### Application platform
+
+- **Next.js 16.1.1** — web application framework.
+- **React 19.2.3** — user-interface library.
+- **FastAPI 0.141.1** — backend API framework.
+- **Tailwind CSS 4** (`^4.1.18`) — styling framework.
+- **Supabase CLI 2.114.0** — local Supabase tooling.
+- **Terraform 1.9+** — Google Cloud infrastructure definition.
+
+### Build, quality, and testing
+
+- **Turborepo 2.10.9** — monorepo task orchestration.
+- **Storybook 10.5.8** — component development and review.
+- **Vitest 3.2.4** — JavaScript unit and component tests.
+- **Playwright 1.58.2** — browser contract and end-to-end tests.
+- **ESLint 9.39.1** — JavaScript linting.
+- **Prettier 3.9.6** — source formatting.
+
+## Applications
+
+- **Factory Home** — launcher for the Factory applications.
+- **Live Splash** — Factory's live splash experience.
+- **Weather** — location search and weather experience.
+- **Storybook** — review surface for reusable UI components.
+
+## Repository structure
 
 - `apps/<app-name>` — independently owned Next.js applications.
-- `packages/auth` — shared same-origin authentication helpers and UI.
+- `packages/auth` — shared helpers and UI for authentication through each application's `/auth/*` routes.
 - `packages/ui` — reusable, accessible UI primitives and composed components.
-- `packages/contracts` — shared JavaScript API contracts.
-- `services/api` — the FastAPI boundary for authentication and external providers.
+- `services/api` — FastAPI boundary for authentication, application APIs, and external providers.
 - `supabase` — pinned self-hosted Supabase development configuration.
 - `infra/gcp` — production Google Cloud infrastructure.
-- `scripts/` — repository-wide development automation.
-- `.github/` — ownership policy and GitHub Actions.
+- `e2e` — Playwright contract and end-to-end test suites.
+- `scripts` — repository-wide development automation.
+- `.github` — ownership policy and GitHub Actions.
 
-## Local integration workflow
+## Architecture
 
-Create one focused local branch and isolated worktree for each coherent change. Review and verify the resulting commit locally, merge it into synchronized local `main`, and remove the worktree after stopping its development resources. Push only the resulting `main` branch.
+Browser-facing applications access backend capabilities through same-origin Factory `/auth/*` and `/app/*` routes. The FastAPI service owns Supabase OAuth, session lifecycle, provider credentials, upstream integrations, response normalization, and safe error mapping. Browsers receive authentication state only through HttpOnly Factory cookies.
 
-Do not create remote GitHub issues, pull requests, or feature branches unless explicitly requested. UI changes still require Storybook or equivalent visual evidence and human approval before local integration.
+Applications keep independent source scaffolds but ship in one Home web image and container. Home is served at `/`, Live Splash at `/live-splash`, and Weather at `/weather`; the API remains independently deployed for `/auth/*` and `/app/*`.
 
-## Getting started
+## Documentation
 
-```bash
-corepack enable
-pnpm install
-pnpm check
-```
-
-## Provider-agnostic development VM bootstrap
-
-Use any Linux VM provider. Recommended baseline: 4 vCPU, 16 GB RAM, 80 GB persistent disk, a non-root SSH user, and Docker Engine with the Compose plugin. Restrict inbound access to SSH; Factory and Supabase bind only to VM loopback.
-
-Install Docker, Git, curl, Python 3.12, Node.js 24, Portless, and agent-browser using supported installers. Install the Node.js tools with `npm install -g portless agent-browser`, then run `agent-browser install --with-deps`. If the VM requires it, configure agent-browser to launch Chrome with `--no-sandbox`.
-
-Clone Factory, then use the worktree-aware lifecycle command:
-
-```bash
-cd factory
-./scripts/worktree-dev up
-./scripts/worktree-dev status
-./scripts/worktree-dev clean
-```
-
-The command derives an isolated Compose project from the canonical worktree path, uses Docker-assigned loopback ports, and registers stable worktree-prefixed `.localhost` URLs with Portless. It records owned aliases and resources in `.hermes/runtime/`, creates local secrets only when absent, and removes its aliases, containers, networks, volumes, generated secrets, and ledger during idempotent cleanup. `./scripts/setup-factory-dev.sh` remains a compatibility alias for `worktree-dev up`.
-
-For remote VMs, start Portless without TLS on one unprivileged port before bringing up Factory:
-
-```bash
-portless proxy start --no-tls -p 8080
-./scripts/worktree-dev up
-```
-
-Tunnel that single proxy entry point from the development machine:
-
-```bash
-ssh -N -L 8080:127.0.0.1:8080 <user>@<vm-host>
-```
-
-Use the URLs printed by `worktree-dev up`; linked worktrees automatically receive distinct hostnames.
-
-## Server-only API authentication
-
-Factory API owns Supabase Google OAuth and persists only encrypted short-lived PKCE/state records. Browsers use same-origin `/auth/*` and `/app/*` paths, and receive only HttpOnly `Factory-Access-Token` and `Factory-Refresh-Token` cookies. The API owns login, callback, session refresh, and logout; Next.js apps do not own callback routes, client token handling, or Supabase clients. For local development, a browser calls its app's `/api/auth/dev/bootstrap`, which is development-only and relays cookies after the app server authenticates to the API with a server-held secret. See [services/api/README.md](services/api/README.md) and [docs/api.md](docs/api.md) for configuration and contract details.
-
-## Direct-process application development
-
-Outside Compose, Factory Home runs at `http://localhost:3002`. Start the three applications in separate terminals:
-
-```bash
-pnpm --filter @factory/live-splash dev
-pnpm --filter @factory/weather dev
-pnpm --filter @factory/home dev
-```
-
-Home links to Live Splash at `http://localhost:3000` and Weather at `http://localhost:3001` by default. For independently hosted deployments, configure server-side absolute HTTPS URLs with `LIVE_SPLASH_URL` and `WEATHER_URL`.
-
-For the shared origin `https://factory.markagen.ai`, build Weather with `FACTORY_SHARED_ORIGIN=true` (serves `/weather`) and Live Splash with `FACTORY_SHARED_ORIGIN=true` (serves `/live-splash`), then route those path prefixes to their corresponding applications without stripping the prefix.
+- [Development environment and application workflows](docs/development.md)
+- [API architecture and contracts](docs/api.md)
+- [API service](services/api/README.md)
+- [Factory architecture](docs/architecture.md)
