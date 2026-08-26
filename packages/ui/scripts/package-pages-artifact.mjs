@@ -12,18 +12,6 @@ const canonicalStoryTargets = [
     redirectPath: "home",
     title: "Factory Home",
   },
-  {
-    appPath: "apps/live-splash/stories/live-splash-home.stories.jsx",
-    exportName: "Default",
-    redirectPath: "live-splash",
-    title: "Live Splash",
-  },
-  {
-    appPath: "apps/weather/stories/weather-screen.stories.jsx",
-    exportName: "Composed",
-    redirectPath: "weather",
-    title: "Weather",
-  },
 ];
 
 export async function packagePagesArtifact({

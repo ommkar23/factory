@@ -12,8 +12,6 @@ const config = {
     "../src/**/*.stories.@(js|jsx)",
     "../../auth/src/**/*.stories.@(js|jsx)",
     "../../../apps/home/stories/**/*.stories.@(js|jsx)",
-    "../../../apps/live-splash/stories/**/*.stories.@(js|jsx)",
-    "../../../apps/weather/stories/**/*.stories.@(js|jsx)",
   ],
   async viteFinal(config) {
     return {

@@ -2,7 +2,7 @@ import React from "react";
 import "@factory/ui/globals.css";
 export const metadata = {
   title: "Live Splash",
-  description: "A local-first Live Splash development baseline",
+  description: "Factory Live Splash authenticated shell",
 };
 export default function RootLayout({ children }) {
   return (

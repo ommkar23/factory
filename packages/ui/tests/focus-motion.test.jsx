@@ -19,12 +19,6 @@ describe("shared focus and reduced-motion contracts", () => {
     expect(styles).not.toMatch(
       /--factory-focus-ring:[\s\S]*?color-mix\([\s\S]*?transparent/,
     );
-    expect(
-      readFileSync(
-        resolve(process.cwd(), "../../apps/weather/app/globals.css"),
-        "utf8",
-      ),
-    ).toMatch(/--factory-focus-ring:\s*#087ea4;/);
     render(
       <>
         <Button>Save</Button>

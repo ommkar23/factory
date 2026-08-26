@@ -73,6 +73,6 @@ test("API and Storybook deployments use relevant paths and remain manual", async
 
   assert.match(storybookWorkflow, /branches: \[main\]/);
   assert.match(storybookWorkflow, /- "packages\/ui\/src\/\*\*"/);
-  assert.match(storybookWorkflow, /- "apps\/weather\/stories\/\*\*"/);
+  assert.match(storybookWorkflow, /- "apps\/home\/stories\/\*\*"/);
   assert.match(storybookWorkflow, /workflow_dispatch:/);
 });

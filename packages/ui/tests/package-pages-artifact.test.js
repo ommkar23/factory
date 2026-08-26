@@ -53,20 +53,6 @@ describe("packagePagesArtifact", () => {
             importPath: "../../../apps/home/stories/app-directory.stories.jsx",
             type: "story",
           },
-          "live-splash-home--default": {
-            exportName: "Default",
-            id: "live-splash-home--default",
-            importPath:
-              "../../../apps/live-splash/stories/live-splash-home.stories.jsx",
-            type: "story",
-          },
-          "weather-screen--composed": {
-            exportName: "Composed",
-            id: "weather-screen--composed",
-            importPath:
-              "../../../apps/weather/stories/weather-screen.stories.jsx",
-            type: "story",
-          },
         },
       }),
     );
@@ -77,11 +63,7 @@ describe("packagePagesArtifact", () => {
     await expect(
       readFile(join(artifactDirectory, "storybook", "index.html"), "utf8"),
     ).resolves.toContain("Storybook");
-    for (const [entry, storyId] of [
-      ["home", "home-app-directory--default"],
-      ["live-splash", "live-splash-home--default"],
-      ["weather", "weather-screen--composed"],
-    ]) {
+    for (const [entry, storyId] of [["home", "home-app-directory--default"]]) {
       await expect(
         readFile(
           join(artifactDirectory, "storybook", entry, "index.html"),
