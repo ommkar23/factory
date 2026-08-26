@@ -1,5 +1,13 @@
 # @factory/ui
 
-Shared accessible UI primitives and composed components used by multiple Factory applications.
+Factory-themed shared UI built with shadcn/ui.
 
-Keep app-specific components in their application. Promote a component here after at least two apps need it, unless an approved ADR documents why earlier extraction is justified. UI changes require Storybook evidence and recorded human approval before merge.
+## Ownership boundaries
+
+- Keep application-specific shadcn/ui configuration, generated primitives, and components in the owning `apps/*` directory.
+- Promote a Factory-themed composition to this package only after at least two applications need it, unless an approved architecture decision justifies earlier extraction.
+- Build shared compositions strictly from the shadcn/ui primitives exported by this package. Do not implement ground-up controls when an appropriate shadcn/ui primitive exists.
+- Keep domain behavior outside this package. For example, `packages/auth` owns authentication requests and state while `packages/ui` owns common login, profile, logout, and application-header presentation.
+- Do not add speculative shared components, such as a search bar, before an active application needs them.
+
+UI changes require component tests, Storybook coverage, Storybook evidence, and recorded human approval before merge.

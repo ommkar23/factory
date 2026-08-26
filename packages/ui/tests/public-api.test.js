@@ -13,11 +13,14 @@ describe("public API", () => {
     expect(barrel).toContain('from "#components/badge"');
     expect(barrel).toContain('from "#components/button"');
     expect(barrel).toContain('from "#components/card"');
+    expect(barrel).toContain('from "#components/dropdown-menu"');
     expect(barrel).toContain('from "#components/input"');
     expect(barrel).toContain('from "#components/label"');
     expect(barrel).toContain('from "#components/skeleton"');
     expect(barrel).toContain('from "#components/spinner"');
+    expect(barrel).toContain('from "#factory-auth"');
     expect(barrel).toContain('from "#status-message"');
+    expect(manifest.imports["#factory-auth"]).toBe("./src/factory-auth.jsx");
     expect(manifest.imports["#status-message"]).toBe(
       "./src/status-message.jsx",
     );
@@ -28,6 +31,10 @@ describe("public API", () => {
       Badge: expect.any(Function),
       Button: expect.any(Function),
       Card: expect.any(Function),
+      DropdownMenu: expect.any(Function),
+      FactoryAppHeader: expect.any(Function),
+      FactoryLogin: expect.any(Function),
+      FactoryProfileMenu: expect.any(Function),
       Input: expect.any(Function),
       Label: expect.any(Function),
       Skeleton: expect.any(Function),
