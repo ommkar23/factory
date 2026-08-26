@@ -15,13 +15,13 @@
 6. [Human] Plan Review
 7. [State] Plan approved
 8. Use delegate tool to carry out each task.
-9. Suppose a plan has 4 tasks.
-10. delegate(task_1)
-11. delegate(task_2)
-12. ... and so on
-13. If plan has UI then handoff for Human Review - UI Review
-14. [Human] App review - dev deployment done for human to test
-15. [Human] Code review - code in new worktree
+9. For a plan with four tasks, delegate each task sequentially:
+   1. `delegate(task_1)`
+   2. `delegate(task_2)`
+   3. Continue through the remaining tasks.
+10. If the plan includes UI, hand off for Human Review - UI Review.
+11. [Human] App review - dev deployment done for human to test
+12. [Human] Code review - code in new worktree
 
 ## Delivery
 
