@@ -8,7 +8,7 @@ import {
   waitFor,
 } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { LoginScreen, ProfileMenu } from "../src/auth-controls";
+import { AppHeader, LoginScreen, ProfileMenu } from "../src/auth-controls";
 const originalNodeEnv = process.env.NODE_ENV;
 afterEach(() => {
   cleanup();
@@ -150,6 +150,19 @@ describe("authentication UI", () => {
     expect(screen.getByRole("menuitem", { name: "Sign out" })).toBeTruthy();
     expect(screen.getByText("ada@example.com")).toBeTruthy();
   });
+  it("closes the account menu with Escape and restores trigger focus", async () => {
+    render(<ProfileMenu loginPath="/login" user={user} />);
+    const trigger = screen.getByRole("button", { name: "Open account menu" });
+
+    fireEvent.click(trigger);
+    expect(screen.getByRole("menuitem", { name: "Sign out" })).toBeTruthy();
+    fireEvent.keyDown(document, { key: "Escape" });
+
+    await waitFor(() => {
+      expect(screen.queryByRole("menuitem", { name: "Sign out" })).toBeNull();
+      expect(document.activeElement).toBe(trigger);
+    });
+  });
   it("redirects to the app logged-out page after a successful logout", async () => {
     const replace = vi.fn();
     const originalWindow = window;
@@ -177,5 +190,34 @@ describe("authentication UI", () => {
     await waitFor(() => {
       expect(replace).toHaveBeenCalledWith("/weather/logged-out");
     });
+  });
+  it("keeps the account menu available with an accessible logout error", async () => {
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue({ ok: false }));
+
+    render(<ProfileMenu loggedOutPath="/logged-out" user={user} />);
+    fireEvent.click(screen.getByRole("button", { name: "Open account menu" }));
+    fireEvent.click(screen.getByRole("menuitem", { name: "Sign out" }));
+
+    await waitFor(() => {
+      expect(screen.getByRole("alert").textContent).toContain(
+        "We couldn’t sign you out. Try again.",
+      );
+    });
+  });
+  it("retains the responsive shared header container contract", () => {
+    const { container } = render(
+      <AppHeader
+        appName="Weather"
+        containerClassName="max-w-5xl"
+        loggedOutPath="/logged-out"
+        loginPath="/login"
+        user={user}
+      />,
+    );
+
+    const headerContainer = container.querySelector("header > div");
+    expect(headerContainer.className).toContain("px-4");
+    expect(headerContainer.className).toContain("sm:px-6");
+    expect(headerContainer.className).toContain("max-w-5xl");
   });
 });

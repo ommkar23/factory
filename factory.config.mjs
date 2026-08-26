@@ -20,7 +20,7 @@ export const clientBoundary = Object.freeze({
   allowedAppApiRoutes: ["api/auth/dev/bootstrap", "api/health"],
   allowedAppDependencies: ["next", "react", "react-dom"],
   allowedPackageDependencies: {
-    "packages/auth/package.json": ["next"],
+    "packages/auth/package.json": ["@factory/ui", "next"],
     "packages/contracts/package.json": [],
     "packages/ui/package.json": [
       "@base-ui/react",

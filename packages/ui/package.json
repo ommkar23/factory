@@ -14,6 +14,7 @@
     "#components/*": "./src/components/*.jsx",
     "#hooks/*": "./src/hooks/*.js",
     "#lib/*": "./src/lib/*.js",
+    "#factory-auth": "./src/factory-auth.jsx",
     "#status-message": "./src/status-message.jsx"
   },
   "scripts": {

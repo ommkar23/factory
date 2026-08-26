@@ -15,8 +15,21 @@ export {
   CardHeader,
   CardTitle,
 } from "#components/card";
+export {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "#components/dropdown-menu";
 export { Input } from "#components/input";
 export { Label } from "#components/label";
 export { Skeleton } from "#components/skeleton";
 export { Spinner } from "#components/spinner";
 export { StatusMessage } from "#status-message";
+export {
+  FactoryAppHeader,
+  FactoryLogin,
+  FactoryProfileMenu,
+} from "#factory-auth";

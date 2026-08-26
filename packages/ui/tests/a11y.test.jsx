@@ -6,6 +6,11 @@ import { Alert, AlertDescription, AlertTitle } from "../src/components/alert";
 import { Button } from "../src/components/button";
 import { Input } from "../src/components/input";
 import { Label } from "../src/components/label";
+import {
+  FactoryAppHeader,
+  FactoryLogin,
+  FactoryProfileMenu,
+} from "../src/factory-auth";
 import { StatusMessage } from "../src/status-message";
 describe("covered primitive accessibility", () => {
   it("has no critical axe violations in the documented form and feedback composition", async () => {
@@ -21,6 +26,28 @@ describe("covered primitive accessibility", () => {
           <AlertDescription>Try again shortly.</AlertDescription>
         </Alert>
       </main>,
+    );
+    const result = await axe.run(container, {
+      rules: { "color-contrast": { enabled: false } },
+    });
+    expect(
+      result.violations.filter(({ impact }) => impact === "critical"),
+    ).toEqual([]);
+  });
+
+  it("has no critical axe violations in shared authentication compositions", async () => {
+    const { container } = render(
+      <>
+        <FactoryAppHeader appName="Weather">
+          <FactoryProfileMenu
+            accountLabel="Ada Lovelace"
+            email="ada@example.com"
+            initials="AL"
+            onSignOut={() => {}}
+          />
+        </FactoryAppHeader>
+        <FactoryLogin appName="Weather" onSignIn={() => {}} />
+      </>,
     );
     const result = await axe.run(container, {
       rules: { "color-contrast": { enabled: false } },

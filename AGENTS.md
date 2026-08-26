@@ -37,6 +37,14 @@ Suppose a plan has 4 tasks.
 - Keep external-provider adapters and SDKs, provider credentials, response normalization, upstream timeouts, and safe error mapping in `services/api`.
 - App-local `/api/health` and server-only `/api/auth/dev/bootstrap` are explicit exceptions. External navigation and attribution links are links, not API calls.
 
+## UI development
+
+- Keep application-specific shadcn/ui configuration and components in the owning `apps/*` directory.
+- Keep only genuinely common Factory-themed compositions in `packages/ui`; promote a composition after at least two applications need it unless an approved architecture decision says otherwise.
+- Build shared compositions strictly from the shadcn/ui primitives exported by `packages/ui`; do not create ground-up controls when an appropriate shadcn/ui primitive exists.
+- Keep behavior in its domain package or application and presentation in `packages/ui`; for example, authentication requests and state belong in `packages/auth` while common login and account presentation belongs in `packages/ui`.
+- Do not add speculative shared components before an active application needs them.
+
 ## Delivery
 
 - Work in local branches or worktrees; review and merge locally.

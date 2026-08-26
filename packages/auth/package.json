@@ -28,6 +28,7 @@
     "vitest": "3.2.4"
   },
   "dependencies": {
+    "@factory/ui": "workspace:*",
     "next": "16.1.1"
   }
 }
