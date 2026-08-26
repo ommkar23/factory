@@ -16,10 +16,9 @@ async function readRepositoryFile(file) {
 
 test("the unified production image receives the reachable server-only Factory API origin", async () => {
   const apps = ["home", "live-splash", "weather"];
-  const [deployment, dockerfile, workflow] = await Promise.all([
-    readRepositoryFile(".github/workflows/deploy-app-cloud-run.yml"),
-    readRepositoryFile("Dockerfile"),
+  const [deployment, dockerfile] = await Promise.all([
     readRepositoryFile(".github/workflows/deploy-home-cloud-run.yml"),
+    readRepositoryFile("Dockerfile"),
   ]);
 
   assert.ok(deployment.includes(productionApiOrigin));
@@ -37,13 +36,10 @@ test("the unified production image receives the reachable server-only Factory AP
   );
 
   for (const app of apps) {
-    assert.match(workflow, new RegExp(`- "apps/${app}/\\*\\*"`));
+    assert.match(deployment, new RegExp(`- "apps/${app}/\\*\\*"`));
   }
-  assert.match(workflow, /workflow_dispatch:/);
-  assert.match(
-    workflow,
-    /uses: \.\/\.github\/workflows\/deploy-app-cloud-run\.yml/,
-  );
+  assert.match(deployment, /workflow_dispatch:/);
+  assert.match(deployment, /runs-on: ubuntu-latest/);
   assert.match(deployment, /service: factory-home/);
   assert.doesNotMatch(deployment, /factory-(weather|live-splash)/);
   assert.doesNotMatch(deployment, /NEXT_PUBLIC_FACTORY_API_URL/);

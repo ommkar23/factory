@@ -27,7 +27,6 @@ test("the production image builds and copies all three standalone runtimes", asy
 
 test("all web changes trigger only the unified Home deployment", async () => {
   const workflow = await text(".github/workflows/deploy-home-cloud-run.yml");
-  const reusable = await text(".github/workflows/deploy-app-cloud-run.yml");
 
   for (const watched of [
     "apps/home/**",
@@ -40,8 +39,13 @@ test("all web changes trigger only the unified Home deployment", async () => {
   ]) {
     assert.ok(workflow.includes(`- "${watched}"`), watched);
   }
-  assert.match(reusable, /service: factory-home/);
-  assert.doesNotMatch(reusable, /factory-(weather|live-splash)/);
+  assert.match(workflow, /runs-on: ubuntu-latest/);
+  assert.match(workflow, /docker build/);
+  assert.match(workflow, /service: factory-home/);
+  assert.doesNotMatch(workflow, /factory-(weather|live-splash)/);
+  await assert.rejects(
+    access(path.join(root, ".github/workflows/deploy-app-cloud-run.yml")),
+  );
   await assert.rejects(
     access(path.join(root, ".github/workflows/deploy-weather-cloud-run.yml")),
   );
