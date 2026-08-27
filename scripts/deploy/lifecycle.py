@@ -88,6 +88,7 @@ class AppLifecycle:
         try:
             self.compose.run("config", env=environment, stdout=subprocess.DEVNULL)
             self.compose.run("up", "-d", "--build", env=environment)
+            self.compose.run("up", "-d", "--no-deps", "--force-recreate", "gateway", env=environment)
             port = self.published_port()
             state = self.save_initial_state(port)
             state = Routes(self.identity.root, self.runner, self.state_path).register(state, self.tailscale)

@@ -36,7 +36,7 @@ class DeployLifecycleTests(unittest.TestCase):
                 lifecycle.up(); lifecycle.up()
             flattened = [part for command in runner.commands for part in command]
             self.assertNotIn("down", flattened)
-            self.assertEqual(sum("up" in command for command in runner.commands), 2)
+            self.assertEqual(sum("up" in command for command in runner.commands), 4)
 
     def test_targeted_down_is_app_scoped(self):
         with tempfile.TemporaryDirectory() as directory:
