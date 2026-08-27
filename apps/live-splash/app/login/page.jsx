@@ -17,6 +17,7 @@ export default async function LoginPage({ searchParams }) {
     <LoginScreen
       appName="Live Splash"
       authError={authError}
+      autoBootstrap={process.env.FACTORY_DEV_AUTH_BOOTSTRAP === "true"}
       returnTo={returnTo}
     />
   );

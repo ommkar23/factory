@@ -6,7 +6,10 @@ function getSetCookies(response) {
 }
 
 export async function POST() {
-  if (process.env.NODE_ENV !== "development") {
+  if (
+    process.env.NODE_ENV !== "development" &&
+    process.env.FACTORY_DEV_AUTH_BOOTSTRAP !== "true"
+  ) {
     return new NextResponse(null, { status: 404 });
   }
 

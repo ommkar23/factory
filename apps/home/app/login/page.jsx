@@ -14,6 +14,11 @@ export default async function LoginPage({ searchParams }) {
     redirect(getAuthPath("", returnTo));
   }
   return (
-    <LoginScreen appName="Factory" authError={authError} returnTo={returnTo} />
+    <LoginScreen
+      appName="Factory"
+      authError={authError}
+      autoBootstrap={process.env.FACTORY_DEV_AUTH_BOOTSTRAP === "true"}
+      returnTo={returnTo}
+    />
   );
 }

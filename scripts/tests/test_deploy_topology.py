@@ -11,6 +11,7 @@ class DeployTopologyTests(unittest.TestCase):
         self.assertIn("../../supabase/docker-compose.yml", compose)
         self.assertIn("target: ${DEPLOY_WEB_TARGET", compose)
         self.assertIn("api-sessions:/data/factory-api", compose)
+        self.assertIn('FACTORY_DEV_AUTH_BOOTSTRAP: "true"', compose)
         self.assertNotRegex(compose, re.compile(r"^name:", re.MULTILINE))
         self.assertNotIn("container_name:", compose)
 
