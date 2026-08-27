@@ -33,11 +33,6 @@ class AppLifecycle:
     def public_url(self) -> str:
         return f"http://{self.identity.alias}.localhost"
 
-    @property
-    def app_url(self) -> str:
-        suffix = "" if self.identity.app == "home" else f"/{self.identity.app}"
-        return f"{self.public_url}{suffix}"
-
     def environment(self) -> dict[str, str]:
         environment, _ = ensure_environment(self.identity, self.public_url)
         return environment
@@ -56,7 +51,7 @@ class AppLifecycle:
         return mapping.rsplit(":", 1)[-1]
 
     def save_initial_state(self, port: str = "") -> DeploymentState:
-        state = DeploymentState(self.identity.app, self.identity.worktree_id, self.identity.project, self.identity.alias, self.app_url, port)
+        state = DeploymentState(self.identity.app, self.identity.worktree_id, self.identity.project, self.identity.alias, self.public_url, port)
         state.save(self.state_path)
         return state
 
@@ -84,14 +79,20 @@ class AppLifecycle:
     def up(self) -> DeploymentState:
         self.require_commands()
         environment = self.environment()
-        self.compose.run("config", env=environment, stdout=subprocess.DEVNULL)
-        self.compose.run("up", "-d", "--build", env=environment)
-        port = self.published_port()
-        state = self.save_initial_state(port)
-        state = Routes(self.identity.root, self.runner, self.state_path).register(state, self.tailscale)
-        self.provision_auth(environment)
-        self.wait_ready(port)
-        return state
+        completed = False
+        try:
+            self.compose.run("config", env=environment, stdout=subprocess.DEVNULL)
+            self.compose.run("up", "-d", "--build", env=environment)
+            port = self.published_port()
+            state = self.save_initial_state(port)
+            state = Routes(self.identity.root, self.runner, self.state_path).register(state, self.tailscale)
+            self.provision_auth(environment)
+            self.wait_ready(port)
+            completed = True
+            return state
+        finally:
+            if not completed:
+                self.down()
 
     def down(self) -> None:
         environment = self.environment()

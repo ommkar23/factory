@@ -10,7 +10,7 @@ services:
       target: ${DEPLOY_WEB_TARGET:?DEPLOY_WEB_TARGET required}
       args:
         FACTORY_SHARED_ORIGIN: ${DEPLOY_SHARED_ORIGIN:?DEPLOY_SHARED_ORIGIN required}
-        FACTORY_API_URL: ${DEPLOY_PUBLIC_URL:?DEPLOY_PUBLIC_URL required}
+        FACTORY_API_URL: http://api:8000
         LIVE_SPLASH_URL: ${DEPLOY_PUBLIC_URL:?DEPLOY_PUBLIC_URL required}/live-splash
         WEATHER_URL: ${DEPLOY_PUBLIC_URL:?DEPLOY_PUBLIC_URL required}/weather
     environment:
