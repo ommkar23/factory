@@ -37,7 +37,7 @@ def main(argv: list[str] | None = None) -> int:
     args = parser().parse_args(argv)
     try:
         if args.command == "up":
-            state = AppLifecycle(ROOT, args.app).up()
+            state = AppLifecycle(ROOT, args.app, tailscale=args.tailscale).up()
             print(f"{state.app}: {state.url}")
         elif args.command == "down":
             targets = all_lifecycles(ROOT) if args.all else [AppLifecycle(ROOT, args.app)]

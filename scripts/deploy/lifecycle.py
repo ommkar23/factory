@@ -13,6 +13,7 @@ from .config import ensure_environment, read_env
 from .docker import Compose
 from .identity import APPS, DeploymentIdentity
 from .process import Command, Runner
+from .routes import Routes
 from .state import DeploymentState, runtime_dir
 
 
@@ -21,9 +22,10 @@ class DeploymentError(RuntimeError):
 
 
 class AppLifecycle:
-    def __init__(self, root: Path, app: str, runner: Runner | None = None) -> None:
+    def __init__(self, root: Path, app: str, runner: Runner | None = None, *, tailscale: bool = False) -> None:
         self.identity = DeploymentIdentity.create(root, app)
         self.runner = runner or Runner()
+        self.tailscale = tailscale
         self.state_path = runtime_dir(self.identity.root) / app / "state.json"
         self.compose = Compose(self.identity.root, self.identity.project, self.runner, self.identity.root / "scripts/deploy/compose.yml")
 
@@ -81,12 +83,15 @@ class AppLifecycle:
         self.compose.run("up", "-d", "--build", env=environment)
         port = self.published_port()
         state = self.save_initial_state(port)
+        state = Routes(self.identity.root, self.runner, self.state_path).register(state, self.tailscale)
         self.provision_auth(environment)
         self.wait_ready(port)
         return state
 
     def down(self) -> None:
         environment = self.environment()
+        if self.state_path.exists():
+            Routes(self.identity.root, self.runner, self.state_path).remove(DeploymentState.load(self.state_path))
         self.compose.run("down", "--volumes", "--remove-orphans", check=False, env=environment, stdout=subprocess.DEVNULL)
         directory = self.state_path.parent
         if directory.exists():
