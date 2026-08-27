@@ -69,7 +69,7 @@ class AppLifecycle:
     def wait_ready(self, port: str) -> None:
         for _ in range(60):
             try:
-                with urlopen(f"http://127.0.0.1:{port}{'/' if self.identity.app == 'home' else f'/{self.identity.app}'}", timeout=3) as response:
+                with urlopen(f"http://127.0.0.1:{port}/api/health", timeout=3) as response:
                     if response.status < 500:
                         return
             except (OSError, URLError):
