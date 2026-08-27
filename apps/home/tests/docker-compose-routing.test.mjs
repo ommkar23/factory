@@ -56,13 +56,13 @@ test("Docker development publishes Storybook on a random loopback port", async (
   const [compose, setup, lifecycle] = await Promise.all([
     readFile(path.join(repoRoot, "compose.yml"), "utf8"),
     readFile(path.join(repoRoot, "scripts/setup-factory-dev.sh"), "utf8"),
-    readFile(path.join(repoRoot, "scripts/worktree-dev"), "utf8"),
+    readFile(path.join(repoRoot, "scripts/worktree-dev.py"), "utf8"),
   ]);
   const storybook = serviceBlock(compose, "storybook");
 
   assert.match(storybook, /pnpm --filter @factory\/ui/);
   assert.match(storybook, /127\.0\.0\.1::6006/);
-  assert.match(setup, /worktree-dev" up/);
-  assert.match(lifecycle, /portless alias/);
-  assert.match(lifecycle, /published_port storybook 6006/);
+  assert.match(setup, /worktree-dev\.py" up/);
+  assert.match(lifecycle, /"portless", "alias"/);
+  assert.match(lifecycle, /published_port\("storybook", 6006\)/);
 });

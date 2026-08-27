@@ -49,7 +49,7 @@ RUN pnpm --filter @factory/home build && \
       if [ -d "apps/$app/public" ]; then cp -a "apps/$app/public/." "/runtimes/$app/apps/$app/public/"; fi; \
     done
 
-FROM node:24-bookworm-slim AS runner
+FROM node:24-bookworm-slim AS standalone-base
 
 ENV NODE_ENV=production
 ENV HOSTNAME=0.0.0.0
@@ -58,10 +58,20 @@ ENV NEXT_TELEMETRY_DISABLED=1
 
 WORKDIR /app
 RUN groupadd --system --gid 1001 nextjs && useradd --system --uid 1001 --gid nextjs nextjs
-
-COPY --chown=nextjs:nextjs --from=builder /runtimes /runtimes
-COPY --chown=nextjs:nextjs scripts/unified-web.mjs /app/scripts/unified-web.mjs
-
 USER nextjs
 EXPOSE 8080
+
+# Local-only targets for exercising an app as an independent production-style service.
+FROM standalone-base AS weather-local
+COPY --chown=nextjs:nextjs --from=builder /runtimes/weather /app
+CMD ["node", "/app/apps/weather/server.js"]
+
+FROM standalone-base AS live-splash-local
+COPY --chown=nextjs:nextjs --from=builder /runtimes/live-splash /app
+CMD ["node", "/app/apps/live-splash/server.js"]
+
+# Production remains one unified Home image containing all three runtimes.
+FROM standalone-base AS runner
+COPY --chown=nextjs:nextjs --from=builder /runtimes /runtimes
+COPY --chown=nextjs:nextjs scripts/unified-web.mjs /app/scripts/unified-web.mjs
 CMD ["node", "/app/scripts/unified-web.mjs"]

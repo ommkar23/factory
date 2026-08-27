@@ -25,6 +25,23 @@ test("the production image builds and copies all three standalone runtimes", asy
   assert.doesNotMatch(dockerfile, /ARG APP/);
 });
 
+test("local-only targets can package Weather and Live Splash independently", async () => {
+  const dockerfile = await text("Dockerfile");
+  assert.match(dockerfile, /FROM standalone-base AS weather-local/);
+  assert.match(dockerfile, /FROM standalone-base AS live-splash-local/);
+  assert.match(dockerfile, /\/app\/apps\/weather\/server\.js/);
+  assert.match(dockerfile, /\/app\/apps\/live-splash\/server\.js/);
+
+  const deployment = await text("scripts/local-app-deploy.py");
+  assert.match(deployment, /APPS = \{"weather", "live-splash"\}/);
+  assert.match(deployment, /FACTORY_SHARED_ORIGIN=false/);
+  assert.match(deployment, /host\.docker\.internal:host-gateway/);
+  assert.match(deployment, /127\.0\.0\.1::8080/);
+  assert.match(deployment, /portless/);
+  assert.match(deployment, /"tailscale", "serve"/);
+  assert.match(deployment, /tailscale_url/);
+});
+
 test("all web changes trigger only the unified Home deployment", async () => {
   const workflow = await text(".github/workflows/deploy-home-cloud-run.yml");
 

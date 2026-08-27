@@ -1,0 +1,60 @@
+# Local production-style topology. Each app uses a unique Compose project.
+include:
+  - path: ../../supabase/docker-compose.yml
+
+services:
+  web:
+    build:
+      context: ../..
+      dockerfile: Dockerfile
+      target: ${DEPLOY_WEB_TARGET:?DEPLOY_WEB_TARGET required}
+      args:
+        FACTORY_SHARED_ORIGIN: ${DEPLOY_SHARED_ORIGIN:?DEPLOY_SHARED_ORIGIN required}
+        FACTORY_API_URL: ${DEPLOY_PUBLIC_URL:?DEPLOY_PUBLIC_URL required}
+        LIVE_SPLASH_URL: ${DEPLOY_PUBLIC_URL:?DEPLOY_PUBLIC_URL required}/live-splash
+        WEATHER_URL: ${DEPLOY_PUBLIC_URL:?DEPLOY_PUBLIC_URL required}/weather
+    environment:
+      DEV_AUTH_SECRET: ${DEV_AUTH_SECRET:?DEV_AUTH_SECRET required}
+    labels:
+      com.factory.worktree: ${FACTORY_WORKTREE_ID:?FACTORY_WORKTREE_ID required}
+      com.factory.deployment.app: ${DEPLOY_APP:?DEPLOY_APP required}
+
+  api:
+    build:
+      context: ../../services/api
+    env_file:
+      - path: ${DEPLOY_API_ENV:?DEPLOY_API_ENV required}
+        required: true
+    environment:
+      ENVIRONMENT: development
+      CORS_ALLOW_ORIGINS: ${DEPLOY_PUBLIC_URL:?DEPLOY_PUBLIC_URL required}
+      SUPABASE_AUTHORIZATION_URL: ${DEPLOY_SUPABASE_URL:?DEPLOY_SUPABASE_URL required}
+      AUTH_PUBLIC_URL: ${DEPLOY_PUBLIC_URL:?DEPLOY_PUBLIC_URL required}
+    volumes:
+      - api-sessions:/data/factory-api
+    labels:
+      com.factory.worktree: ${FACTORY_WORKTREE_ID:?FACTORY_WORKTREE_ID required}
+      com.factory.deployment.app: ${DEPLOY_APP:?DEPLOY_APP required}
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
+      interval: 5s
+      timeout: 3s
+      retries: 12
+
+  gateway:
+    image: nginx:1.29-alpine
+    volumes:
+      - ./nginx.conf:/etc/nginx/conf.d/default.conf:ro
+    ports:
+      - 127.0.0.1::8080
+    labels:
+      com.factory.worktree: ${FACTORY_WORKTREE_ID:?FACTORY_WORKTREE_ID required}
+      com.factory.deployment.app: ${DEPLOY_APP:?DEPLOY_APP required}
+    depends_on:
+      api:
+        condition: service_healthy
+      web:
+        condition: service_started
+
+volumes:
+  api-sessions: null
