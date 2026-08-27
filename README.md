@@ -52,7 +52,7 @@ Factory is a multi-application product platform built as a pnpm/Turborepo monore
 
 Browser-facing applications access backend capabilities through same-origin Factory `/auth/*` and `/app/*` routes. The FastAPI service owns Supabase OAuth, session lifecycle, provider credentials, upstream integrations, response normalization, and safe error mapping. Browsers receive authentication state only through HttpOnly Factory cookies.
 
-Applications keep independent source scaffolds but ship in one Home web image and container. Home is served at `/`, Live Splash at `/live-splash`, and Weather at `/weather`; the API remains independently deployed for `/auth/*` and `/app/*`.
+Applications keep independent source scaffolds but ship to production in one Home web image and container. Home is served at `/`, Live Splash at `/live-splash`, and Weather at `/weather`; the API remains independently deployed for `/auth/*` and `/app/*`. Local production-style verification can instead create a fully isolated stack for any one app.
 
 ## Documentation
 

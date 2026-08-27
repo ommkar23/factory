@@ -1,6 +1,6 @@
 # Manage Tailscale Serve through the worktree lifecycle
 
-1. To-do: Add opt-in Tailscale Serve setup to `scripts/worktree-dev` that allocates collision-free stable HTTPS ports for the Factory app and Storybook, proxies their worktree-specific loopback ports, and records ownership and URLs in the runtime ledger without replacing foreign routes.
+1. To-do: Add opt-in Tailscale Serve setup to `scripts/worktree-dev.py` that allocates collision-free stable HTTPS ports for the Factory app and Storybook, proxies their worktree-specific loopback ports, and records ownership and URLs in the runtime ledger without replacing foreign routes.
    To-verify: Add lifecycle tests proving separate worktrees receive distinct stable endpoints and existing unowned Tailscale Serve configuration is preserved.
 2. To-do: Extend worktree status, interrupted-start recovery, and cleanup to report and remove only the Tailscale Serve endpoints owned by that worktree.
    To-verify: Add tests proving normal cleanup, repeated cleanup, and failed startup remove owned routes while leaving other worktrees and foreign routes intact.

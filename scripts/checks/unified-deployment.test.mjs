@@ -32,14 +32,14 @@ test("local-only targets can package Weather and Live Splash independently", asy
   assert.match(dockerfile, /\/app\/apps\/weather\/server\.js/);
   assert.match(dockerfile, /\/app\/apps\/live-splash\/server\.js/);
 
-  const deployment = await text("scripts/local-app-deploy.py");
-  assert.match(deployment, /APPS = \{"weather", "live-splash"\}/);
-  assert.match(deployment, /FACTORY_SHARED_ORIGIN=false/);
-  assert.match(deployment, /host\.docker\.internal:host-gateway/);
-  assert.match(deployment, /127\.0\.0\.1::8080/);
-  assert.match(deployment, /portless/);
-  assert.match(deployment, /"tailscale", "serve"/);
-  assert.match(deployment, /tailscale_url/);
+  const [deployment, topology] = await Promise.all([
+    text("scripts/deploy/app.py"),
+    text("scripts/deploy/compose.yml"),
+  ]);
+  assert.match(deployment, /choices=APPS/);
+  assert.match(topology, /DEPLOY_SHARED_ORIGIN/);
+  assert.match(topology, /127\.0\.0\.1::8080/);
+  assert.match(topology, /DEPLOY_WEB_TARGET/);
 });
 
 test("all web changes trigger only the unified Home deployment", async () => {

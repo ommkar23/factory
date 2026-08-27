@@ -36,7 +36,13 @@ services:
       com.factory.worktree: ${FACTORY_WORKTREE_ID:?FACTORY_WORKTREE_ID required}
       com.factory.deployment.app: ${DEPLOY_APP:?DEPLOY_APP required}
     healthcheck:
-      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
+      test:
+        [
+          "CMD",
+          "python",
+          "-c",
+          "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')",
+        ]
       interval: 5s
       timeout: 3s
       retries: 12

@@ -31,7 +31,7 @@ class DeployLifecycleTests(unittest.TestCase):
     def test_repeated_up_uses_same_project_without_down(self):
         runner = FakeRunner()
         lifecycle = AppLifecycle(ROOT, "home", runner)
-        with patch.object(lifecycle, "require_commands"), patch.object(lifecycle, "wait_ready"), patch.object(lifecycle, "environment", return_value={}):
+        with patch.object(lifecycle, "require_commands"), patch.object(lifecycle, "wait_ready"), patch.object(lifecycle, "provision_auth"), patch("deploy.lifecycle.Routes.register", side_effect=lambda state, tailscale: state), patch.object(lifecycle, "environment", return_value={}):
             lifecycle.up(); lifecycle.up()
         flattened = [part for command in runner.commands for part in command]
         self.assertNotIn("down", flattened)

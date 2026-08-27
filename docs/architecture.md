@@ -23,7 +23,9 @@ One Home container starts the three standalone Next.js runtimes on private loopb
 
 Exact path-segment matching prevents similarly named Home routes from being captured. Base paths remain configured in Weather and Live Splash, so their pages, `_next` assets, health routes, and app-local development bootstrap routes preserve their existing URLs. A child startup/runtime failure terminates the whole container; SIGTERM is forwarded to every child for graceful Cloud Run shutdown.
 
-Local Compose has exactly one web service named `home`. Its bind-mounted workspace and shared dependency volume preserve hot reload for all app source trees. The local gateway and production load balancer expose one Factory origin. Production publishes and deploys one `home` image containing all three standalone outputs.
+The repository Compose topology retains one unified development web service. For production-style local verification, `python3 -m scripts.deploy.app` creates a fully isolated stack per selected app, including API, Supabase, database, secrets, and routes. Home uses the unified runtime; Weather and Live Splash each run one Next.js process.
+
+These isolated stacks are local-only. Production publishes and deploys one `home` image containing all three standalone outputs and deploys the API independently.
 
 ## API and authentication
 
