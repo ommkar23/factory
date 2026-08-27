@@ -12,8 +12,14 @@ class DeployTopologyTests(unittest.TestCase):
         self.assertIn("target: ${DEPLOY_WEB_TARGET", compose)
         self.assertIn("api-sessions:/data/factory-api", compose)
         self.assertIn('FACTORY_DEV_AUTH_BOOTSTRAP: "true"', compose)
+        self.assertEqual(compose.count("FACTORY_SHARED_ORIGIN: ${DEPLOY_SHARED_ORIGIN"), 2)
         self.assertNotRegex(compose, re.compile(r"^name:", re.MULTILINE))
         self.assertNotIn("container_name:", compose)
+
+    def test_home_uses_shared_origin_while_child_deployments_stay_rooted(self):
+        config = (ROOT / "scripts/deploy/config.py").read_text()
+        self.assertIn('"DEPLOY_SHARED_ORIGIN": "true" if identity.app == "home" else "false"', config)
+        self.assertIn('"DEPLOY_WEB_TARGET": "runner" if identity.app == "home" else f"{identity.app}-local"', config)
 
     def test_home_and_child_targets_have_expected_process_models(self):
         dockerfile = (ROOT / "Dockerfile").read_text()

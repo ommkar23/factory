@@ -21,9 +21,9 @@ python3 -m scripts.deploy.app up live-splash
 python3 -m scripts.deploy.app status
 ```
 
-Home uses the production unified image and runs Home, Weather, and Live Splash through `scripts/unified-web.mjs`. Weather and Live Splash use their single-process standalone image targets. Different apps can run concurrently; repeating `up` converges the same app's Compose project.
+Home uses the production unified image and runs Home, Weather, and Live Splash through `scripts/unified-web.mjs`. Its directory links resolve on the current Home origin at `/weather` and `/live-splash`. Weather and Live Splash use their single-process standalone image targets and each app is rooted at its own base URL. Different apps can run concurrently; repeating `up` converges the same app's Compose project.
 
-Pass `--tailscale` to add a collision-safe tailnet HTTPS route. Route ownership is recorded before Tailscale is changed, and cleanup removes a route only while its current target still matches the deployment.
+Portless and optional Tailscale URLs always identify an app at the origin root, without an appended app-name path. Pass `--tailscale` to add a collision-safe tailnet HTTPS route. Route ownership is recorded before Tailscale is changed, and cleanup removes a route only while its current target still matches the deployment.
 
 ```bash
 python3 -m scripts.deploy.app up weather --tailscale

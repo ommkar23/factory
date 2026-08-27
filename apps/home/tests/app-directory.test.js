@@ -17,18 +17,26 @@ describe("getAppDirectory", () => {
       },
     ]);
   });
-  it("uses same-origin route paths in the unified runtime", () => {
-    expect(
-      getAppDirectory({
+  it.each([
+    "http://home.factory.localhost:32100",
+    "https://node.example.ts.net:12000",
+  ])(
+    "uses same-origin app paths on the current Home base URL %s",
+    (baseUrl) => {
+      const apps = getAppDirectory({
         FACTORY_SHARED_ORIGIN: "true",
         LIVE_SPLASH_URL: "https://configured.example.test/live-splash",
         WEATHER_URL: "https://configured.example.test/weather",
-      }),
-    ).toMatchObject([
-      { href: "/live-splash", id: "live-splash" },
-      { href: "/weather", id: "weather" },
-    ]);
-  });
+      });
+      expect(apps).toMatchObject([
+        { href: "/live-splash", id: "live-splash" },
+        { href: "/weather", id: "weather" },
+      ]);
+      expect(apps.map(({ href }) => new URL(href, baseUrl).toString())).toEqual(
+        [`${baseUrl}/live-splash`, `${baseUrl}/weather`],
+      );
+    },
+  );
   it("uses valid configured URLs without changing the app identities", () => {
     expect(
       getAppDirectory({

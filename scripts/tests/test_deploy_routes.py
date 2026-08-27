@@ -23,6 +23,15 @@ class RouteTests(unittest.TestCase):
             root=Path(directory); path=root/'.hermes/runtime/deploy/home/state.json'; runner=FakeRunner(); state=DeploymentState('home','id','project','alias','url','32100')
             Routes(root,runner,path).register(state,False)
             self.assertTrue(path.exists()); self.assertIn(('portless','alias','alias','32100','--force'),runner.commands)
+    def test_tailscale_urls_are_pathless_and_proxy_each_app_root(self):
+        for app in ('home', 'weather', 'live-splash'):
+            with self.subTest(app=app), tempfile.TemporaryDirectory() as directory:
+                root=Path(directory); path=root/f'.hermes/runtime/deploy/{app}/state.json'; runner=FakeRunner(); state=DeploymentState(app,'id',f'project-{app}',f'alias-{app}',f'http://{app}.localhost','32100')
+                with patch('deploy.routes.shutil.which',return_value='/bin/tailscale'):
+                    registered=Routes(root,runner,path).register(state,True)
+                self.assertEqual(registered.tailscale_url, f'https://node.ts.net:{registered.tailscale_port}')
+                self.assertEqual(registered.tailscale_target, 'http://127.0.0.1:32100')
+                self.assertIn(('tailscale','serve',f'--https={registered.tailscale_port}','--bg','http://127.0.0.1:32100'),runner.commands)
     def test_cleanup_preserves_foreign_tailscale_target(self):
         with tempfile.TemporaryDirectory() as directory:
             state=DeploymentState('home','id','project','alias','url','1','12000','http://owned','','')
