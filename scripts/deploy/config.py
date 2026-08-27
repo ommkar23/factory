@@ -67,7 +67,7 @@ def ensure_environment(identity: DeploymentIdentity, public_url: str) -> tuple[d
         "DEPLOY_WEB_TARGET": "runner" if identity.app == "home" else f"{identity.app}-local",
         "DEPLOY_SHARED_ORIGIN": "true" if identity.app == "home" else "false",
         "DEPLOY_PUBLIC_URL": public_url,
-        "DEPLOY_SUPABASE_URL": f"{public_url}/auth/v1",
+        "DEPLOY_SUPABASE_URL": f"{public_url}/supabase/auth/v1",
         "SUPABASE_PUBLIC_URL": f"{public_url}/supabase",
         "API_EXTERNAL_URL": f"{public_url}/auth/v1",
         "SITE_URL": public_url,

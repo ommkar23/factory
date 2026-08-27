@@ -64,7 +64,7 @@ class Routes:
             node = self.runner.run(Command(("tailscale", "status", "--json")), capture=True)
             hostname = magic_dns_hostname(TailscaleStatus.from_mapping(json.loads(node.stdout or "{}")))
             if not hostname: raise RouteError("Tailscale did not report a MagicDNS hostname")
-            state = replace(state, tailscale_port=port, tailscale_target=target, tailscale_previous_target=previous, tailscale_url=f"https://{hostname}:{port}")
+            state = replace(state, tailscale_port=port, tailscale_target=target, tailscale_previous_target=previous, tailscale_url=f"https://{hostname}:{port}{'' if state.app == 'home' else f'/{state.app}'}")
             state.save(self.state_path)
             current = serve_state(status).proxy_for_port(int(port))
             if current and current not in {target, previous}:

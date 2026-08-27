@@ -33,6 +33,11 @@ class AppLifecycle:
     def public_url(self) -> str:
         return f"http://{self.identity.alias}.localhost"
 
+    @property
+    def app_url(self) -> str:
+        suffix = "" if self.identity.app == "home" else f"/{self.identity.app}"
+        return f"{self.public_url}{suffix}"
+
     def environment(self) -> dict[str, str]:
         environment, _ = ensure_environment(self.identity, self.public_url)
         return environment
@@ -51,7 +56,7 @@ class AppLifecycle:
         return mapping.rsplit(":", 1)[-1]
 
     def save_initial_state(self, port: str = "") -> DeploymentState:
-        state = DeploymentState(self.identity.app, self.identity.worktree_id, self.identity.project, self.identity.alias, self.public_url, port)
+        state = DeploymentState(self.identity.app, self.identity.worktree_id, self.identity.project, self.identity.alias, self.app_url, port)
         state.save(self.state_path)
         return state
 
@@ -69,7 +74,7 @@ class AppLifecycle:
     def wait_ready(self, port: str) -> None:
         for _ in range(60):
             try:
-                with urlopen(f"http://127.0.0.1:{port}/", timeout=3) as response:
+                with urlopen(f"http://127.0.0.1:{port}{'/' if self.identity.app == 'home' else f'/{self.identity.app}'}", timeout=3) as response:
                     if response.status < 500:
                         return
             except (OSError, URLError):
