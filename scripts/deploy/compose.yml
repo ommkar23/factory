@@ -15,6 +15,9 @@ services:
         WEATHER_URL: ${DEPLOY_PUBLIC_URL:?DEPLOY_PUBLIC_URL required}/weather
     environment:
       DEV_AUTH_SECRET: ${DEV_AUTH_SECRET:?DEV_AUTH_SECRET required}
+      FACTORY_API_URL: http://api:8000
+      LIVE_SPLASH_URL: ${DEPLOY_PUBLIC_URL:?DEPLOY_PUBLIC_URL required}/live-splash
+      WEATHER_URL: ${DEPLOY_PUBLIC_URL:?DEPLOY_PUBLIC_URL required}/weather
     labels:
       com.factory.worktree: ${FACTORY_WORKTREE_ID:?FACTORY_WORKTREE_ID required}
       com.factory.deployment.app: ${DEPLOY_APP:?DEPLOY_APP required}
