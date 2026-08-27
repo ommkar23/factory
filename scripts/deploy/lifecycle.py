@@ -111,6 +111,8 @@ class AppLifecycle:
         result = self.compose.run("ps", "--status", "running", "--quiet", capture=True, check=False, env=self.environment())
         condition = "running" if result.stdout.strip() else "stopped"
         print(f"{state.app}: {condition} {state.url}")
+        if state.tailscale_url:
+            print(f"Tailnet {state.app}: {state.tailscale_url}")
         return 0
 
 

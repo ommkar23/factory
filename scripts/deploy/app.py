@@ -39,6 +39,8 @@ def main(argv: list[str] | None = None) -> int:
         if args.command == "up":
             state = AppLifecycle(ROOT, args.app, tailscale=args.tailscale).up()
             print(f"{state.app}: {state.url}")
+            if state.tailscale_url:
+                print(f"Tailnet {state.app}: {state.tailscale_url}")
         elif args.command == "down":
             targets = all_lifecycles(ROOT) if args.all else [AppLifecycle(ROOT, args.app)]
             for lifecycle in targets:
