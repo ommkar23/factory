@@ -1,0 +1,94 @@
+"""App-scoped isolated Compose lifecycle."""
+from __future__ import annotations
+
+import shutil
+import subprocess
+import time
+from pathlib import Path
+from urllib.error import URLError
+from urllib.request import urlopen
+
+from .config import ensure_environment
+from .docker import Compose
+from .identity import APPS, DeploymentIdentity
+from .process import Command, Runner
+from .state import DeploymentState, runtime_dir
+
+
+class DeploymentError(RuntimeError):
+    pass
+
+
+class AppLifecycle:
+    def __init__(self, root: Path, app: str, runner: Runner | None = None) -> None:
+        self.identity = DeploymentIdentity.create(root, app)
+        self.runner = runner or Runner()
+        self.state_path = runtime_dir(self.identity.root) / app / "state.json"
+        self.compose = Compose(self.identity.root, self.identity.project, self.runner, self.identity.root / "scripts/deploy/compose.yml")
+
+    @property
+    def public_url(self) -> str:
+        return f"http://{self.identity.alias}.localhost"
+
+    def environment(self) -> dict[str, str]:
+        environment, _ = ensure_environment(self.identity, self.public_url)
+        return environment
+
+    def require_commands(self) -> None:
+        for command in ("docker", "portless"):
+            if shutil.which(command) is None:
+                raise DeploymentError(f"{command} is required")
+        self.runner.run(Command(("docker", "compose", "version")))
+
+    def published_port(self) -> str:
+        result = self.compose.run("port", "gateway", "8080", capture=True, env=self.environment())
+        mapping = result.stdout.strip()
+        if not mapping:
+            raise DeploymentError(f"{self.identity.app} gateway has no published port")
+        return mapping.rsplit(":", 1)[-1]
+
+    def save_initial_state(self, port: str = "") -> DeploymentState:
+        state = DeploymentState(self.identity.app, self.identity.worktree_id, self.identity.project, self.identity.alias, self.public_url, port)
+        state.save(self.state_path)
+        return state
+
+    def wait_ready(self, port: str) -> None:
+        for _ in range(60):
+            try:
+                with urlopen(f"http://127.0.0.1:{port}/", timeout=3) as response:
+                    if response.status < 500:
+                        return
+            except (OSError, URLError):
+                time.sleep(2)
+        raise DeploymentError(f"{self.identity.app} readiness timed out")
+
+    def up(self) -> DeploymentState:
+        self.require_commands()
+        environment = self.environment()
+        self.compose.run("config", env=environment, stdout=subprocess.DEVNULL)
+        self.compose.run("up", "-d", "--build", env=environment)
+        port = self.published_port()
+        state = self.save_initial_state(port)
+        self.wait_ready(port)
+        return state
+
+    def down(self) -> None:
+        environment = self.environment()
+        self.compose.run("down", "--volumes", "--remove-orphans", check=False, env=environment, stdout=subprocess.DEVNULL)
+        directory = self.state_path.parent
+        if directory.exists():
+            shutil.rmtree(directory)
+
+    def status(self) -> int:
+        if not self.state_path.exists():
+            print(f"{self.identity.app}: down")
+            return 0
+        state = DeploymentState.load(self.state_path)
+        result = self.compose.run("ps", "--status", "running", "--quiet", capture=True, check=False, env=self.environment())
+        condition = "running" if result.stdout.strip() else "stopped"
+        print(f"{state.app}: {condition} {state.url}")
+        return 0
+
+
+def all_lifecycles(root: Path, runner: Runner | None = None):
+    return [AppLifecycle(root, app, runner) for app in APPS]
