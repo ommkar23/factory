@@ -4,6 +4,7 @@ from __future__ import annotations
 import shutil
 import subprocess
 import time
+from dataclasses import replace
 from pathlib import Path
 from urllib.error import URLError
 from urllib.request import urlopen
@@ -51,7 +52,11 @@ class AppLifecycle:
         return mapping.rsplit(":", 1)[-1]
 
     def save_initial_state(self, port: str = "") -> DeploymentState:
-        state = DeploymentState(self.identity.app, self.identity.worktree_id, self.identity.project, self.identity.alias, self.public_url, port)
+        if self.state_path.exists():
+            existing = DeploymentState.load(self.state_path)
+            state = replace(existing, alias=self.identity.alias, url=self.public_url, port=port)
+        else:
+            state = DeploymentState(self.identity.app, self.identity.worktree_id, self.identity.project, self.identity.alias, self.public_url, port)
         state.save(self.state_path)
         return state
 
