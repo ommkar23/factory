@@ -1,4 +1,6 @@
 import unittest
+import tempfile
+import shutil
 from pathlib import Path
 from unittest.mock import patch
 import sys
@@ -25,18 +27,17 @@ class DeployAuthTests(unittest.TestCase):
         self.assertEqual(request.call_args.kwargs["method"], "PUT")
 
     def test_each_app_has_distinct_credentials_and_database_project(self):
-        home = DeploymentIdentity.create(ROOT, "home")
-        weather = DeploymentIdentity.create(ROOT, "weather")
-        home_env, home_api = ensure_environment(home, "http://home.localhost")
-        weather_env, weather_api = ensure_environment(weather, "http://weather.localhost")
-        try:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            (root / "supabase").mkdir()
+            shutil.copy(ROOT / "supabase/.env.example", root / "supabase/.env.example")
+            home = DeploymentIdentity.create(root, "home")
+            weather = DeploymentIdentity.create(root, "weather")
+            home_env, home_api = ensure_environment(home, "http://home.localhost")
+            weather_env, weather_api = ensure_environment(weather, "http://weather.localhost")
             self.assertNotEqual(read_env(home_api)["DEV_AUTH_EMAIL"], read_env(weather_api)["DEV_AUTH_EMAIL"])
             self.assertNotEqual(home.project, weather.project)
             self.assertNotEqual(home_env["POSTGRES_PASSWORD"], weather_env["POSTGRES_PASSWORD"])
-        finally:
-            import shutil
-            shutil.rmtree(home_api.parent, ignore_errors=True)
-            shutil.rmtree(weather_api.parent, ignore_errors=True)
 
 
 if __name__ == "__main__": unittest.main()
