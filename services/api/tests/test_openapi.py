@@ -15,20 +15,38 @@ def test_openapi_describes_factory_weather_contract_for_client_implementers() ->
     assert locations["summary"] == "Search locations"
     assert "Open-Meteo" in locations["description"]
     assert locations["responses"]["400"]["description"] == "Invalid request parameters."
-    query = next(parameter for parameter in locations["parameters"] if parameter["name"] == "q")
-    assert "A 2–100 character city, region, or postal-code search query." in query["description"]
+    query = next(
+        parameter for parameter in locations["parameters"] if parameter["name"] == "q"
+    )
+    assert (
+        "A 2–100 character city, region, or postal-code search query."
+        in query["description"]
+    )
     assert query["schema"]["minLength"] == 2
     assert query["schema"]["maxLength"] == 100
 
     conditions = schema["paths"]["/app/weather/v1/current-conditions"]["get"]
     assert conditions["summary"] == "Get current conditions"
-    assert conditions["responses"]["502"]["description"] == "Weather provider unavailable or returned invalid data."
-    latitude = next(parameter for parameter in conditions["parameters"] if parameter["name"] == "latitude")
+    assert (
+        conditions["responses"]["502"]["description"]
+        == "Weather provider unavailable or returned invalid data."
+    )
+    latitude = next(
+        parameter
+        for parameter in conditions["parameters"]
+        if parameter["name"] == "latitude"
+    )
     assert "WGS84 latitude from -90 through 90." in latitude["description"]
 
     location = schema["components"]["schemas"]["Location"]
-    assert location["properties"]["latitude"]["description"] == "WGS84 latitude in decimal degrees."
-    assert location["properties"]["timezone"]["description"] == "IANA time-zone identifier for the location."
+    assert (
+        location["properties"]["latitude"]["description"]
+        == "WGS84 latitude in decimal degrees."
+    )
+    assert (
+        location["properties"]["timezone"]["description"]
+        == "IANA time-zone identifier for the location."
+    )
 
 
 def test_openapi_matches_manual_weather_validation_contract() -> None:
@@ -40,22 +58,41 @@ def test_openapi_matches_manual_weather_validation_contract() -> None:
     }.items():
         operation = schema["paths"][path]["get"]
         assert "422" not in operation["responses"]
-        parameters = {parameter["name"]: parameter for parameter in operation["parameters"]}
+        parameters = {
+            parameter["name"]: parameter for parameter in operation["parameters"]
+        }
         for name in names:
             assert parameters[name]["required"] is True
             assert "exactly once" in parameters[name]["description"]
 
     locations = schema["paths"]["/app/weather/v1/locations"]["get"]
-    assert locations["responses"]["400"]["content"]["application/json"]["example"]["error"]["code"] == "INVALID_REQUEST"
+    assert (
+        locations["responses"]["400"]["content"]["application/json"]["example"][
+            "error"
+        ]["code"]
+        == "INVALID_REQUEST"
+    )
 
 
 def test_openapi_describes_supabase_bearer_and_browser_cookie_authentication() -> None:
     schema = create_app().openapi()
     locations = schema["paths"]["/app/weather/v1/locations"]["get"]
     assert locations["security"] == [{"SupabaseBearer": []}, {"SupabaseCookie": []}]
-    assert schema["components"]["securitySchemes"]["SupabaseBearer"]["scheme"] == "bearer"
-    assert schema["components"]["securitySchemes"]["SupabaseCookie"]["name"] == "Factory-Access-Token"
+    assert (
+        schema["components"]["securitySchemes"]["SupabaseBearer"]["scheme"] == "bearer"
+    )
+    assert (
+        schema["components"]["securitySchemes"]["SupabaseCookie"]["name"]
+        == "Factory-Access-Token"
+    )
     callback = schema["paths"]["/auth/callback"]["get"]
-    assert callback["responses"]["303"]["description"] == "OAuth code exchanged and Supabase browser token cookies issued."
-    for path in ("/auth/native/challenge", "/auth/native/exchange", "/auth/token/refresh"):
+    assert (
+        callback["responses"]["303"]["description"]
+        == "OAuth code exchanged and Supabase browser token cookies issued."
+    )
+    for path in (
+        "/auth/native/challenge",
+        "/auth/native/exchange",
+        "/auth/token/refresh",
+    ):
         assert path in schema["paths"]

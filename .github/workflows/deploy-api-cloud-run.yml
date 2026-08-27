@@ -35,11 +35,12 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Test API
+      - name: Validate API
         run: >-
           docker run --rm -v "$PWD:/workspace" -w /workspace/services/api
           python:3.12.14-slim sh -c
-          "pip install --disable-pip-version-check --root-user-action=ignore -e .[dev] && pytest"
+          "pip install --disable-pip-version-check --root-user-action=ignore -e .[dev] &&
+          ruff check . && ruff format --check . && ty check && pytest"
 
       - id: auth
         uses: google-github-actions/auth@v3

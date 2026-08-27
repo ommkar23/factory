@@ -1,32 +1,53 @@
+from typing import Any
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.openapi.utils import get_openapi
 
 from factory_api.config import Settings
 from factory_api.errors import ApiError, api_error_handler
-from factory_api.routers.auth import SupabaseAuthClient, clear_token_cookies, dev_router, router as auth_router, set_token_cookies
+from factory_api.routers.auth import (
+    SupabaseAuthClient,
+    SupabaseAuthProvider,
+    clear_token_cookies,
+    dev_router,
+    set_token_cookies,
+)
+from factory_api.routers.auth import router as auth_router
 from factory_api.routers.health import router as health_router
 from factory_api.routers.weather import router as weather_router
 from factory_api.session_store import create_session_store
 
 
+class FactoryFastAPI(FastAPI):
+    def openapi(self) -> dict[str, Any]:
+        return factory_openapi(self)
+
+
 def create_app(
     settings: Settings | None = None,
-    supabase_auth_client: SupabaseAuthClient | None = None,
+    supabase_auth_client: SupabaseAuthProvider | None = None,
 ) -> FastAPI:
     settings = settings or Settings.from_environment()
-    app = FastAPI(
+    app = FactoryFastAPI(
         title="Factory API",
         version="1.0.0",
-        description=("Shared REST API for Factory applications. Endpoints are namespaced as " "`/app/<app-name>/v1/<named-feature>`."),
+        description=(
+            "Shared REST API for Factory applications. Endpoints are namespaced as "
+            "`/app/<app-name>/v1/<named-feature>`."
+        ),
     )
     app.state.settings = settings
     if settings.auth_session_database_url and settings.auth_session_encryption_key:
-        app.state.session_store = create_session_store(settings.auth_session_database_url, settings.auth_session_encryption_key)
+        app.state.session_store = create_session_store(
+            settings.auth_session_database_url, settings.auth_session_encryption_key
+        )
         app.state.session_store.initialize()
     if settings.supabase_url and settings.supabase_publishable_key:
         app.state.supabase_auth_client = supabase_auth_client or SupabaseAuthClient(
-            settings.supabase_url, settings.supabase_publishable_key, settings.supabase_authorization_url
+            settings.supabase_url,
+            settings.supabase_publishable_key,
+            settings.supabase_authorization_url,
         )
     app.add_exception_handler(ApiError, api_error_handler)
 
@@ -37,7 +58,9 @@ def create_app(
         if getattr(request.state, "clear_browser_tokens", False):
             clear_token_cookies(response, secure=settings.browser_cookie_secure)
         elif token_data is not None:
-            set_token_cookies(response, token_data, secure=settings.browser_cookie_secure)
+            set_token_cookies(
+                response, token_data, secure=settings.browser_cookie_secure
+            )
         return response
 
     if settings.cors_allow_origins:
@@ -53,14 +76,18 @@ def create_app(
     if settings.is_dev_auth_enabled:
         app.include_router(dev_router)
     app.include_router(weather_router)
-    app.openapi = lambda: factory_openapi(app)
     return app
 
 
-def factory_openapi(app: FastAPI) -> dict:
+def factory_openapi(app: FastAPI) -> dict[str, Any]:
     if app.openapi_schema:
         return app.openapi_schema
-    schema = get_openapi(title=app.title, version=app.version, description=app.description, routes=app.routes)
+    schema = get_openapi(
+        title=app.title,
+        version=app.version,
+        description=app.description,
+        routes=app.routes,
+    )
     for path, names in {
         "/app/weather/v1/locations": ("q",),
         "/app/weather/v1/current-conditions": ("latitude", "longitude"),
@@ -72,12 +99,24 @@ def factory_openapi(app: FastAPI) -> dict:
         for parameter in operation["parameters"]:
             if parameter["name"] in names:
                 parameter["required"] = True
-    schema.setdefault("components", {}).setdefault("securitySchemes", {}).update({
-        "SupabaseBearer": {"type": "http", "scheme": "bearer", "bearerFormat": "JWT"},
-        "SupabaseCookie": {"type": "apiKey", "in": "cookie", "name": "Factory-Access-Token"},
-    })
+    schema.setdefault("components", {}).setdefault("securitySchemes", {}).update(
+        {
+            "SupabaseBearer": {
+                "type": "http",
+                "scheme": "bearer",
+                "bearerFormat": "JWT",
+            },
+            "SupabaseCookie": {
+                "type": "apiKey",
+                "in": "cookie",
+                "name": "Factory-Access-Token",
+            },
+        }
+    )
     if app.state.settings.is_dev_auth_enabled:
-        schema.setdefault("components", {}).setdefault("securitySchemes", {})["DevAuthSecret"] = {"type": "apiKey", "in": "header", "name": "X-Dev-Auth-Secret"}
+        schema.setdefault("components", {}).setdefault("securitySchemes", {})[
+            "DevAuthSecret"
+        ] = {"type": "apiKey", "in": "header", "name": "X-Dev-Auth-Secret"}
         for path in ("/auth/dev/token", "/auth/dev/session"):
             schema["paths"][path]["post"]["security"] = [{"DevAuthSecret": []}]
     for path, methods in schema["paths"].items():

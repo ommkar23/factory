@@ -5,19 +5,35 @@ from fastapi import APIRouter, Depends, Query, Request
 from fastapi.responses import JSONResponse
 
 from factory_api.auth import get_current_principal
-
 from factory_api.dependencies import WeatherProvider, get_weather_provider
 from factory_api.errors import ApiError
 from factory_api.providers.open_meteo import ProviderPayloadError, UpstreamHttpError
-from factory_api.schemas import CurrentConditionsResponse, ErrorResponse, LocationsResponse
+from factory_api.schemas import (
+    CurrentConditionsResponse,
+    ErrorResponse,
+    LocationsResponse,
+)
 
-router = APIRouter(prefix="/app/weather/v1", tags=["weather"], dependencies=[Depends(get_current_principal)])
+router = APIRouter(
+    prefix="/app/weather/v1",
+    tags=["weather"],
+    dependencies=[Depends(get_current_principal)],
+)
 _PROTECTED_CACHE_CONTROL = "private, no-store"
 _NUMBER = re.compile(r"^-?(?:0|[1-9]\d*)(?:\.\d+)?$")
 Provider = Annotated[WeatherProvider, Depends(get_weather_provider)]
 
+
 def documented_error(code: str, message: str, description: str) -> dict:
-    return {"model": ErrorResponse, "description": description, "content": {"application/json": {"example": {"error": {"code": code, "message": message}}}}}
+    return {
+        "model": ErrorResponse,
+        "description": description,
+        "content": {
+            "application/json": {
+                "example": {"error": {"code": code, "message": message}}
+            }
+        },
+    }
 
 
 def documented_authentication_error() -> dict:
@@ -45,12 +61,34 @@ _AUTHENTICATION_RESPONSE = documented_authentication_error()
     response_model=LocationsResponse,
     summary="Search locations",
     description="Search Open-Meteo for up to five normalized locations. Authentication is required, so responses are not cached.",
-    responses={401: _AUTHENTICATION_RESPONSE, 400: documented_error("INVALID_REQUEST", "Request parameters are invalid.", "Invalid request parameters."), 429: documented_error("UPSTREAM_RATE_LIMITED", "The upstream service is rate limited.", "Weather provider rate limited the request."), 502: documented_error("UPSTREAM_UNAVAILABLE", "The upstream service is unavailable.", "Weather provider unavailable or returned invalid data.")},
+    responses={
+        401: _AUTHENTICATION_RESPONSE,
+        400: documented_error(
+            "INVALID_REQUEST",
+            "Request parameters are invalid.",
+            "Invalid request parameters.",
+        ),
+        429: documented_error(
+            "UPSTREAM_RATE_LIMITED",
+            "The upstream service is rate limited.",
+            "Weather provider rate limited the request.",
+        ),
+        502: documented_error(
+            "UPSTREAM_UNAVAILABLE",
+            "The upstream service is unavailable.",
+            "Weather provider unavailable or returned invalid data.",
+        ),
+    },
 )
 async def get_locations(
     request: Request,
     provider: Provider,
-    q: str | None = Query(None, description="A 2–100 character city, region, or postal-code search query. Supply exactly once.", examples=["Portland, Maine"], json_schema_extra={"minLength": 2, "maxLength": 100}),
+    q: str | None = Query(
+        None,
+        description="A 2–100 character city, region, or postal-code search query. Supply exactly once.",
+        examples=["Portland, Maine"],
+        json_schema_extra={"minLength": 2, "maxLength": 100},
+    ),
 ) -> JSONResponse:
     values = request.query_params.getlist("q")
     if len(values) != 1:
@@ -63,7 +101,9 @@ async def get_locations(
     except Exception as error:
         raise upstream_error(error) from error
     response = LocationsResponse(locations=locations[:5])
-    return JSONResponse(response.model_dump(), headers={"Cache-Control": _PROTECTED_CACHE_CONTROL})
+    return JSONResponse(
+        response.model_dump(), headers={"Cache-Control": _PROTECTED_CACHE_CONTROL}
+    )
 
 
 @router.get(
@@ -71,13 +111,42 @@ async def get_locations(
     response_model=CurrentConditionsResponse,
     summary="Get current conditions",
     description="Return current normalized metric conditions for one WGS84 location. Authentication is required, so responses are not cached.",
-    responses={401: _AUTHENTICATION_RESPONSE, 400: documented_error("INVALID_REQUEST", "Request parameters are invalid.", "Invalid request parameters."), 429: documented_error("UPSTREAM_RATE_LIMITED", "The upstream service is rate limited.", "Weather provider rate limited the request."), 502: documented_error("UPSTREAM_UNAVAILABLE", "The upstream service is unavailable.", "Weather provider unavailable or returned invalid data.")},
+    responses={
+        401: _AUTHENTICATION_RESPONSE,
+        400: documented_error(
+            "INVALID_REQUEST",
+            "Request parameters are invalid.",
+            "Invalid request parameters.",
+        ),
+        429: documented_error(
+            "UPSTREAM_RATE_LIMITED",
+            "The upstream service is rate limited.",
+            "Weather provider rate limited the request.",
+        ),
+        502: documented_error(
+            "UPSTREAM_UNAVAILABLE",
+            "The upstream service is unavailable.",
+            "Weather provider unavailable or returned invalid data.",
+        ),
+    },
 )
 async def get_current_conditions(
     request: Request,
     provider: Provider,
-    latitude_query: str | None = Query(None, alias="latitude", description="WGS84 latitude from -90 through 90. Supply exactly once.", examples=["45.5234"], json_schema_extra={"minimum": -90, "maximum": 90}),
-    longitude_query: str | None = Query(None, alias="longitude", description="WGS84 longitude from -180 through 180. Supply exactly once.", examples=["-122.6762"], json_schema_extra={"minimum": -180, "maximum": 180}),
+    latitude_query: str | None = Query(
+        None,
+        alias="latitude",
+        description="WGS84 latitude from -90 through 90. Supply exactly once.",
+        examples=["45.5234"],
+        json_schema_extra={"minimum": -90, "maximum": 90},
+    ),
+    longitude_query: str | None = Query(
+        None,
+        alias="longitude",
+        description="WGS84 longitude from -180 through 180. Supply exactly once.",
+        examples=["-122.6762"],
+        json_schema_extra={"minimum": -180, "maximum": 180},
+    ),
 ) -> JSONResponse:
     latitude = coordinate(request, "latitude", -90, 90)
     longitude = coordinate(request, "longitude", -180, 180)
@@ -86,7 +155,9 @@ async def get_current_conditions(
     except Exception as error:
         raise upstream_error(error) from error
     response = CurrentConditionsResponse(conditions=conditions)
-    return JSONResponse(response.model_dump(), headers={"Cache-Control": _PROTECTED_CACHE_CONTROL})
+    return JSONResponse(
+        response.model_dump(), headers={"Cache-Control": _PROTECTED_CACHE_CONTROL}
+    )
 
 
 def coordinate(request: Request, name: str, minimum: float, maximum: float) -> float:
@@ -105,7 +176,13 @@ def invalid_request() -> ApiError:
 
 def upstream_error(error: Exception) -> ApiError:
     if isinstance(error, ProviderPayloadError):
-        return ApiError("UPSTREAM_INVALID_RESPONSE", "The upstream service returned an invalid response.", 502)
+        return ApiError(
+            "UPSTREAM_INVALID_RESPONSE",
+            "The upstream service returned an invalid response.",
+            502,
+        )
     if isinstance(error, UpstreamHttpError) and error.status_code == 429:
-        return ApiError("UPSTREAM_RATE_LIMITED", "The upstream service is rate limited.", 429)
+        return ApiError(
+            "UPSTREAM_RATE_LIMITED", "The upstream service is rate limited.", 429
+        )
     return ApiError("UPSTREAM_UNAVAILABLE", "The upstream service is unavailable.", 502)

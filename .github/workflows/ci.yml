@@ -81,11 +81,12 @@ jobs:
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
-      - name: Run API tests
+      - name: Validate API
         run: >-
           docker run --rm -v "$PWD:/workspace" -w /workspace/services/api
           python:3.12.14-slim sh -c
-          "pip install --disable-pip-version-check --root-user-action=ignore -e .[dev] && pytest"
+          "pip install --disable-pip-version-check --root-user-action=ignore -e .[dev] &&
+          ruff check . && ruff format --check . && ty check && pytest"
 
   infrastructure:
     name: Terraform validation

@@ -19,7 +19,9 @@ class FakeSupabaseAuthProvider:
         self.logged_out: list[str] = []
         self.password_sign_ins: list[tuple[str, str]] = []
 
-    def authorization_url(self, *, callback_url: str, code_challenge: str, state: str) -> str:
+    def authorization_url(
+        self, *, callback_url: str, code_challenge: str, state: str
+    ) -> str:
         assert callback_url == "https://api.factory.example/auth/callback"
         assert code_challenge
         return f"https://supabase.example/auth/v1/authorize?code_challenge={code_challenge}&state={state}"
@@ -31,7 +33,10 @@ class FakeSupabaseAuthProvider:
             "refresh_token": "supabase-refresh-token",
             "expires_in": 3600,
             "token_type": "bearer",
-            "user": {"id": "5d594e47-d4d1-4bbd-a461-f4794fc491a6", "email": "person@example.com"},
+            "user": {
+                "id": "5d594e47-d4d1-4bbd-a461-f4794fc491a6",
+                "email": "person@example.com",
+            },
         }
 
     async def verify_access_token(self, token: str) -> dict:
@@ -41,24 +46,43 @@ class FakeSupabaseAuthProvider:
 
             raise SupabaseAccessTokenExpired
         if token == "invalid":
-            raise Exception("invalid token")
-        return {"sub": "5d594e47-d4d1-4bbd-a461-f4794fc491a6", "email": "person@example.com"}
+            raise RuntimeError("invalid token")
+        return {
+            "sub": "5d594e47-d4d1-4bbd-a461-f4794fc491a6",
+            "email": "person@example.com",
+        }
 
     async def refresh_session(self, *, refresh_token: str) -> dict:
         self.refreshes.append(refresh_token)
         if refresh_token == "bad-refresh":
-            raise Exception("bad refresh")
-        return {"access_token": "rotated-access-token", "refresh_token": "rotated-refresh-token", "expires_in": 3600, "token_type": "bearer", "user": {"id": "5d594e47-d4d1-4bbd-a461-f4794fc491a6"}}
+            raise RuntimeError("bad refresh")
+        return {
+            "access_token": "rotated-access-token",
+            "refresh_token": "rotated-refresh-token",
+            "expires_in": 3600,
+            "token_type": "bearer",
+            "user": {"id": "5d594e47-d4d1-4bbd-a461-f4794fc491a6"},
+        }
 
     async def password_sign_in(self, *, email: str, password: str) -> dict:
         self.password_sign_ins.append((email, password))
-        return {"access_token": "development-access-token", "refresh_token": "development-refresh-token", "expires_in": 3600, "token_type": "bearer"}
+        return {
+            "access_token": "development-access-token",
+            "refresh_token": "development-refresh-token",
+            "expires_in": 3600,
+            "token_type": "bearer",
+        }
 
     async def exchange_google_id_token(self, *, id_token: str, nonce: str) -> dict:
         self.challenges.append(nonce)
         if id_token != "google-id-token":
-            raise Exception("invalid google token")
-        return {"access_token": "native-access-token", "refresh_token": "native-refresh-token", "expires_in": 3600, "token_type": "bearer"}
+            raise RuntimeError("invalid google token")
+        return {
+            "access_token": "native-access-token",
+            "refresh_token": "native-refresh-token",
+            "expires_in": 3600,
+            "token_type": "bearer",
+        }
 
     async def logout(self, *, access_token: str) -> None:
         self.logged_out.append(access_token)
@@ -78,17 +102,27 @@ def production_settings(tmp_path: Path) -> Settings:
 
 
 def _cookie(response, name: str) -> str:
-    return next(header for header in response.headers.get_list("set-cookie") if header.startswith(f"{name}="))
+    return next(
+        header
+        for header in response.headers.get_list("set-cookie")
+        if header.startswith(f"{name}=")
+    )
 
 
-def test_callback_exchanges_code_server_side_and_sets_transient_supabase_token_cookies(tmp_path: Path) -> None:
+def test_callback_exchanges_code_server_side_and_sets_transient_supabase_token_cookies(
+    tmp_path: Path,
+) -> None:
     provider = FakeSupabaseAuthProvider()
-    app = create_app(settings=production_settings(tmp_path), supabase_auth_client=provider)
+    app = create_app(
+        settings=production_settings(tmp_path), supabase_auth_client=provider
+    )
     client = TestClient(app, base_url="https://api.factory.example")
     login_response = client.get("/auth/login?next=/weather", follow_redirects=False)
     state = parse_qs(urlparse(login_response.headers["location"]).query)["state"][0]
 
-    response = client.get(f"/auth/callback?code=one-time-code&state={state}", follow_redirects=False)
+    response = client.get(
+        f"/auth/callback?code=one-time-code&state={state}", follow_redirects=False
+    )
 
     assert response.status_code == 303
     assert response.headers["location"] == "/weather"
@@ -97,12 +131,28 @@ def test_callback_exchanges_code_server_side_and_sets_transient_supabase_token_c
     refresh_cookie = _cookie(response, "Factory-Refresh-Token")
     assert "supabase-access-token" in access_cookie
     assert "supabase-refresh-token" in refresh_cookie
-    assert "HttpOnly" in access_cookie and "Secure" in access_cookie and "SameSite=lax" in access_cookie
-    assert "HttpOnly" in refresh_cookie and "Secure" in refresh_cookie and "SameSite=lax" in refresh_cookie
-    assert not any(header.startswith("Factory-Session=") for header in response.headers.get_list("set-cookie"))
+    assert (
+        "HttpOnly" in access_cookie
+        and "Secure" in access_cookie
+        and "SameSite=lax" in access_cookie
+    )
+    assert (
+        "HttpOnly" in refresh_cookie
+        and "Secure" in refresh_cookie
+        and "SameSite=lax" in refresh_cookie
+    )
+    assert not any(
+        header.startswith("Factory-Session=")
+        for header in response.headers.get_list("set-cookie")
+    )
     assert "Max-Age=0" in _cookie(response, "Factory-OAuth-Transaction")
     assert not hasattr(app.state.session_store, "get_session")
-    assert app.state.session_store.consume_oauth_state(state, hashlib.sha256("irrelevant".encode()).hexdigest()) is None
+    assert (
+        app.state.session_store.consume_oauth_state(
+            state, hashlib.sha256(b"irrelevant").hexdigest()
+        )
+        is None
+    )
 
 
 class FakeWeatherProvider:
@@ -113,36 +163,64 @@ class FakeWeatherProvider:
         return {}
 
 
-def test_protected_routes_accept_exactly_one_verified_bearer_or_cookie_and_reject_ambiguous_credentials(tmp_path: Path) -> None:
+def test_protected_routes_accept_exactly_one_verified_bearer_or_cookie_and_reject_ambiguous_credentials(
+    tmp_path: Path,
+) -> None:
     from factory_api.dependencies import get_weather_provider
 
     provider = FakeSupabaseAuthProvider()
-    app = create_app(settings=production_settings(tmp_path), supabase_auth_client=provider)
+    app = create_app(
+        settings=production_settings(tmp_path), supabase_auth_client=provider
+    )
     app.dependency_overrides[get_weather_provider] = lambda: FakeWeatherProvider()
     client = TestClient(app, base_url="https://api.factory.example")
 
-    bearer = client.get("/app/weather/v1/locations?q=Portland", headers={"Authorization": "Bearer native-jwt"})
-    cookie = client.get("/app/weather/v1/locations?q=Portland", headers={"Cookie": "Factory-Access-Token=browser-jwt"})
-    ambiguous = client.get("/app/weather/v1/locations?q=Portland", headers={"Authorization": "Bearer native-jwt", "Cookie": "Factory-Access-Token=browser-jwt"})
-    malformed = client.get("/app/weather/v1/locations?q=Portland", headers={"Authorization": "Basic nope"})
+    bearer = client.get(
+        "/app/weather/v1/locations?q=Portland",
+        headers={"Authorization": "Bearer native-jwt"},
+    )
+    cookie = client.get(
+        "/app/weather/v1/locations?q=Portland",
+        headers={"Cookie": "Factory-Access-Token=browser-jwt"},
+    )
+    ambiguous = client.get(
+        "/app/weather/v1/locations?q=Portland",
+        headers={
+            "Authorization": "Bearer native-jwt",
+            "Cookie": "Factory-Access-Token=browser-jwt",
+        },
+    )
+    malformed = client.get(
+        "/app/weather/v1/locations?q=Portland", headers={"Authorization": "Basic nope"}
+    )
 
     assert bearer.status_code == 200 and cookie.status_code == 200
     assert provider.verified == ["native-jwt", "browser-jwt"]
     assert ambiguous.status_code == malformed.status_code == 401
-    assert ambiguous.json()["error"]["code"] == malformed.json()["error"]["code"] == "INVALID_CREDENTIALS"
+    assert (
+        ambiguous.json()["error"]["code"]
+        == malformed.json()["error"]["code"]
+        == "INVALID_CREDENTIALS"
+    )
 
 
-def test_protected_route_refreshes_expired_browser_access_cookie(tmp_path: Path) -> None:
+def test_protected_route_refreshes_expired_browser_access_cookie(
+    tmp_path: Path,
+) -> None:
     from factory_api.dependencies import get_weather_provider
 
     provider = FakeSupabaseAuthProvider()
-    app = create_app(settings=production_settings(tmp_path), supabase_auth_client=provider)
+    app = create_app(
+        settings=production_settings(tmp_path), supabase_auth_client=provider
+    )
     app.dependency_overrides[get_weather_provider] = lambda: FakeWeatherProvider()
     client = TestClient(app, base_url="https://api.factory.example")
 
     response = client.get(
         "/app/weather/v1/locations?q=Portland",
-        headers={"Cookie": "Factory-Access-Token=expired-jwt; Factory-Refresh-Token=browser-refresh"},
+        headers={
+            "Cookie": "Factory-Access-Token=expired-jwt; Factory-Refresh-Token=browser-refresh"
+        },
     )
 
     assert response.status_code == 200
@@ -150,27 +228,61 @@ def test_protected_route_refreshes_expired_browser_access_cookie(tmp_path: Path)
     assert "rotated-access-token" in _cookie(response, "Factory-Access-Token")
 
 
-def test_native_challenge_exchange_and_refresh_return_only_supabase_tokens(tmp_path: Path) -> None:
+def test_native_challenge_exchange_and_refresh_return_only_supabase_tokens(
+    tmp_path: Path,
+) -> None:
     provider = FakeSupabaseAuthProvider()
-    client = TestClient(create_app(settings=production_settings(tmp_path), supabase_auth_client=provider))
+    client = TestClient(
+        create_app(
+            settings=production_settings(tmp_path), supabase_auth_client=provider
+        )
+    )
 
     challenge = client.post("/auth/native/challenge")
     nonce = challenge.json()["nonce"]
-    exchange = client.post("/auth/native/exchange", json={"id_token": "google-id-token", "nonce": nonce})
-    refresh = client.post("/auth/token/refresh", json={"refresh_token": "native-refresh-token"})
+    exchange = client.post(
+        "/auth/native/exchange", json={"id_token": "google-id-token", "nonce": nonce}
+    )
+    refresh = client.post(
+        "/auth/token/refresh", json={"refresh_token": "native-refresh-token"}
+    )
 
     assert challenge.status_code == exchange.status_code == refresh.status_code == 200
-    assert provider.challenges == [nonce] and provider.refreshes == ["native-refresh-token"]
-    assert exchange.json() == {"access_token": "native-access-token", "refresh_token": "native-refresh-token", "expires_in": 3600, "token_type": "bearer"}
+    assert provider.challenges == [nonce] and provider.refreshes == [
+        "native-refresh-token"
+    ]
+    assert exchange.json() == {
+        "access_token": "native-access-token",
+        "refresh_token": "native-refresh-token",
+        "expires_in": 3600,
+        "token_type": "bearer",
+    }
     assert refresh.json()["access_token"] == "rotated-access-token"
 
 
-def test_session_refresh_and_logout_rotate_or_clear_browser_supabase_cookies(tmp_path: Path) -> None:
+def test_session_refresh_and_logout_rotate_or_clear_browser_supabase_cookies(
+    tmp_path: Path,
+) -> None:
     provider = FakeSupabaseAuthProvider()
-    client = TestClient(create_app(settings=production_settings(tmp_path), supabase_auth_client=provider), base_url="https://api.factory.example")
+    client = TestClient(
+        create_app(
+            settings=production_settings(tmp_path), supabase_auth_client=provider
+        ),
+        base_url="https://api.factory.example",
+    )
 
-    refreshed = client.get("/auth/session", headers={"Cookie": "Factory-Access-Token=expired-jwt; Factory-Refresh-Token=browser-refresh"})
-    logout = client.post("/auth/logout", headers={"Cookie": "Factory-Access-Token=browser-jwt; Factory-Refresh-Token=browser-refresh"})
+    refreshed = client.get(
+        "/auth/session",
+        headers={
+            "Cookie": "Factory-Access-Token=expired-jwt; Factory-Refresh-Token=browser-refresh"
+        },
+    )
+    logout = client.post(
+        "/auth/logout",
+        headers={
+            "Cookie": "Factory-Access-Token=browser-jwt; Factory-Refresh-Token=browser-refresh"
+        },
+    )
 
     assert refreshed.status_code == 200
     assert provider.refreshes == ["browser-refresh"]
@@ -182,26 +294,48 @@ def test_session_refresh_and_logout_rotate_or_clear_browser_supabase_cookies(tmp
 
 def test_session_rejects_malformed_or_duplicate_credentials(tmp_path: Path) -> None:
     provider = FakeSupabaseAuthProvider()
-    client = TestClient(create_app(settings=production_settings(tmp_path), supabase_auth_client=provider))
+    client = TestClient(
+        create_app(
+            settings=production_settings(tmp_path), supabase_auth_client=provider
+        )
+    )
 
-    blank_header = client.get("/auth/session", headers={"Authorization": "", "Cookie": "Factory-Access-Token=browser-jwt"})
-    duplicate_cookie = client.get("/auth/session", headers={"Cookie": "Factory-Access-Token=bad; Factory-Access-Token=browser-jwt"})
+    blank_header = client.get(
+        "/auth/session",
+        headers={"Authorization": "", "Cookie": "Factory-Access-Token=browser-jwt"},
+    )
+    duplicate_cookie = client.get(
+        "/auth/session",
+        headers={
+            "Cookie": "Factory-Access-Token=bad; Factory-Access-Token=browser-jwt"
+        },
+    )
 
     assert blank_header.status_code == duplicate_cookie.status_code == 401
-    assert blank_header.json()["error"]["code"] == duplicate_cookie.json()["error"]["code"] == "INVALID_CREDENTIALS"
+    assert (
+        blank_header.json()["error"]["code"]
+        == duplicate_cookie.json()["error"]["code"]
+        == "INVALID_CREDENTIALS"
+    )
 
 
-def test_failed_protected_cookie_refresh_clears_both_browser_cookies(tmp_path: Path) -> None:
+def test_failed_protected_cookie_refresh_clears_both_browser_cookies(
+    tmp_path: Path,
+) -> None:
     from factory_api.dependencies import get_weather_provider
 
     provider = FakeSupabaseAuthProvider()
-    app = create_app(settings=production_settings(tmp_path), supabase_auth_client=provider)
+    app = create_app(
+        settings=production_settings(tmp_path), supabase_auth_client=provider
+    )
     app.dependency_overrides[get_weather_provider] = lambda: FakeWeatherProvider()
     client = TestClient(app, base_url="https://api.factory.example")
 
     response = client.get(
         "/app/weather/v1/locations?q=Portland",
-        headers={"Cookie": "Factory-Access-Token=expired-jwt; Factory-Refresh-Token=bad-refresh"},
+        headers={
+            "Cookie": "Factory-Access-Token=expired-jwt; Factory-Refresh-Token=bad-refresh"
+        },
     )
 
     assert response.status_code == 401
@@ -209,17 +343,23 @@ def test_failed_protected_cookie_refresh_clears_both_browser_cookies(tmp_path: P
     assert "Max-Age=0" in _cookie(response, "Factory-Refresh-Token")
 
 
-def test_invalid_browser_access_cookie_never_uses_its_refresh_cookie(tmp_path: Path) -> None:
+def test_invalid_browser_access_cookie_never_uses_its_refresh_cookie(
+    tmp_path: Path,
+) -> None:
     from factory_api.dependencies import get_weather_provider
 
     provider = FakeSupabaseAuthProvider()
-    app = create_app(settings=production_settings(tmp_path), supabase_auth_client=provider)
+    app = create_app(
+        settings=production_settings(tmp_path), supabase_auth_client=provider
+    )
     app.dependency_overrides[get_weather_provider] = lambda: FakeWeatherProvider()
     client = TestClient(app, base_url="https://api.factory.example")
 
     response = client.get(
         "/app/weather/v1/locations?q=Portland",
-        headers={"Cookie": "Factory-Access-Token=invalid; Factory-Refresh-Token=browser-refresh"},
+        headers={
+            "Cookie": "Factory-Access-Token=invalid; Factory-Refresh-Token=browser-refresh"
+        },
     )
 
     assert response.status_code == 401
@@ -227,45 +367,66 @@ def test_invalid_browser_access_cookie_never_uses_its_refresh_cookie(tmp_path: P
     assert "Max-Age=0" in _cookie(response, "Factory-Access-Token")
 
 
-def test_malformed_browser_access_cookie_clears_both_browser_cookies(tmp_path: Path) -> None:
+def test_malformed_browser_access_cookie_clears_both_browser_cookies(
+    tmp_path: Path,
+) -> None:
     from factory_api.dependencies import get_weather_provider
 
     provider = FakeSupabaseAuthProvider()
-    app = create_app(settings=production_settings(tmp_path), supabase_auth_client=provider)
+    app = create_app(
+        settings=production_settings(tmp_path), supabase_auth_client=provider
+    )
     app.dependency_overrides[get_weather_provider] = lambda: FakeWeatherProvider()
     client = TestClient(app, base_url="https://api.factory.example")
 
     response = client.get(
         "/app/weather/v1/locations?q=Portland",
-        headers={"Cookie": "Factory-Access-Token=; Factory-Refresh-Token=browser-refresh"},
+        headers={
+            "Cookie": "Factory-Access-Token=; Factory-Refresh-Token=browser-refresh"
+        },
     )
     duplicate = client.get(
         "/app/weather/v1/locations?q=Portland",
-        headers={"Cookie": "Factory-Access-Token=bad; Factory-Access-Token=also-bad; Factory-Refresh-Token=browser-refresh"},
+        headers={
+            "Cookie": "Factory-Access-Token=bad; Factory-Access-Token=also-bad; Factory-Refresh-Token=browser-refresh"
+        },
     )
     whitespace_name = client.get(
         "/app/weather/v1/locations?q=Portland",
-        headers={"Cookie": "Factory-Access-Token = browser-jwt; Factory-Refresh-Token=browser-refresh"},
+        headers={
+            "Cookie": "Factory-Access-Token = browser-jwt; Factory-Refresh-Token=browser-refresh"
+        },
     )
 
-    assert response.status_code == duplicate.status_code == whitespace_name.status_code == 401
+    assert (
+        response.status_code
+        == duplicate.status_code
+        == whitespace_name.status_code
+        == 401
+    )
     assert "Max-Age=0" in _cookie(response, "Factory-Access-Token")
     assert "Max-Age=0" in _cookie(response, "Factory-Refresh-Token")
     assert "Max-Age=0" in _cookie(duplicate, "Factory-Access-Token")
     assert "Max-Age=0" in _cookie(whitespace_name, "Factory-Access-Token")
 
 
-def test_duplicate_refresh_cookie_never_refreshes_an_expired_access_cookie(tmp_path: Path) -> None:
+def test_duplicate_refresh_cookie_never_refreshes_an_expired_access_cookie(
+    tmp_path: Path,
+) -> None:
     from factory_api.dependencies import get_weather_provider
 
     provider = FakeSupabaseAuthProvider()
-    app = create_app(settings=production_settings(tmp_path), supabase_auth_client=provider)
+    app = create_app(
+        settings=production_settings(tmp_path), supabase_auth_client=provider
+    )
     app.dependency_overrides[get_weather_provider] = lambda: FakeWeatherProvider()
     client = TestClient(app, base_url="https://api.factory.example")
 
     response = client.get(
         "/app/weather/v1/locations?q=Portland",
-        headers={"Cookie": "Factory-Access-Token=expired-jwt; Factory-Refresh-Token=first; Factory-Refresh-Token=second"},
+        headers={
+            "Cookie": "Factory-Access-Token=expired-jwt; Factory-Refresh-Token=first; Factory-Refresh-Token=second"
+        },
     )
 
     assert response.status_code == 401
@@ -276,16 +437,27 @@ def test_duplicate_refresh_cookie_never_refreshes_an_expired_access_cookie(tmp_p
 
 def test_logout_revokes_a_valid_native_bearer_token(tmp_path: Path) -> None:
     provider = FakeSupabaseAuthProvider()
-    client = TestClient(create_app(settings=production_settings(tmp_path), supabase_auth_client=provider))
+    client = TestClient(
+        create_app(
+            settings=production_settings(tmp_path), supabase_auth_client=provider
+        )
+    )
 
-    response = client.post("/auth/logout", headers={"Authorization": "Bearer native-jwt"})
+    response = client.post(
+        "/auth/logout", headers={"Authorization": "Bearer native-jwt"}
+    )
 
     assert response.status_code == 204
     assert provider.logged_out == ["native-jwt"]
 
 
 def test_native_token_endpoints_reject_malformed_json(tmp_path: Path) -> None:
-    client = TestClient(create_app(settings=production_settings(tmp_path), supabase_auth_client=FakeSupabaseAuthProvider()))
+    client = TestClient(
+        create_app(
+            settings=production_settings(tmp_path),
+            supabase_auth_client=FakeSupabaseAuthProvider(),
+        )
+    )
 
     exchange = client.post("/auth/native/exchange", content=b"{")
     refresh = client.post("/auth/token/refresh", content=b"{")
@@ -294,7 +466,10 @@ def test_native_token_endpoints_reject_malformed_json(tmp_path: Path) -> None:
 
 
 def test_explicit_browser_origin_may_send_authorization_header(tmp_path: Path) -> None:
-    app = create_app(settings=production_settings(tmp_path), supabase_auth_client=FakeSupabaseAuthProvider())
+    app = create_app(
+        settings=production_settings(tmp_path),
+        supabase_auth_client=FakeSupabaseAuthProvider(),
+    )
     client = TestClient(app)
 
     response = client.options(
@@ -310,7 +485,9 @@ def test_explicit_browser_origin_may_send_authorization_header(tmp_path: Path) -
     assert "authorization" in response.headers["access-control-allow-headers"].lower()
 
 
-def test_development_protected_routes_require_a_supabase_credential(tmp_path: Path) -> None:
+def test_development_protected_routes_require_a_supabase_credential(
+    tmp_path: Path,
+) -> None:
     from factory_api.dependencies import get_weather_provider
 
     provider = FakeSupabaseAuthProvider()
@@ -326,7 +503,9 @@ def test_development_protected_routes_require_a_supabase_credential(tmp_path: Pa
     assert response.json()["error"]["code"] == "INVALID_CREDENTIALS"
 
 
-def test_enabled_development_issuer_returns_provider_tokens_that_authorize_app_routes(tmp_path: Path) -> None:
+def test_enabled_development_issuer_returns_provider_tokens_that_authorize_app_routes(
+    tmp_path: Path,
+) -> None:
     from factory_api.dependencies import get_weather_provider
 
     provider = FakeSupabaseAuthProvider()
@@ -345,19 +524,39 @@ def test_enabled_development_issuer_returns_provider_tokens_that_authorize_app_r
     app.dependency_overrides[get_weather_provider] = lambda: FakeWeatherProvider()
     client = TestClient(app, base_url="http://localhost:3004")
 
-    rejected = client.post("/auth/dev/token", headers={"X-Dev-Auth-Secret": "wrong-secret"})
-    issued = client.post("/auth/dev/token", headers={"X-Dev-Auth-Secret": "development-secret"})
-    authorized = client.get("/app/weather/v1/locations?q=Portland", headers={"Authorization": "Bearer development-access-token"})
+    rejected = client.post(
+        "/auth/dev/token", headers={"X-Dev-Auth-Secret": "wrong-secret"}
+    )
+    issued = client.post(
+        "/auth/dev/token", headers={"X-Dev-Auth-Secret": "development-secret"}
+    )
+    authorized = client.get(
+        "/app/weather/v1/locations?q=Portland",
+        headers={"Authorization": "Bearer development-access-token"},
+    )
 
     assert rejected.status_code == 401
     assert rejected.headers["cache-control"] == "no-store"
     schema = app.openapi()
-    assert schema["paths"]["/auth/dev/token"]["post"]["security"] == [{"DevAuthSecret": []}]
-    assert schema["components"]["securitySchemes"]["DevAuthSecret"] == {"type": "apiKey", "in": "header", "name": "X-Dev-Auth-Secret"}
+    assert schema["paths"]["/auth/dev/token"]["post"]["security"] == [
+        {"DevAuthSecret": []}
+    ]
+    assert schema["components"]["securitySchemes"]["DevAuthSecret"] == {
+        "type": "apiKey",
+        "in": "header",
+        "name": "X-Dev-Auth-Secret",
+    }
     assert issued.status_code == 200
     assert issued.headers["cache-control"] == "no-store"
-    assert issued.json() == {"access_token": "development-access-token", "refresh_token": "development-refresh-token", "expires_in": 3600, "token_type": "bearer"}
-    assert provider.password_sign_ins == [("development@example.com", "development-password")]
+    assert issued.json() == {
+        "access_token": "development-access-token",
+        "refresh_token": "development-refresh-token",
+        "expires_in": 3600,
+        "token_type": "bearer",
+    }
+    assert provider.password_sign_ins == [
+        ("development@example.com", "development-password")
+    ]
     assert authorized.status_code == 200
     assert provider.verified == ["development-access-token"]
 
@@ -375,20 +574,28 @@ def development_settings(tmp_path: Path) -> Settings:
     )
 
 
-def test_development_session_uses_http_localhost_cookies_and_authorizes_cookie_jar(tmp_path: Path) -> None:
+def test_development_session_uses_http_localhost_cookies_and_authorizes_cookie_jar(
+    tmp_path: Path,
+) -> None:
     from factory_api.dependencies import get_weather_provider
 
     provider = FakeSupabaseAuthProvider()
-    app = create_app(settings=development_settings(tmp_path), supabase_auth_client=provider)
+    app = create_app(
+        settings=development_settings(tmp_path), supabase_auth_client=provider
+    )
     app.dependency_overrides[get_weather_provider] = lambda: FakeWeatherProvider()
     client = TestClient(app, base_url="http://localhost:3004")
 
     rejected = client.post("/auth/dev/session")
-    issued = client.post("/auth/dev/session", headers={"X-Dev-Auth-Secret": "development-secret"})
+    issued = client.post(
+        "/auth/dev/session", headers={"X-Dev-Auth-Secret": "development-secret"}
+    )
     authorized = client.get("/app/weather/v1/locations?q=Portland")
 
     assert rejected.status_code == 401
-    assert provider.password_sign_ins == [("development@example.com", "development-password")]
+    assert provider.password_sign_ins == [
+        ("development@example.com", "development-password")
+    ]
     assert issued.status_code == 204
     assert issued.headers["cache-control"] == "no-store"
     access_cookie = _cookie(issued, "Factory-Access-Token")
@@ -402,23 +609,39 @@ def test_development_session_uses_http_localhost_cookies_and_authorizes_cookie_j
     assert provider.verified == ["development-access-token"]
 
 
-def test_development_issuer_is_not_registered_when_disabled_and_rejects_invalid_configuration(tmp_path: Path) -> None:
+def test_development_issuer_is_not_registered_when_disabled_and_rejects_invalid_configuration(
+    tmp_path: Path,
+) -> None:
     disabled = create_app(
         settings=replace(production_settings(tmp_path), environment="development"),
         supabase_auth_client=FakeSupabaseAuthProvider(),
     )
 
-    production = create_app(settings=production_settings(tmp_path), supabase_auth_client=FakeSupabaseAuthProvider())
+    production = create_app(
+        settings=production_settings(tmp_path),
+        supabase_auth_client=FakeSupabaseAuthProvider(),
+    )
     assert TestClient(disabled).post("/auth/dev/token").status_code == 404
     assert "/auth/dev/token" not in disabled.openapi()["paths"]
     assert TestClient(production).post("/auth/dev/token").status_code == 404
     assert "/auth/dev/token" not in production.openapi()["paths"]
     with pytest.raises(RuntimeError, match="permitted only"):
-        replace(production_settings(tmp_path), dev_auth_enabled=True, dev_auth_email="development@example.com", dev_auth_password="development-password", dev_auth_secret="development-secret")
+        replace(
+            production_settings(tmp_path),
+            dev_auth_enabled=True,
+            dev_auth_email="development@example.com",
+            dev_auth_password="development-password",
+            dev_auth_secret="development-secret",
+        )
 
 
-def test_development_cors_allows_only_the_documented_local_issuer_headers(tmp_path: Path) -> None:
-    app = create_app(settings=development_settings(tmp_path), supabase_auth_client=FakeSupabaseAuthProvider())
+def test_development_cors_allows_only_the_documented_local_issuer_headers(
+    tmp_path: Path,
+) -> None:
+    app = create_app(
+        settings=development_settings(tmp_path),
+        supabase_auth_client=FakeSupabaseAuthProvider(),
+    )
 
     response = TestClient(app).options(
         "/auth/dev/session",
@@ -433,11 +656,19 @@ def test_development_cors_allows_only_the_documented_local_issuer_headers(tmp_pa
     assert response.headers["access-control-allow-origin"] == "http://localhost:3000"
     assert response.headers["access-control-allow-credentials"] == "true"
     allowed_headers = response.headers["access-control-allow-headers"].lower()
-    assert "authorization" in allowed_headers and "content-type" in allowed_headers and "x-dev-auth-secret" in allowed_headers
+    assert (
+        "authorization" in allowed_headers
+        and "content-type" in allowed_headers
+        and "x-dev-auth-secret" in allowed_headers
+    )
 
 
-def test_enabled_development_issuer_requires_complete_supabase_auth_configuration() -> None:
-    with pytest.raises(RuntimeError, match="requires complete Supabase auth configuration"):
+def test_enabled_development_issuer_requires_complete_supabase_auth_configuration() -> (
+    None
+):
+    with pytest.raises(
+        RuntimeError, match="requires complete Supabase auth configuration"
+    ):
         Settings(
             cors_allow_origins=(),
             environment="development",
@@ -455,5 +686,5 @@ def test_enabled_development_issuer_requires_complete_supabase_auth_configuratio
 
 
 def test_credentialed_cors_rejects_wildcard_origins() -> None:
-    with pytest.raises(RuntimeError, match="must not contain \"\\*\""):
+    with pytest.raises(RuntimeError, match='must not contain "\\*"'):
         replace(production_settings(Path("/tmp")), cors_allow_origins=("*",))

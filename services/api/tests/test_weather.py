@@ -83,14 +83,14 @@ def test_locations_returns_normalized_response_and_cache_policy() -> None:
     response = client_for(provider).get("/app/weather/v1/locations?q=%20Portland%20")
 
     assert response.status_code == 200
-    assert response.headers["cache-control"] == (
-        "private, no-store"
-    )
+    assert response.headers["cache-control"] == ("private, no-store")
     assert response.json() == {"locations": [LOCATION]}
     assert provider.queries == ["Portland"]
 
 
-def test_locations_rejects_invalid_or_repeated_queries_without_calling_provider() -> None:
+def test_locations_rejects_invalid_or_repeated_queries_without_calling_provider() -> (
+    None
+):
     provider = FakeWeatherProvider()
 
     for path in (
@@ -118,14 +118,14 @@ def test_current_conditions_returns_response_and_cache_policy() -> None:
     )
 
     assert response.status_code == 200
-    assert response.headers["cache-control"] == (
-        "private, no-store"
-    )
+    assert response.headers["cache-control"] == ("private, no-store")
     assert response.json() == {"conditions": CONDITIONS}
     assert provider.coordinates == [(45.5234, -122.6762)]
 
 
-def test_current_conditions_rejects_malformed_coordinates_without_calling_provider() -> None:
+def test_current_conditions_rejects_malformed_coordinates_without_calling_provider() -> (
+    None
+):
     provider = FakeWeatherProvider()
 
     response = client_for(provider).get(

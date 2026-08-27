@@ -4,7 +4,12 @@ from dataclasses import dataclass
 from fastapi import Request
 
 from factory_api.errors import ApiError
-from factory_api.routers.auth import ACCESS_TOKEN_COOKIE_NAME, REFRESH_TOKEN_COOKIE_NAME, SupabaseAccessTokenExpired, validate_token_pair
+from factory_api.routers.auth import (
+    ACCESS_TOKEN_COOKIE_NAME,
+    REFRESH_TOKEN_COOKIE_NAME,
+    SupabaseAccessTokenExpired,
+    validate_token_pair,
+)
 
 
 @dataclass(frozen=True)
@@ -14,7 +19,9 @@ class AuthenticatedPrincipal:
 
 
 def authentication_error() -> ApiError:
-    return ApiError("INVALID_CREDENTIALS", "A valid Supabase access credential is required.", 401)
+    return ApiError(
+        "INVALID_CREDENTIALS", "A valid Supabase access credential is required.", 401
+    )
 
 
 def _single_bearer_token(request: Request) -> str | None:
@@ -24,7 +31,12 @@ def _single_bearer_token(request: Request) -> str | None:
     if not headers:
         return None
     scheme, separator, token = headers[0].partition(" ")
-    if scheme.lower() != "bearer" or not separator or not token or token.strip() != token:
+    if (
+        scheme.lower() != "bearer"
+        or not separator
+        or not token
+        or token.strip() != token
+    ):
         raise authentication_error()
     return token
 
@@ -58,7 +70,10 @@ def _clear_browser_tokens_on_credential_error(request: Request) -> None:
     for header in cookie_headers:
         for segment in header.split(";"):
             name, separator, _ = segment.strip().partition("=")
-            if separator and name.strip() in (ACCESS_TOKEN_COOKIE_NAME, REFRESH_TOKEN_COOKIE_NAME):
+            if separator and name.strip() in (
+                ACCESS_TOKEN_COOKIE_NAME,
+                REFRESH_TOKEN_COOKIE_NAME,
+            ):
                 request.state.clear_browser_tokens = True
                 return
 
@@ -70,7 +85,9 @@ def principal_from_claims(claims: dict) -> AuthenticatedPrincipal:
     except (ValueError, TypeError, AttributeError) as error:
         raise authentication_error() from error
     email = claims.get("email")
-    return AuthenticatedPrincipal(subject=canonical_subject, email=email if isinstance(email, str) else None)
+    return AuthenticatedPrincipal(
+        subject=canonical_subject, email=email if isinstance(email, str) else None
+    )
 
 
 async def get_current_principal(request: Request) -> AuthenticatedPrincipal:
@@ -84,12 +101,16 @@ async def get_current_principal(request: Request) -> AuthenticatedPrincipal:
         raise
     if bearer:
         try:
-            return principal_from_claims(await request.app.state.supabase_auth_client.verify_access_token(bearer))
+            return principal_from_claims(
+                await request.app.state.supabase_auth_client.verify_access_token(bearer)
+            )
         except Exception as error:
             raise authentication_error() from error
 
     try:
-        return principal_from_claims(await request.app.state.supabase_auth_client.verify_access_token(cookie))
+        return principal_from_claims(
+            await request.app.state.supabase_auth_client.verify_access_token(cookie)
+        )
     except SupabaseAccessTokenExpired:
         try:
             refresh_token = _refresh_cookie(request)
@@ -100,9 +121,15 @@ async def get_current_principal(request: Request) -> AuthenticatedPrincipal:
             request.state.clear_browser_tokens = True
             raise authentication_error()
         try:
-            token_data = await request.app.state.supabase_auth_client.refresh_session(refresh_token=refresh_token)
+            token_data = await request.app.state.supabase_auth_client.refresh_session(
+                refresh_token=refresh_token
+            )
             validate_token_pair(token_data)
-            principal = principal_from_claims(await request.app.state.supabase_auth_client.verify_access_token(token_data["access_token"]))
+            principal = principal_from_claims(
+                await request.app.state.supabase_auth_client.verify_access_token(
+                    token_data["access_token"]
+                )
+            )
         except Exception as error:
             request.state.clear_browser_tokens = True
             raise authentication_error() from error

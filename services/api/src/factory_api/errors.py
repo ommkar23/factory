@@ -11,7 +11,9 @@ class ApiError(Exception):
     status_code: int
 
 
-async def api_error_handler(_: Request, error: ApiError) -> JSONResponse:
+async def api_error_handler(_: Request, error: Exception) -> JSONResponse:
+    if not isinstance(error, ApiError):
+        raise error
     return JSONResponse(
         {"error": {"code": error.code, "message": error.message}},
         status_code=error.status_code,

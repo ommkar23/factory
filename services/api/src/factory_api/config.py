@@ -21,9 +21,13 @@ class Settings:
 
     def __post_init__(self) -> None:
         if "*" in self.cors_allow_origins:
-            raise RuntimeError("CORS_ALLOW_ORIGINS must not contain \"*\" when credentials are enabled.")
+            raise RuntimeError(
+                'CORS_ALLOW_ORIGINS must not contain "*" when credentials are enabled.'
+            )
         if self.dev_auth_enabled and not self.is_development:
-            raise RuntimeError("DEV_AUTH_ENABLED is permitted only when ENVIRONMENT=development.")
+            raise RuntimeError(
+                "DEV_AUTH_ENABLED is permitted only when ENVIRONMENT=development."
+            )
         if self.dev_auth_enabled:
             missing = [
                 name
@@ -35,9 +39,13 @@ class Settings:
                 if not value
             ]
             if missing:
-                raise RuntimeError("Missing required development auth settings: " + ", ".join(missing))
+                raise RuntimeError(
+                    "Missing required development auth settings: " + ", ".join(missing)
+                )
             if not self.is_auth_configured:
-                raise RuntimeError("DEV_AUTH_ENABLED requires complete Supabase auth configuration.")
+                raise RuntimeError(
+                    "DEV_AUTH_ENABLED requires complete Supabase auth configuration."
+                )
 
     @property
     def is_development(self) -> bool:
@@ -77,12 +85,20 @@ class Settings:
             auth_public_url=(os.getenv("AUTH_PUBLIC_URL") or "").rstrip("/") or None,
             auth_allowed_return_paths=tuple(
                 path.strip()
-                for path in os.getenv("AUTH_ALLOWED_RETURN_PATHS", "/,/weather,/live-splash").split(",")
+                for path in os.getenv(
+                    "AUTH_ALLOWED_RETURN_PATHS", "/,/weather,/live-splash"
+                ).split(",")
                 if path.strip()
             ),
-            auth_session_encryption_key=os.getenv("AUTH_SESSION_ENCRYPTION_KEY") or None,
+            auth_session_encryption_key=os.getenv("AUTH_SESSION_ENCRYPTION_KEY")
+            or None,
             auth_session_database_url=os.getenv("AUTH_SESSION_DATABASE_URL") or None,
-            supabase_authorization_url=(os.getenv("SUPABASE_AUTHORIZATION_URL") or os.getenv("SUPABASE_URL") or "").rstrip("/") or None,
+            supabase_authorization_url=(
+                os.getenv("SUPABASE_AUTHORIZATION_URL")
+                or os.getenv("SUPABASE_URL")
+                or ""
+            ).rstrip("/")
+            or None,
             dev_auth_enabled=os.getenv("DEV_AUTH_ENABLED", "").lower() == "true",
             dev_auth_email=os.getenv("DEV_AUTH_EMAIL") or None,
             dev_auth_password=os.getenv("DEV_AUTH_PASSWORD") or None,
@@ -95,13 +111,25 @@ class Settings:
                     ("SUPABASE_URL", settings.supabase_url),
                     ("SUPABASE_PUBLISHABLE_KEY", settings.supabase_publishable_key),
                     ("AUTH_PUBLIC_URL", settings.auth_public_url),
-                    ("AUTH_SESSION_ENCRYPTION_KEY", settings.auth_session_encryption_key),
+                    (
+                        "AUTH_SESSION_ENCRYPTION_KEY",
+                        settings.auth_session_encryption_key,
+                    ),
                     ("AUTH_SESSION_DATABASE_URL", settings.auth_session_database_url),
                 )
                 if not value
             ]
             if missing:
-                raise RuntimeError("Missing required production settings: " + ", ".join(missing))
-            if not settings.auth_session_database_url.startswith(("postgresql://", "postgres://")):
-                raise RuntimeError("AUTH_SESSION_DATABASE_URL must use PostgreSQL in production.")
+                raise RuntimeError(
+                    "Missing required production settings: " + ", ".join(missing)
+                )
+            if (
+                settings.auth_session_database_url is None
+                or not settings.auth_session_database_url.startswith(
+                    ("postgresql://", "postgres://")
+                )
+            ):
+                raise RuntimeError(
+                    "AUTH_SESSION_DATABASE_URL must use PostgreSQL in production."
+                )
         return settings

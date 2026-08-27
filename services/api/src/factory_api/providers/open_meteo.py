@@ -1,7 +1,7 @@
 import math
 import re
 from collections.abc import Mapping, Sequence
-from typing import Any, Protocol
+from typing import Any, Never, Protocol
 from urllib.parse import urlencode
 from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
@@ -36,15 +36,19 @@ class UpstreamHttpError(Exception):
 
 
 class OpenMeteoProvider:
-    def __init__(self, client: AsyncHttpClient, timeout_seconds: float = TIMEOUT_SECONDS) -> None:
+    def __init__(
+        self, client: AsyncHttpClient, timeout_seconds: float = TIMEOUT_SECONDS
+    ) -> None:
         self._client = client
         self._timeout_seconds = timeout_seconds
 
     async def search_locations(self, query: str) -> list[dict[str, Any]]:
-        url = f"{GEOCODING_ENDPOINT}?{urlencode({"name": query.strip(), "count": "5", "language": "en", "format": "json"})}"
+        url = f"{GEOCODING_ENDPOINT}?{urlencode({'name': query.strip(), 'count': '5', 'language': 'en', 'format': 'json'})}"
         return normalize_locations(await self._request(url))
 
-    async def get_current_conditions(self, latitude: float, longitude: float) -> dict[str, Any]:
+    async def get_current_conditions(
+        self, latitude: float, longitude: float
+    ) -> dict[str, Any]:
         validate_coordinates(latitude, longitude)
         params = {
             "latitude": str(latitude),
@@ -55,7 +59,9 @@ class OpenMeteoProvider:
             "precipitation_unit": "mm",
             "current": ",".join(_CURRENT_FIELDS),
         }
-        return normalize_current_conditions(await self._request(f"{FORECAST_ENDPOINT}?{urlencode(params)}"))
+        return normalize_current_conditions(
+            await self._request(f"{FORECAST_ENDPOINT}?{urlencode(params)}")
+        )
 
     async def _request(self, url: str) -> object:
         response = await self._client.get(url, timeout=self._timeout_seconds)
@@ -144,12 +150,34 @@ def normalize_current_conditions(payload: object) -> dict[str, Any]:
 
 def weather_condition(code: int) -> dict[str, str]:
     labels = {
-        0: ("clear", "Clear sky"), 1: ("partly-cloudy", "Mainly clear"), 2: ("partly-cloudy", "Partly cloudy"), 3: ("partly-cloudy", "Overcast"),
-        45: ("fog", "Fog"), 48: ("fog", "Rime fog"), 51: ("drizzle", "Light drizzle"), 53: ("drizzle", "Moderate drizzle"), 55: ("drizzle", "Dense drizzle"),
-        56: ("freezing-drizzle", "Light freezing drizzle"), 57: ("freezing-drizzle", "Dense freezing drizzle"), 61: ("rain", "Slight rain"), 63: ("rain", "Moderate rain"), 65: ("rain", "Heavy rain"),
-        66: ("freezing-rain", "Light freezing rain"), 67: ("freezing-rain", "Heavy freezing rain"), 71: ("snow", "Slight snow fall"), 73: ("snow", "Moderate snow fall"), 75: ("snow", "Heavy snow fall"),
-        77: ("snow-grains", "Snow grains"), 80: ("rain-showers", "Slight rain showers"), 81: ("rain-showers", "Moderate rain showers"), 82: ("rain-showers", "Violent rain showers"),
-        85: ("snow-showers", "Slight snow showers"), 86: ("snow-showers", "Heavy snow showers"), 95: ("thunderstorm", "Thunderstorm"), 96: ("thunderstorm-hail", "Thunderstorm with slight hail"), 99: ("thunderstorm-hail", "Thunderstorm with heavy hail"),
+        0: ("clear", "Clear sky"),
+        1: ("partly-cloudy", "Mainly clear"),
+        2: ("partly-cloudy", "Partly cloudy"),
+        3: ("partly-cloudy", "Overcast"),
+        45: ("fog", "Fog"),
+        48: ("fog", "Rime fog"),
+        51: ("drizzle", "Light drizzle"),
+        53: ("drizzle", "Moderate drizzle"),
+        55: ("drizzle", "Dense drizzle"),
+        56: ("freezing-drizzle", "Light freezing drizzle"),
+        57: ("freezing-drizzle", "Dense freezing drizzle"),
+        61: ("rain", "Slight rain"),
+        63: ("rain", "Moderate rain"),
+        65: ("rain", "Heavy rain"),
+        66: ("freezing-rain", "Light freezing rain"),
+        67: ("freezing-rain", "Heavy freezing rain"),
+        71: ("snow", "Slight snow fall"),
+        73: ("snow", "Moderate snow fall"),
+        75: ("snow", "Heavy snow fall"),
+        77: ("snow-grains", "Snow grains"),
+        80: ("rain-showers", "Slight rain showers"),
+        81: ("rain-showers", "Moderate rain showers"),
+        82: ("rain-showers", "Violent rain showers"),
+        85: ("snow-showers", "Slight snow showers"),
+        86: ("snow-showers", "Heavy snow showers"),
+        95: ("thunderstorm", "Thunderstorm"),
+        96: ("thunderstorm-hail", "Thunderstorm with slight hail"),
+        99: ("thunderstorm-hail", "Thunderstorm with heavy hail"),
     }
     kind, label = labels.get(code, ("unknown", "Unknown conditions"))
     return {"kind": kind, "label": label}
@@ -162,16 +190,26 @@ def cardinal_direction(degrees: float) -> str:
 
 def validate_units(units: Mapping[str, object]) -> None:
     expected = {
-        "time": "iso8601", "temperature_2m": "°C", "apparent_temperature": "°C",
-        "relative_humidity_2m": "%", "precipitation": "mm", "weather_code": "wmo code",
-        "wind_speed_10m": "km/h", "wind_direction_10m": "°", "is_day": "",
+        "time": "iso8601",
+        "temperature_2m": "°C",
+        "apparent_temperature": "°C",
+        "relative_humidity_2m": "%",
+        "precipitation": "mm",
+        "weather_code": "wmo code",
+        "wind_speed_10m": "km/h",
+        "wind_direction_10m": "°",
+        "is_day": "",
     }
     if any(units.get(key) != unit for key, unit in expected.items()):
         fail("Unexpected Open-Meteo units.")
 
 
 def validate_coordinates(latitude: float, longitude: float) -> None:
-    if not all(math.isfinite(value) for value in (latitude, longitude)) or not -90 <= latitude <= 90 or not -180 <= longitude <= 180:
+    if (
+        not all(math.isfinite(value) for value in (latitude, longitude))
+        or not -90 <= latitude <= 90
+        or not -180 <= longitude <= 180
+    ):
         fail("Coordinates must be finite WGS84 latitude/longitude values.")
 
 
@@ -201,7 +239,11 @@ def optional_text(value: object) -> str | None:
 
 def number(value: Mapping[str, object], key: str) -> float | int:
     result = value.get(key)
-    if isinstance(result, bool) or not isinstance(result, (int, float)) or not math.isfinite(result):
+    if (
+        isinstance(result, bool)
+        or not isinstance(result, (int, float))
+        or not math.isfinite(result)
+    ):
         fail(f"{key} must be a finite number.")
     return result
 
@@ -216,5 +258,5 @@ def unique_parts(parts: Sequence[str | None] | Any) -> list[str]:
     return result
 
 
-def fail(message: str) -> None:
+def fail(message: str) -> Never:
     raise ProviderPayloadError(message)

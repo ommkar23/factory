@@ -71,7 +71,9 @@ class RecordingClient:
 
 
 @pytest.mark.asyncio
-async def test_search_locations_builds_bounded_english_request_and_normalizes_response() -> None:
+async def test_search_locations_builds_bounded_english_request_and_normalizes_response() -> (
+    None
+):
     client = RecordingClient(FakeResponse(LOCATION_PAYLOAD))
 
     locations = await OpenMeteoProvider(client).search_locations("  Portland, Maine  ")
@@ -100,10 +102,14 @@ async def test_search_locations_builds_bounded_english_request_and_normalizes_re
 
 
 @pytest.mark.asyncio
-async def test_current_conditions_requests_only_required_metric_fields_and_normalizes_response() -> None:
+async def test_current_conditions_requests_only_required_metric_fields_and_normalizes_response() -> (
+    None
+):
     client = RecordingClient(FakeResponse(CURRENT_PAYLOAD))
 
-    conditions = await OpenMeteoProvider(client).get_current_conditions(45.5234, -122.6762)
+    conditions = await OpenMeteoProvider(client).get_current_conditions(
+        45.5234, -122.6762
+    )
 
     assert conditions == {
         "apparentTemperatureC": 19.4,

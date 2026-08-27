@@ -8,6 +8,23 @@ Protected app routes accept exactly one credential: a Supabase access JWT in Aut
 
 Native clients use a one-time Google nonce then receive or refresh provider token pairs only. Browser cookie refresh rotates cookies server-side and failed refresh or logout clears them. Home, Live Splash, and Weather call only same-origin Factory `/auth/*` and `/app/*`; deployment routing and the Next.js local proxy send those paths to this API. App-local `/api/health` and the server-only development auth bootstrap are explicit exceptions. External navigation and attribution links are not API calls.
 
-Run all API tests: `docker run --rm -v $PWD:/workspace -w /workspace python:3.12.14-slim sh -c 'pip install -e .[dev] && pytest -q'`.
+## Development checks
+
+From `services/api`, install the development dependencies into Python 3.12 and run the same checks as CI:
+
+```bash
+pip install -e '.[dev]'
+ruff check .
+ruff format --check .
+ty check
+pytest -q
+```
+
+To exercise the complete CI command in its pinned Python container:
+
+```bash
+docker run --rm -v "$PWD:/workspace" -w /workspace python:3.12.14-slim sh -c \
+  'pip install --disable-pip-version-check --root-user-action=ignore -e .[dev] && ruff check . && ruff format --check . && ty check && pytest'
+```
 
 For local development only, `python3 -m scripts.deploy.app up <app>` creates an isolated API and Supabase database, provisions a distinct confirmed test login, and stores its issuer secret under ignored `.hermes/runtime/deploy/<app>/api.env`. With `DEV_AUTH_ENABLED=true`, Postman/native callers can use `X-Dev-Auth-Secret` with `POST /auth/dev/token`. A browser instead calls its same-origin `POST /api/auth/dev/bootstrap`; the Next.js server uses the server-held secret to call API `POST /auth/dev/session` and relays Factory cookies. These routes are absent outside explicit development.

@@ -24,32 +24,55 @@ class SqliteSessionStore:
         self._path.parent.mkdir(parents=True, exist_ok=True)
         self._fernet = Fernet(encryption_key.encode())
         with self._connect() as connection:
-            connection.execute("CREATE TABLE IF NOT EXISTS oauth_states (state TEXT PRIMARY KEY, payload BLOB NOT NULL, expires_at INTEGER NOT NULL)")
+            connection.execute(
+                "CREATE TABLE IF NOT EXISTS oauth_states (state TEXT PRIMARY KEY, payload BLOB NOT NULL, expires_at INTEGER NOT NULL)"
+            )
 
     def initialize(self) -> None:
         return None
 
-    def store_oauth_state(self, state: str, code_verifier: str, next_path: str, transaction_binding: str) -> None:
-        payload = self._encrypt({"code_verifier": code_verifier, "next_path": next_path, "transaction_binding": transaction_binding})
+    def store_oauth_state(
+        self, state: str, code_verifier: str, next_path: str, transaction_binding: str
+    ) -> None:
+        payload = self._encrypt(
+            {
+                "code_verifier": code_verifier,
+                "next_path": next_path,
+                "transaction_binding": transaction_binding,
+            }
+        )
         now = int(time.time())
         with self._connect() as connection:
             connection.execute("DELETE FROM oauth_states WHERE expires_at < ?", (now,))
-            connection.execute("INSERT INTO oauth_states (state, payload, expires_at) VALUES (?, ?, ?)", (state, payload, now + 300))
+            connection.execute(
+                "INSERT INTO oauth_states (state, payload, expires_at) VALUES (?, ?, ?)",
+                (state, payload, now + 300),
+            )
 
-    def consume_oauth_state(self, state: str, transaction_binding: str) -> OAuthState | None:
+    def consume_oauth_state(
+        self, state: str, transaction_binding: str
+    ) -> OAuthState | None:
         with self._connect() as connection:
             connection.execute("BEGIN IMMEDIATE")
-            row = connection.execute("SELECT payload, expires_at FROM oauth_states WHERE state = ?", (state,)).fetchone()
+            row = connection.execute(
+                "SELECT payload, expires_at FROM oauth_states WHERE state = ?", (state,)
+            ).fetchone()
             if row is None or row[1] < int(time.time()):
                 if row is not None:
-                    connection.execute("DELETE FROM oauth_states WHERE state = ?", (state,))
+                    connection.execute(
+                        "DELETE FROM oauth_states WHERE state = ?", (state,)
+                    )
                 return None
             payload = self._decrypt(row[0])
             binding = payload.get("transaction_binding")
-            if not isinstance(binding, str) or not secrets.compare_digest(binding, transaction_binding):
+            if not isinstance(binding, str) or not secrets.compare_digest(
+                binding, transaction_binding
+            ):
                 return None
             connection.execute("DELETE FROM oauth_states WHERE state = ?", (state,))
-            return OAuthState(code_verifier=payload["code_verifier"], next_path=payload["next_path"])
+            return OAuthState(
+                code_verifier=payload["code_verifier"], next_path=payload["next_path"]
+            )
 
     def store_native_challenge(self, nonce: str) -> None:
         self.store_oauth_state(f"native:{nonce}", "", "/", "native")
@@ -75,28 +98,57 @@ class PostgresSessionStore:
     def initialize(self) -> None:
         with _connect_postgres(self._database_url) as connection:
             connection.execute("CREATE SCHEMA IF NOT EXISTS factory_auth")
-            connection.execute("CREATE TABLE IF NOT EXISTS factory_auth.oauth_states (state TEXT PRIMARY KEY, payload BYTEA NOT NULL, expires_at BIGINT NOT NULL)")
+            connection.execute(
+                "CREATE TABLE IF NOT EXISTS factory_auth.oauth_states (state TEXT PRIMARY KEY, payload BYTEA NOT NULL, expires_at BIGINT NOT NULL)"
+            )
 
-    def store_oauth_state(self, state: str, code_verifier: str, next_path: str, transaction_binding: str) -> None:
-        payload = self._encrypt({"code_verifier": code_verifier, "next_path": next_path, "transaction_binding": transaction_binding})
+    def store_oauth_state(
+        self, state: str, code_verifier: str, next_path: str, transaction_binding: str
+    ) -> None:
+        payload = self._encrypt(
+            {
+                "code_verifier": code_verifier,
+                "next_path": next_path,
+                "transaction_binding": transaction_binding,
+            }
+        )
         now = int(time.time())
         with _connect_postgres(self._database_url) as connection:
-            connection.execute("DELETE FROM factory_auth.oauth_states WHERE expires_at < %s", (now,))
-            connection.execute("INSERT INTO factory_auth.oauth_states (state, payload, expires_at) VALUES (%s, %s, %s)", (state, payload, now + 300))
+            connection.execute(
+                "DELETE FROM factory_auth.oauth_states WHERE expires_at < %s", (now,)
+            )
+            connection.execute(
+                "INSERT INTO factory_auth.oauth_states (state, payload, expires_at) VALUES (%s, %s, %s)",
+                (state, payload, now + 300),
+            )
 
-    def consume_oauth_state(self, state: str, transaction_binding: str) -> OAuthState | None:
+    def consume_oauth_state(
+        self, state: str, transaction_binding: str
+    ) -> OAuthState | None:
         with _connect_postgres(self._database_url) as connection:
-            row = connection.execute("SELECT payload, expires_at FROM factory_auth.oauth_states WHERE state = %s FOR UPDATE", (state,)).fetchone()
+            row = connection.execute(
+                "SELECT payload, expires_at FROM factory_auth.oauth_states WHERE state = %s FOR UPDATE",
+                (state,),
+            ).fetchone()
             if row is None or row[1] < int(time.time()):
                 if row is not None:
-                    connection.execute("DELETE FROM factory_auth.oauth_states WHERE state = %s", (state,))
+                    connection.execute(
+                        "DELETE FROM factory_auth.oauth_states WHERE state = %s",
+                        (state,),
+                    )
                 return None
             payload = self._decrypt(row[0])
             binding = payload.get("transaction_binding")
-            if not isinstance(binding, str) or not secrets.compare_digest(binding, transaction_binding):
+            if not isinstance(binding, str) or not secrets.compare_digest(
+                binding, transaction_binding
+            ):
                 return None
-            connection.execute("DELETE FROM factory_auth.oauth_states WHERE state = %s", (state,))
-            return OAuthState(code_verifier=payload["code_verifier"], next_path=payload["next_path"])
+            connection.execute(
+                "DELETE FROM factory_auth.oauth_states WHERE state = %s", (state,)
+            )
+            return OAuthState(
+                code_verifier=payload["code_verifier"], next_path=payload["next_path"]
+            )
 
     def store_native_challenge(self, nonce: str) -> None:
         self.store_oauth_state(f"native:{nonce}", "", "/", "native")
@@ -113,10 +165,13 @@ class PostgresSessionStore:
 
 def _connect_postgres(database_url: str) -> Any:
     import psycopg
+
     return psycopg.connect(database_url)
 
 
-def create_session_store(database_url: str, encryption_key: str) -> SqliteSessionStore | PostgresSessionStore:
+def create_session_store(
+    database_url: str, encryption_key: str
+) -> SqliteSessionStore | PostgresSessionStore:
     if database_url.startswith(("postgresql://", "postgres://")):
         return PostgresSessionStore(database_url, encryption_key)
     return SqliteSessionStore(database_url, encryption_key)
